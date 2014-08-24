@@ -1,0 +1,10 @@
+<div style="padding-left: 10px; padding-top: 10px">
+  <p><%= $login %>, thanks for signing up for JAGC!</p>
+  <p>To activate your account, simply click on the link below or paste into the url field on your favorite browser:</p>
+  <p><a href="<%= $link %>"><%= $link %></a></p>
+
+  <p>
+    --<br>
+    JAGC Team
+  </p>
+</div>

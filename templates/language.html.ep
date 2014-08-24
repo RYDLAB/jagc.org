@@ -1,0 +1,17 @@
+<table class="table table-hover table-striped">
+<caption>Languages</caption>
+<thead>
+  <tr>
+    <th>Language</th>
+    <th>%</th>
+  </tr>
+</thead>
+% my $n = 0;
+% $n += $_->{c} for @$languages;
+% for my $language (@$languages) {
+  <tr>
+    <td><i class="<%= $language->{_id} %>"></i> <%= $language->{_id} %></td>
+    <td><%= sprintf('%.2f', 100 * $language->{c} / $n) %>%</td>
+  </tr>
+% }
+</table>

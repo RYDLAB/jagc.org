@@ -1,0 +1,120 @@
+% layout 'default';
+% title 'Edit task "' . $task->{name} . '"';
+
+% use Mojo::Util qw/encode decode/;
+
+% my $uid = session 'uid';
+
+<h2>Edit task</h2>
+
+% my $test_template = begin
+  % my ($number, $test_in, $test_out) = @_;
+  <div id="<%= $number %>">
+    <label>Test #<%= $number %></label>
+    <div class="row">
+      <div class="col-lg-4">
+        %= include 'field', type => 'textarea', label => 'STDIN', name => "test_${number}_in", value => $test_in, opt => {class => 'input-lg'}
+      </div>
+      <div class="col-lg-4">
+        %= include 'field', type => 'textarea', label => 'STDOUT', name => "test_${number}_out", value => $test_out, opt => {class => 'input-lg'}
+      </div>
+      <div class="col-lg-1">
+        <button type="button" class="btn btn-default btn-xs" onclick="delete_test(<%= $number %>)">
+          <span class="glyphicon glyphicon-remove"></span> delete
+        </button>
+      </div>
+    </div>
+  </div>
+% end
+
+<script type="text/template" id="test_template">
+  %= $test_template->('{0}','','');
+</script>
+
+<script type="text/javascript">
+  String.prototype.format = function() {
+    var args = arguments;
+    return this.replace(/{(\d+)}/g, function(match, number) { 
+      return typeof args[number] != 'undefined'
+        ? args[number]
+        : match
+      ;
+    });
+  };
+
+  $(document).ready(function () {
+    $('#test_add').click(function() {
+      var count = $('#tests .row').size();
+      var test_template = $('#test_template').html();
+      var template = test_template.format(count + 1);
+      $("#tests").append(template);
+      return false;
+    });
+  });
+
+  function delete_test(num) {
+    num = parseInt(num);
+    var count = $('#tests .row').size();
+    if (count == 1) return;
+    $('div#'+num).remove();
+    for(var i=num+1;i<=count;++i) {
+      $('div#' + i + '>label').text('Test #' + (i-1));
+
+      $('div#' + i + '> div.row').find('label.control-label').each(function(idx,elem){
+        var mfor = $(elem).attr('for');
+        $(elem).attr('for', mfor.replace(/\d+/, i-1));
+      });
+
+      $('div#' + i + '> div.row').find('textarea').each(function(idx,elem){
+        var mname = $(elem).attr('name');
+        $(elem).attr('name', mname.replace(/\d+/, i-1));
+      });
+
+      var button = $('div#' + i + '> div.row button[type=button]');
+      var but_onclick = button.attr('onclick');
+      button.attr('onclick', but_onclick.replace(/\d+/,(i-1)));
+
+      $('div#' + i).attr('id',i-1);
+    }
+  }
+</script>
+
+% if ($uid) {
+  <form action="<%= url_for('task_edit', tid => $task->{_id}) %>" method="POST">
+    <fieldset>
+      <div class="row">
+        <div class="col-lg-6">
+          %= include 'field', type => 'text', label => 'Task name', name => 'name', value => validation->param('name') ? validation->param('name') : $task->{name}, opt => {class => 'input-lg'}
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-lg-6">
+          %= include 'field', type => 'textarea', label => 'Task description', name => 'description', value => validation->param('description') ? validation->param('description') : $task->{desc}, opt => {class => 'input-lg'}
+        </div>
+      </div>
+
+      <h3 class="col-lg-offset-3">Tests </h3>
+      <div id="tests">
+        % my $n = 1;
+        % if (validation->has_error) {
+          % for my $k (grep { /^test_\d+_in$/ } sort keys %{validation->input}) {
+            %= $test_template->($n++, '', '');
+          % }
+        % } else {
+          % for my $test (@{$task->{tests}}) {
+            %= $test_template->($n++, decode('UTF-8', $test->{in}), decode('UTF-8', $test->{out}));
+          % }
+        % }
+      </div>
+      <div class="col-lg-offset-3">
+        <button id="test_add" type="button" class="btn btn-default btn-sm">
+          <span class="glyphicon glyphicon-plus"></span> Add more tests
+        </button>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Submit</button>
+    </fieldset>
+  </form>
+% } else {
+  <h3>login to edit task</h3>
+% }

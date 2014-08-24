@@ -1,0 +1,29 @@
+<div class="anchor">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <div class="row">
+        <div class="col-lg-7">
+          <span>Leave a comment</span>
+        </div>
+        <div class="col-lg-5">
+          <p class="pull-right">
+            Parsed as Markdown <span class="glyphicon glyphicon-question-sign"></span>
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="panel-body">
+      <form action="<%= $url %>" method="POST">
+        <fieldset>
+          %= include 'field', type => 'textarea', label => '', name => 'text', value => '', opt => {rows => 5}
+          % if (session('uid')) {
+            <button type="submit" class="btn btn-primary">Submit</button>
+          % } else {
+            <button type="button" class="btn btn-primary disabled">Submit</button>
+            <small class="text-danger">Login to leave a comment</small>
+          % }
+        </fieldset>
+      </form>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,98 @@
+% layout 'default';
+% title 'About';
+
+<div class="row">
+  <div class="col-lg-12">
+    <div class="col-lg-9" id="padding_header0"><h1>JAGC &mdash; Just Another Golf Coding</h1></div>
+    <img src="/images/logo_v.png" class="pull-right">
+  </div>
+  <div class="col-lg-8">
+    <hr>
+
+    <h2>About</h2>
+    <p>
+      JAGC is a server for <a href="http://en.wikipedia.org/wiki/Code_golf">code golf</a>,
+      where users should write the shortest code using all standard features of scripting languages for solve tasks.
+      Users can add new tasks with unit tests and invent solutions and submit them.
+      JAGC will run tests for these solutions to determine the winner.
+    </p>
+
+    <h2>Rules</h2>
+    <p>
+      “The shortest solution is the best solution”.
+      So if your code have a smaller length then you have more points.<br>
+      The first 10 participants who have the shortest code, receive a ponits from 10 to 1, respectively.
+    </p>
+    <p>
+      Only the author of task can edit description and add/modify tests. If the author has changed the tests then
+      all solutions will be rejudged.
+    </p>
+
+    <h3>Code Length</h3>
+    <p>
+      <ul>
+        <li>
+          Before saving solution of the problem JAGC server replaces new lines symbols in accordance with the style of Unix(0xA).
+        </li>
+        <li>
+          JAGC server removes all leading and tailings newline symbols of each test.
+        </li>
+        <li>
+          Before comparing the result of solution and the expected result JAGC server removes all leading and tailings newline symbols.
+        </li>
+        <li>
+          She-bang <br>
+          If solution contains she-bang (i.e. #!/usr/bin/perl -ap), JAGC will replace this path to the path interpreter that you specified when
+          adding a solution. While calculating the length solution the she-bang is not sensitive, except keys (including minus symbol). <br>
+          For example:<br>
+
+          <ol>
+            <li>
+            <pre>
+#!/bin/perl -l -n
+print 'test'</pre>
+               This source has 5+12 symbols length.
+            </li>
+            <li>
+            <pre>
+#!/bin/perl -ln
+print 'test'</pre>
+             This code has 3+12 symbols length.
+            </li>
+          </ol>
+          It is recommended to use just the name of the interpreter in the she-bang, instead of writing the full path.
+        </li>
+      </ul>
+    </p>
+
+    <h2>Latency</h2>
+    <p>
+      Some actual information about statistics on site appear with delay, about 1 minutes.
+    </p>
+    <h2>Examples</h2>
+    <p>
+      <a href="<%= url_for('examples') %>">Here</a> are examples of task A + B on different programming languages.
+    </p>
+    <h2>Technology</h2>
+      <ul>
+        <li><a href="http://www.perl.org/">perl</a>, <a href="http://mojolicio.us/">Mojolicious</a></li>
+        <li><a href="http://www.mongodb.org/">mongodb</a></li>
+        <li><a href="http://linuxcontainers.org/">LXC</a> (Ubuntu 14.04) for running users code</li>
+      </ul>
+
+    <h2>Languages</h2>
+    <p>
+      <ul>
+        <li>perl</li>
+        <li>python3</li>
+        <li>python2</li>
+        <li>erlang</li>
+        <li>ruby1.9</li>
+        <li>ruby1.8</li>
+        <li>haskell</li>
+        <li>bash</li>
+        <li>php</li>
+      </ul>
+    </p>
+  </div>
+</div>

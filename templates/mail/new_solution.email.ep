@@ -1,0 +1,19 @@
+<div style="padding-left: 10px; padding-top: 10px">
+  <p>
+    Hi <%= $login %>, <b><%= $user %></b> write a new correct solution in <%= $tname %> task:
+    <pre>
+      <%= $code %>
+    </pre>
+
+  </p>
+  <p>View solution <a href="<%= $slink %>">on site</a>.</p>
+
+  <p style="padding-top: 5px">
+    You can disable these notifications on task page: <a href="<%= $tlink %>"><%= $tlink %></a>
+  </p>
+
+  <p>
+    --<br>
+    JAGC Team
+  </p>
+</div>

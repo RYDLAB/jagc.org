@@ -1,0 +1,22 @@
+% layout 'default';
+% title 'Solutions';
+
+% my $count = 1;
+% for my $solution (@$solutions) {
+  % my $n = 1;
+  % my $test;
+  % if ($self->stash('s') == 0) {
+    % ($test) = grep { $_->[0] eq $solution->{terr} } map { [$_->{_id}, $n++, $_->{out}] } @{$task->{tests}};
+  % }
+  %= include 'solution', solution => $solution, user => $solution->{user}, s => $self->stash('s'), count => $count, test => $test
+  % ++$count;
+% }
+
+% my $url = $s == 0 ? 'task_view_incorrect_solutions' : 'task_view_solutions';
+% my $url_prev = url_for($url, page => $page - 1, id => $id);
+% my $url_next = url_for($url, page => $page + 1, id => $id);
+
+<ul class="pager">
+  <li class="previous <%= 'disabled' if $page == 1 %>"><a href="<%= $url_prev if $page > 1 %>">&larr; Prev</a></li>
+  <li class="next <%= 'disabled' unless $need_next_btn %>"><a href="<%= $url_next if $need_next_btn %>">Next &rarr;</a></li>
+</ul>

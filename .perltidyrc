@@ -1,0 +1,15 @@
+-w     # warning-output
+-iob   # ignore-old-breakpoints
+-l=110 # maximum-line-length
+-mbl=2 # maximum-consecutive-blank-lines
+-i=2   # indent-columns
+-ci=2  # continuation-indentation
+-vt=0  # vertical-tightness
+-pt=2  # paren-tightness
+-bt=2  # brace-tightness
+-sbt=2 # square-bracket-tightness
+-ce    # cuddled-else
+-bar   # opening-brace-always-on-right
+-otr   # opening-token-right and related flags
+-sot   # stack-opening-tokens and related flags
+-b     # backup-and-modify-in-place

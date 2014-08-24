@@ -1,0 +1,19 @@
+<div class="row">
+  <div class="col-lg-7">
+    <blockquote>
+      <%== $comment->{html} %>
+      <footer>
+        <a href="<%= url_for('user_info', login => $comment->{user}{login}) %>">
+          <%= $comment->{user}{login} %>
+          <img src="<%= $comment->{user}{pic} %>" class="img-rounded user">
+        </a>
+      </footer>
+    </blockquote>
+  </div>
+  <div class="col-lg-5">
+    % my ($datetime, $cdate) = tz $comment->{ts};
+    <p class="text-right">
+      <abbr class="timeago" title="<%= $datetime %>"><%= $cdate %></abbr>
+    </p>
+  </div>
+</div>

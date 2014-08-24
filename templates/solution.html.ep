@@ -1,0 +1,77 @@
+<div class="solution anchor" id="<%= $solution->{_id} %>">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <div class="row">
+        <div class="col-lg-7">
+          <div>
+            % if ($s == 1) {
+              <span class="label label-default"><%= $count %></span>
+            % }
+            <a href="<%= url_for('solution_comments', id => $solution->{_id}) %>">
+              % if (my $solution_comments = $self->stash('solution_comments')) {
+                Comments <span class="badge"><%= $solution_comments->{$solution->{_id}} %></span>
+              % }
+            </a>
+          </div>
+          <div>
+            <span><%= $solution->{size} %> symbols</span>
+            &ndash;
+            <i class="<%= $solution->{lng} %>"></i>
+            <span><i><%= $solution->{lng} %></i></span>
+            % if ($s == 0) {
+              % if ($test) {
+                <small style="display:block">
+                  <a style="cursor: pointer;" onclick="active_task('<%= $test->[0] %>')">failed test <%= $test->[1] %></a>
+                </small>
+                % if ($solution->{s} eq 'incorrect') {
+                  <small class="text-danger">
+                    Wrong answer
+                    <a data-toggle="collapse" href="#sa-<%= $solution->{_id} %>">
+                      <span class="glyphicon glyphicon-question-sign"></span>
+                    </a>
+                  </small>
+                  <div id="sa-<%= $solution->{_id} %>" class="panel-collapse collapse">
+                    <div class="row">
+                      <div class="col-lg-5">
+                        <pre><%= $solution->{out} %></pre>
+                      </div>
+                      <div class="col-lg-2">instead of</div>
+                      <div class="col-lg-5">
+                        <pre><%= decode 'UTF-8', $test->[2] %></pre>
+                      </div>
+                    </div>
+                  </div>
+                % } elsif ($solution->{s} eq 'timeout') {
+                  <small class="text-danger">Timeout</small>
+                % } else {
+                  <small class="text-danger">
+                    Code error
+                    <a data-toggle="collapse" href="#s-<%= $solution->{_id} %>">
+                      <span class="glyphicon glyphicon-question-sign"></span>
+                    </a>
+                  </small>
+                  <div id="s-<%= $solution->{_id} %>" class="panel-collapse collapse">
+                    <p class="text-muted"><%= $solution->{err} %></p>
+                  </div>
+                % }
+              % }
+            % }
+          </div>
+        </div>
+        <div class="col-lg-5">
+          <div class="pull-right">
+            <img src="<%= $user->{pic} %>" class="img-rounded user-big pull-right">
+          </div>
+          <div class="pull-right" style="margin-right:10px">
+            % my ($datetime, $cdate) = tz $solution->{ts};
+            <abbr class="timeago" title="<%= $datetime %>"><%= $cdate %></abbr>
+            <a class="text-right show" href="<%= url_for('user_info', login => $user->{login}) %>"><%= $user->{login} %></a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel-body">
+      <pre><%= $solution->{code} %></pre>
+    </div>
+  </div>
+</div>

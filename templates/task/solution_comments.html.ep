@@ -1,0 +1,20 @@
+% layout 'default';
+% title $solution->{task}{name};
+
+% use Mojo::Util 'decode';
+
+<p class="text-right">
+  <a href="<%= url_for('task_view', id => $solution->{task}{tid}) %>">Back to task</a>
+</p>
+
+%= include 'solution', solution => $solution, user => $solution->{user}, s => 0, count => 0, test => undef;
+
+<hr>
+
+% for my $comment (@$comments) {
+  %= include 'comment', comment => $comment;
+% }
+
+<hr>
+
+%= include 'post_comment', url => url_for('solution_comment_add', id => $solution->{_id})

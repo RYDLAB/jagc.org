@@ -1,0 +1,13 @@
+<div style="padding-left: 10px; padding-top: 10px">
+  <p>Hi <%= $login %>, JAGC has a new task <%= $tname %>!</p>
+  <p>To see the description of task <a href="<%= $tlink %>">click here</a>.</p>
+
+  <p style="padding-top: 20px">
+    You can disable these notifications in your profile settings by link: <a href="<%= $profile %>"><%= $profile %></a>
+  </p>
+
+  <p>
+    --<br>
+    JAGC Team
+  </p>
+</div>

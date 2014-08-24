@@ -1,0 +1,64 @@
+% layout 'default';
+% title 'Examples';
+
+<h2>A+B program on different languages.</h2>
+<h3>Perl</h3>
+<pre>#!/bin/perl -p
+$_+=<>;
+</pre>
+<h3>Python</h3>
+<pre>a = int (input(''))
+b = int (input(''))
+print(a+b, end="")
+</pre>
+<h3>Ruby</h3>
+<pre>a = Integer(gets)+Integer(gets)
+puts a
+</pre>
+<h3>Erlang</h3>
+<pre>
+main(_) ->
+        {ok, [A,B]} = io:fread("","~d~d"),
+        C=A+B,
+        io:fwrite("~p",[C]).
+
+</pre>
+<h3>Bash</h3>
+<pre>read a;read b;let a=a+b;echo $a
+</pre>
+<h3>Haskell</h3>
+<pre>import System.IO
+
+main :: IO ()
+main  = do
+        a <- getLine
+        b <- getLine
+        let aa = read a :: Int
+        let bb = read b :: Int
+        let cc = aa + bb
+        putStr . show $ cc
+
+</pre>
+<h3>Nodejs</h3>
+<pre>String.prototype.trim=function(){return this.replace(/^\s+|\s+$/g, '');};
+
+process.stdin.resume();
+var sum = 0;
+
+process.stdin.on('data', function(chunk) {
+        var arr = chunk.toString().trim().split("\n");
+        for (i =0; i < arr.length; ++i)
+             sum+=parseInt(arr[i]);
+});
+
+process.stdin.on('end', function() {
+  process.stdout.write(sum.toString());
+});
+</pre>
+<h3>Php</h3>
+<pre>&lt;?php
+$n1 = trim(fgets(STDIN));
+$n2 = trim(fgets(STDIN));
+print $n1 + $n2;
+?&gt;
+</pre>

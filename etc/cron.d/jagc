@@ -1,0 +1,1 @@
+*/1 * * * * root su jagc -c "cd /home/jagc/jagc.org && ./script/jagc stat -m production"

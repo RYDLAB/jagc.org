@@ -1,0 +1,91 @@
+% layout 'default';
+% title 'Settings';
+
+<script type="text/javascript">
+  function change_url(e) {
+    $('#url').val( "<%= app->config->{site_url} %>" + '/user/' + $(e).val());
+  }
+</script>
+
+<div class="row">
+  <div class="col-lg-6">
+    <table class="table table-hover">
+      <caption><b>Socials</b></caption>
+      <thead>
+        <tr>
+          <th class="span1">#</th>
+          <th class="span3">Social Name</th>
+          <th class="span2"><span class="pull-right">Turn on/off</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        % my $n = 1;
+        % my @all_socials = ('fb','vk','linkedin','github','twitter');
+        % my %socials = map { $_->{type}, 1 } @{$user->{social}};
+        % for my $s (@all_socials) {
+        <tr>
+          <td><%= $n++ %></td>
+          <td><%= $s %></td>
+          <td>
+            % if ($socials{$s}) {
+              % if($#{$user->{social}} > 0) {
+                <form action="<%= url_for('remove_social') %>" method="GET">
+                  <button class="pull-right btn btn-danger" type="submit">Remove</button>
+                  <input type="hidden" name="social" value="<%= $s %>">
+                </form>
+              % } else {
+                <button class="pull-right btn btn-info disabled" type="submit">Current</button>
+              % }
+            % } else {
+              <form action="<%= url_for('add_social') %>" method="GET">
+                <button class="pull-right btn btn-success" type="submit">Add</button>
+                <input type="hidden" name="social" value="<%= $s %>">
+              </form>
+            % }
+          </td>
+        </tr>
+        % }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="col-lg-6">
+    <h5 class="text-center" style="margin-bottom:30px"><b>Screen name</b></h5>
+    <form class="form-horizontal" action="<%= url_for('user_change_name', login => $user->{login}) %>" method="POST">
+        <div class="row">
+          <div class="alert alert-info">
+            Screen name will be contained in the url <br>
+            Screen name must not contain characters . and /
+          </div>
+        </div>
+        <div class="row">
+            <div class="form-group">
+              <label for="screen_name" class="col-lg-3 control-label">Screen Name</label>
+              <div class="col-lg-9">
+                <input type="text" class="form-control" onkeyup="change_url(this)" onchange="change_url(this)" id="screen_name" name="name" placeholder="<%= $user->{login} %>">
+              </div>
+            </div>
+            <fieldset disabled>
+              <div class="form-group">
+                <label for="url" class="col-lg-3 control-label">URL</label>
+                <div class="col-lg-9">
+                  <input type="text" class="form-control" id="url" placeholder="<%= app->config->{site_url} . '/user/' . $user->{login} %>">
+                </div>
+              </div>
+            </fieldset>
+        </div>
+        <div class="row text-right">
+          <button type="submit" class="btn btn-primary">Change name</button>
+        </div>
+    </form>
+  </div>
+</div>
+
+<div class="row">
+  <h4>Notifications</h4>
+
+  <h5>About new task on JAGC</h5>
+  <a class="btn btn-primary" href="<%= url_for('user_notification_new') %>">
+    <%= $user->{notice}{new} ? 'unsubscribe' : 'subscribe' %>
+  </a>
+</div>

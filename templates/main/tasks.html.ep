@@ -1,0 +1,20 @@
+% layout 'default';
+% title 'Tasks';
+
+<div class="col-lg-9">
+  %= include 'tasks', tasks => $tasks;
+
+  % my $url_prev = url_for('tasks', page => $page - 1);
+  % my $url_next = url_for('tasks', page => $page + 1);
+
+  <ul class="pager">
+      <li class="previous <%= 'disabled' if $page == 1 %>"><a href="<%= $url_prev if $page > 1 %>">&larr; Prev</a></li>
+      <li class="next <%= 'disabled' unless $need_next_btn %>"><a href="<%= $url_next if $need_next_btn %>">Next &rarr;</a></li>
+  </ul>
+
+</div>
+
+<div class="col-lg-3">
+  %= include 'language';
+</div>
+

@@ -1,0 +1,36 @@
+% layout 'default';
+% title 'Get paid to create task';
+
+<div class="row">
+  <div class="col-lg-8">
+    <h2>Get paid to create task <small>beta</small></h2>
+
+    <p>
+      The more interesting tasks on JAGC the more interesting to use the service.
+      We decided to pay <b>2$</b> per interesting task. And we hope that this will
+      increase the interest to JAGC.
+    </p>
+    <p>
+      The minimum amount for transfer is <b>10$</b>. Thus you should add at least <b>5</b> good tasks.
+    </p>
+    <p>
+      More tasks, more fun!
+    </p>
+
+    <h3>Process</h3>
+
+    <ul>
+      <li>To come up with a task;</li>
+      <li>Login to JAGC through any social network;</li>
+      <li>Create task by <a href="<%= url_for('task_add') %>">link</a>;</li>
+      <li>Wait until your task will solve at least 5 people (you can check this in your profile page);</li>
+      <li>Repeat the previous steps at least 5 times;</li>
+      <li>Contact us through <a href="mailto:info@jagc.org">email</a> or <a href="https://twitter.com/JagcOrg">twitter</a>;</li>
+      <li>Get paid and be happy.</li>
+    </ul>
+  </div>
+  <div class="col-lg-4">
+    <img src="/images/logo_v.png" class="pull-right">
+  </div>
+
+</div>

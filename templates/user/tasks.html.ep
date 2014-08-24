@@ -1,0 +1,30 @@
+% layout 'default';
+% title 'Tasks';
+
+<div class="row">
+  <div class="col-lg-2">
+    <img class="social_img_normal" src="<%= $owner->{pic} %>"><h3 class="snuggle"><b><%= $owner->{login} %></b></h3>
+  </div>
+  <div class="col-lg-10">
+    <ul class="nav nav-pills nav-justified">
+      <li><a href="<%= url_for('user_info', login => $owner->{login}) %>">Score</a></li>
+      <li class="active"><a href="#">Tasks</a></li>
+      <li><a href="<%= url_for('event_user_info', login => $owner->{login}) %>">Events</a></li>
+    </ul>
+    <br>
+    % if (@$tasks) {
+      % for my $task (@$tasks) {
+          <div class="row">
+            <div class="col-lg-5">
+              <a href="<%= url_for('task_view', id => $task->{_id}) %>"><%= $task->{name} %></a>
+            </div>
+            <div class="col-lg-5">
+              <span>(solved by <%= $tcount->{$task->{_id}} // 0 %> users)</span>
+            </div>
+          </div>
+      % }
+    % } else {
+      <h2 class="text-center">This user has not created tasks</h2>
+    % }
+  </div>
+</div>

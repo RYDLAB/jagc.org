@@ -1,0 +1,77 @@
+% layout 'default';
+% title $task->{name};
+
+% use Mojo::Util 'decode';
+
+<div class="row">
+  <div class="col-lg-10">
+    <blockquote>
+      <h3><%= $task->{name} %></h3>
+      <p class="content-desciption"><pre class="text_desciption"><%= $task->{desc} %></pre></p>
+      <footer>
+        <a href="<%= url_for('user_tasks_owner', login => $task->{owner}{login}) %>">
+          <%= $task->{owner}{login} %>
+          <img src="<%= $task->{owner}{pic} %>" class="img-rounded user">
+        </a>
+      </footer>
+    </blockquote>
+  </div>
+  <div class="col-lg-2">
+    <p class="text-right">
+      <a href="<%= url_for('task_view', id => $task->{_id}) %>">Back to task</a>
+    </p>
+  </div>
+</div>
+
+<div class="panel-group anchor" id="accordion">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h4 class="panel-title">
+        <a class="accordion-toggle collapsed" data-toggle="collapse" href="#collapseTest">
+          Tests
+        </a>
+      </h4>
+    </div>
+    <div id="collapseTest" class="panel-collapse collapse">
+      <div class="panel-body">
+        <div class="tabbable tabs-below">
+          <div class="tab-content">
+            <ul class="nav nav-tabs">
+              % my $n = 0;
+              % for my $test (@{$task->{tests}}) {
+                <li class="<%= $n ? '' : 'active' %>">
+                  <a name="<%= $test->{_id} %>" href="#<%= $test->{_id} %>" data-toggle="tab">#<%= ++$n %></a>
+                </li>
+              % }
+            </ul>
+            % $n = 0;
+            % for my $test (@{$task->{tests}}) {
+              <div class="anchor tab-pane <%= $n++ ? '' : 'active' %>" id="<%= $test->{_id} %>">
+                <div class="row">
+                  <div class="col-lg-6">
+                    <p class="text-info">IN</p>
+                    <pre><%= decode 'UTF-8', $test->{in} %></pre>
+                  </div>
+                  <div class="col-lg-6">
+                    <p class="text-info">OUT</p>
+                    <pre><%= decode 'UTF-8', $test->{out} %></pre>
+                  </div>
+                </div>
+              </div>
+            % }
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr>
+
+% for my $comment (@$comments) {
+  %= include 'comment', comment => $comment;
+% }
+
+<hr>
+
+%= include 'post_comment', url => url_for('comment_add', id => $task->{_id})

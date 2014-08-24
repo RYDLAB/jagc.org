@@ -1,0 +1,186 @@
+% layout 'default';
+% title $task->{name};
+
+% use Mojo::Util 'decode';
+
+<script>
+ $(document).ready(function(){
+    // Javascript to enable link to tab
+    var url = document.location.toString();
+
+    if (url.match('#') && $('.nav-tabs a[href=#'+url.split('#')[1]+']').length) {
+        $('.nav-tabs a[href=#'+url.split('#')[1]+']').tab('show');
+    }
+
+    // Code length
+    $('textarea.code').on('change keyup paste', function() {
+      var code = $(this).val();
+      var code_len = code.length;
+      if (code.substr(0, 2) == "#!") {
+        code = code.replace(/^#![^\s]+[\t ]*/, "");
+        code_len = code.length - 1;
+        if (code.indexOf("\n") == -1) {
+          code_len++;
+        }
+      }
+      var str = code_len > 0 ? code_len + " symbols" : "";
+      $('div#code_length').html(str);
+    });
+  });
+</script>
+
+
+<div class="row"> 
+  <div class="col-lg-9">
+    <blockquote>
+      <h3>
+        <%= $task->{name} %>
+      </h3>
+      <p class="content-desciption"><pre class="text_desciption"><%= $task->{desc} %></pre></p>
+      <footer>
+        <a href="<%= url_for('user_tasks_owner', login => $task->{owner}{login}) %>">
+          <%= $task->{owner}{login} %>
+          <img src="<%= $task->{owner}{pic} %>" class="img-rounded user">
+        </a>
+      </footer>
+    </blockquote>
+  </div>
+  <div class="col-lg-3">
+    <p class="text-right">
+      <a href="<%= url_for('task_comments', id => $task->{_id}) %>">
+        Comments <span class="badge"><%= $comments_count || '' %></span>
+      </a>
+    </p>
+    <div class="pull-right">
+    % if ($task->{owner}{uid} eq (session('uid') // '')) {
+      <p>
+        <a class="btn btn-primary" href="<%= url_for('task_edit_view', tid => $task->{_id}) %>">Edit task</a>
+      </p>
+    % }
+    % if (session('uid')) {
+      % my $is_notice_comment  = $notice ? ( grep { $_ eq 'comment'  } @{$notice->{for}} ) : 0;
+      % my $is_notice_solution = $notice ? ( grep { $_ eq 'solution' } @{$notice->{for}} ) : 0;
+      <p>
+        <a class="btn btn-primary" href="<%= url_for('user_notification', tid => $task->{_id}, type => 'comment') %>">
+          <%= $is_notice_comment ? 'Unsubscribe from new comments' : 'Subscribe to new comments' %>
+        </a>
+      </p>
+      <p>
+        <a class="btn btn-primary" href="<%= url_for('user_notification', tid => $task->{_id}, type => 'solution') %>">
+          <%= $is_notice_solution ? 'Unsubscribe from new solutions' : 'Subscribe to new solutions' %>
+        </a>
+      </p>
+    % }
+    </div>
+  </div>
+</div>
+
+<div class="panel-group anchor" id="accordion">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h4 class="panel-title">
+        <a class="accordion-toggle collapsed" data-toggle="collapse" href="#collapseTest">
+          Tests
+        </a>
+      </h4>
+    </div>
+    <div id="collapseTest" class="panel-collapse in">
+      <div class="panel-body">
+        <div class="tabbable tabs-below">
+          <div class="tab-content">
+            <ul class="nav nav-tabs">
+              % my $n = 0;
+              % for my $test (@{$task->{tests}}) {
+                <li class="<%= $n ? '' : 'active' %>"><a name="<%= $test->{_id} %>" href="#<%= $test->{_id} %>" data-toggle="tab">#<%= ++$n %></a></li>
+              % }
+            </ul>
+            % $n = 0;
+            % for my $test (@{$task->{tests}}) {
+              <div class="anchor tab-pane <%= $n++ ? '' : 'active' %>" id="<%= $test->{_id} %>">
+                <div class="row">
+                  <div class="col-lg-6">
+                    <p class="text-info">IN</p>
+                    <pre><%= decode 'UTF-8', $test->{in} %></pre>
+                  </div>
+                  <div class="col-lg-6">
+                    <p class="text-info">OUT</p>
+                    <pre><%= decode 'UTF-8', $test->{out} %></pre>
+                  </div>
+                </div>
+              </div>
+            % }
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h4 class="panel-title">
+        <a class="accordion-toggle collapsed" data-toggle="collapse" href="#collapseSolution">
+          Submit solution
+        </a>
+      </h4>
+    </div>
+    <div id="collapseSolution" class="panel-collapse in">
+      <div class="panel-body">
+        <form action="<%= url_for('solution_add', tid => $task->{_id}) %>" method="POST">
+          <fieldset>
+            <div class="row">
+              <div class="col-lg-10">
+                %= include 'field', type => 'textarea', label => 'Code', name => 'code', value => '', opt => {class => 'code', rows => 6}
+              </div>
+              <div class="col-lg-2">
+                %= include 'field', type => 'select', label => 'Language', name => 'language', value => session('lang') // '', opt => {options => $languages}
+                <div id="code_length"></div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-lg-12">
+                % if (session('uid')) {
+                  <button type="submit" class="btn btn-primary">Submit</button>
+                % } else {
+                  <button type="button" class="btn btn-primary disabled">Submit</button>
+                  <small class="text-danger">Login to submit solution</small>
+                % }
+              </div>
+            </div>
+          </fieldset>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<ul class="nav nav-tabs">
+  <li class="<%= $self->stash('s') == 1 ? 'active' : '' %>"><a href="<%= url_for('task_view') %>">Correct solutions</a></li>
+  <li class="<%= $self->stash('s') == 0 ? 'active' : '' %>"><a href="<%= url_for('task_view_incorrect') %>">Incorrect solutions</a></li>
+</ul>
+
+<script>
+  function active_task(num) {
+    $("#collapseTest").collapse('show');
+    $('.nav-tabs a[href=#'+num+']').tab('show');
+    document.location.href='#accordion';
+  }
+</script>
+
+<br>
+
+% my $count = 1;
+% for my $solution (@$solutions) {
+  % my $n = 1;
+  % my $test;
+  % if ($self->stash('s') == 0) {
+    % ($test) = grep { $_->[0] eq $solution->{terr} } map { [$_->{_id}, $n++, $_->{out}] } @{$task->{tests}};
+  % }
+  %= include 'solution', solution => $solution, user => $solution->{user}, s => $self->stash('s'), count => $count++, test => $test
+% }
+
+<div>
+  % my $url = $s == 0 ? 'task_view_incorrect_solutions' : 'task_view_solutions';
+  <p><a class="btn btn-primary" href="<%= url_for($url, id => $id, page => 1) %>">View all solutions</a></p>
+</div>

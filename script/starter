@@ -1,0 +1,51 @@
+#!/usr/bin/perl -wl
+
+use POSIX;
+use IPC::Run qw/run timeout/;
+use POSIX::1003::Limit ':rlimit';
+use JSON::PP 'encode_json';
+
+my $interpret = shift // q{/usr/bin/perl};
+my $dir       = shift // q{/home/guest/};
+my $timeout   = shift // 10;
+my $code      = shift // q{/home/guest/code};
+my $input     = shift // q{./input};
+my $arguments = shift // '';
+
+my $guest = getpwnam 'guest';
+
+chdir $dir;
+
+unless (setrlimit('RLIMIT_NPROC', 20, 25)) {
+  print STDERR "Can't change limit on running process";
+  exit INTERNAL_FAIL;
+}
+
+setrlimit('RLIMIT_NOFILE', 20, 25);
+
+POSIX::setuid $guest;
+my $eid = POSIX::geteuid;
+if ($eid != $guest) {
+  print STDERR "Can't change user eid";
+  exit INTERNAL_FAIL;
+}
+
+open my $in, '<', $input or do {
+  print STDERR "Can't open input file: $!";
+  exit INTERNAL_FAIL;
+};
+
+my @cmd;
+if (length $arguments > 0) {
+  @cmd = ($interpret, $arguments, $code);
+} else {
+  @cmd = ($interpret, $code);
+}
+
+my ($out, $err) = (undef, undef);
+my $res = eval { run \@cmd, $in, \$out, \$err, timeout($timeout); };
+close $in;
+
+my $status = $@ ? 'fail' : $res ? 'ok' : 'error';
+my $result = {status => $status, stderr => $status eq 'fail' ? $@ : $err, stdout => $out};
+print encode_json $result;

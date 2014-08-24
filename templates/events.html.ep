@@ -1,0 +1,102 @@
+% use Mojo::Util 'decode';
+
+<div class="panel-group">
+  % my $id = 0;
+  % for my $event (@$events) {
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <div class="row">
+          <div class="col-lg-2">
+            % my ($datetime, $cdate) = tz $event->{ts};
+            <abbr class="timeago" title="<%= $datetime %>"><%= $cdate %></abbr>
+          </div>
+          <div class="col-lg-2">
+
+            <a href="<%= url_for('user_info', login => $event->{user}{login}) %>">
+              <img class="img-rounded user" src="<%= $event->{user}{pic} %>" >
+                <%= $event->{user}{login} %>
+            </a>
+          </div>
+          <div class="col-lg-3">
+            <a href="<%= url_for('task_view', id => $event->{task}{tid}) %>"><%= $event->{task}{name} %></a>
+          </div>
+          <div class="col-lg-2">
+            % if ($event->{s} eq 'incorrect') {
+              <a class="text-danger" href="<%=url_for('task_view_incorrect', id => $event->{task}{tid})%><%=='?#' . $event->{terr}%>">
+                Wrong answer
+              </a>
+              <a data-toggle="collapse" href="#sa-<%= $event->{_id} %>">
+                <span class="glyphicon glyphicon-question-sign"></span>
+              </a>
+            % } elsif ($event->{s} eq 'timeount') {
+              <a class="text-danger" href="<%=url_for('task_view_incorrect', id => $event->{task}{tid})%><%=='?#' . $event->{terr}%>">
+                Timeout
+              </a>
+            % } elsif ($event->{s} eq 'error') {
+              <a class="text-danger" href="<%=url_for('task_view_incorrect', id => $event->{task}{tid})%><%=='?#' . $event->{terr}%>">
+                Code error
+              </a>
+              <a data-toggle="collapse" href="#s-<%= $event->{_id} %>">
+                <span class="glyphicon glyphicon-question-sign"></span>
+              </a>
+            % } elsif ($event->{s} eq 'fail') {
+              <span class="text-danger">Server error</span>
+            % } elsif ($event->{s} eq 'inactive') {
+              <span class="text-muted">Not tested yet</span>
+            % } elsif ($event->{s} eq 'testing') {
+              <span class="text-info">Testing now</span>
+            % } elsif ($event->{s} eq 'finished') {
+              <a class="text-success" href="<%= url_for('task_view', id => $event->{task}{tid})%><%=='?#'. $event->{_id}%>">Success</a>
+            % } else {
+              <span class="text-info"><%= $event->{s} %></span>
+            % }
+          </div>
+          <div class="col-lg-2">
+            <i class="<%= $event->{lng} %>"></i> <%= $event->{lng} %>
+          </div>
+          <div class="col-lg-1">
+            <button id="button_collapse<%= $id %>" type="button" class="btn btn-sm" data-toggle="collapse" data-target="#collapse<%= $id %>" onclick="show_code(<%= $id %>)">
+              Show
+            </button>
+          </div>
+        </div>
+        % if ($event->{s} eq 'incorrect') {
+          <div id="sa-<%= $event->{_id} %>" class="panel-collapse collapse">
+            <br />
+            <div class="row">
+              <div class="col-lg-5">
+                <pre><%= $event->{out} %></pre>
+              </div>
+              <div class="col-lg-2">instead of</div>
+              <div class="col-lg-5">
+                % my ($test) = grep { $_->[0] eq $event->{terr} } map { [$_->{_id}, $_->{out}] } @{$tasks->{$event->{task}{tid}}->{tests}};
+                <pre><%= decode 'UTF-8', $test->[1] %></pre>
+              </div>
+            </div>
+          </div>
+        % }
+        % if ($event->{s} eq 'error') {
+        <div id="s-<%= $event->{_id} %>" class="panel-collapse collapse">
+          <br />
+          <p class="text-muted"><%= $event->{err} %></p>
+        </div>
+        % }
+      </div>
+      <div id="collapse<%= $id %>" class="panel-collapse collapse">
+        <div class="panel-body">
+          <pre><%= $event->{code} %></pre>
+        </div>
+      </div>
+    </div>
+    % ++$id;
+  % }
+</div>
+
+<script>
+  function show_code(id) {
+    if ($('#collapse' + id).is(":visible"))
+      $('#button_collapse' + id).html('Show');
+    else
+      $('#button_collapse' + id).html('Hide');
+  }
+</script>

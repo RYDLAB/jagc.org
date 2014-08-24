@@ -1,0 +1,6 @@
+*.log
+*.bak
+*.tdy
+*.pid
+app.development.conf
+app.production.conf

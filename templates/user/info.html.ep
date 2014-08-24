@@ -1,0 +1,45 @@
+% layout 'default';
+% title 'Information about ' . $user_stat->{login};
+
+<div class="row">
+  <div class="col-lg-2">
+    <img class="social_img_normal" src="<%= $user_stat->{pic} %>"><h3 class="snuggle"><b><%= $user_stat->{login} %></b></h3>
+  </div>
+  <div class="col-lg-10">
+    <ul class="nav nav-pills nav-justified">
+      <li class="active"><a href="#">Score</a></li>
+      <li><a href="<%= url_for('user_tasks_owner', login => $user_stat->{login}) %>">Tasks</a></li>
+      <li><a href="<%= url_for('event_user_info', login => $user_stat->{login}) %>">Events</a></li>
+    </ul>
+
+      <h3>
+        Total Score: <%= $user_stat->{score} %>
+      </h3>
+
+      % if (@{$user_stat->{tasks}}) {
+        <table class="table table-striped">
+          <caption><h4>Participation problems</h4></caption>
+          <thead>
+            <tr>
+              <th class="text-to-left">Task name</th>
+              <th class="text-to-left">Position</th>
+              <th class="text-to-left">Score</th>
+              <th class="text-to-left">Solution</th>
+            </tr>
+          </thead>
+          <tbody>
+            % for (@{$user_stat->{tasks}}) {
+              <tr>
+                <td class="text-to-left"><a href="<%= url_for('task_view', id => $_->{tid}) %>"><%= $_->{name} %></a></td>
+                <td class="text-to-left"><%= $_->{pos} %></td>
+                <td class="text-to-left"><%= ($_->{pos} < 11) ? 11 - $_->{pos} : 0 %></td>
+                <td class="text-to-left"><a href="<%= url_for('task_view', id => $_->{tid}) %>?#<%= $_->{sid} %>">link</a></td>
+              </tr>
+            % }
+          </tbody>
+        </table>
+      % } else {
+        <h2 class="text-center">This user has not participated in the task</h2>
+      % }
+  </div>
+</div>

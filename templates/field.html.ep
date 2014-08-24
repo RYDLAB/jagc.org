@@ -1,0 +1,145 @@
+% my $input = begin
+  % my ($type, $label, $name, $value, $opt) = @_;
+  % if ($type eq 'text') {
+    <div class="form-group">
+      <label class="control-label" for="<%= $name %>"><%= $label %></label>
+      <input class="form-control <%= $opt->{class} %>" type="text" name="<%= $name %>" value="<%= $value %>" placeholder="<%= $opt->{placeholder} %>">
+      % if (my $help = $opt->{help}) {
+        <span class="help-block"><%= $help %></span>
+      % }
+    </div>
+  % } elsif ($type eq 'text-append') {
+    <div class="form-group">
+      <label class="control-label" for="<%= $name %>"><%= $label %></label>
+      <div class="input-group">
+        <input class="form-control <%= $opt->{class} %>" type="text" name="<%= $name %>" value="<%= $value %>" placeholder="<%= $opt->{placeholder} %>">
+        <span class="input-group-addon"><%= $opt->{add} %></span>
+      </div>
+      % if (my $help = $opt->{help}) {
+        <span class="help-block"><%= $help %></span>
+      % }
+    </div>
+  % } elsif ($type eq 'text-prepend') {
+    <div class="form-group">
+      <label class="control-label" for="<%= $name %>"><%= $label %></label>
+      <div class="input-group">
+        <span class="input-group-addon"><%= $opt->{add} %></span>
+        <input class="form-control <%= $opt->{class} %>" type="text" name="<%= $name %>" value="<%= $value %>" placeholder="<%= $opt->{placeholder} %>">
+      </div>
+      % if (my $help = $opt->{help}) {
+        <span class="help-block"><%= $help %></span>
+      % }
+    </div>
+  % } elsif ($type eq 'textarea') {
+    <div class="form-group">
+      <label class="control-label" for="<%= $name %>"><%= $label %></label>
+      <textarea class="form-control <%= $opt->{class} %>" rows="<%= $opt->{rows} // 3 %>" name="<%= $name %>"><%= $value %></textarea>
+      % if (my $help = $opt->{help}) {
+        <span class="help-block"><%= $help %></span>
+      % }
+    </div>
+  % } elsif ($type eq 'select') {
+    <div class="form-group">
+      <label class="control-label" for="<%= $name %>"><%= $label %></label>
+      <select class="form-control <%= $opt->{class} %>" name="<%= $name %>">
+        % for my $option (@{$opt->{options}}) {
+          % if ($option eq $value) {
+            <option selected="selected"><%= $option %></option>
+          % } else {
+            <option><%= $option %></option>
+          %}
+        % }
+      </select>
+      % if (my $help = $opt->{help}) {
+        <span class="help-block"><%= $help %></span>
+      % }
+    </div>
+  % } elsif ($type eq 'file') {
+    <div class="form-group">
+      <label class="control-label" for="<%= $name %>"><%= $label %></label>
+      <input class="form-group <%= $opt->{class} %>" type="file" name="<%= $name %>">
+    </div>
+  % } elsif ($type eq 'checkbox') {
+    <div class="checkbox">
+      <label>
+        <input class="<%= $opt->{class} %>" type="checkbox" name="<%= $name %>" value="checked" <%= $value %> >
+        <%= $label %>
+      </label>
+      </div>
+    </div>
+  % } elsif ($type eq 'radio') {
+    <div class="radio">
+      <label>
+        <input class="<%= $opt->{class} %>" type="radio" name="<%= $name %>" value="<%= $value %>">
+        <%= $label %>
+      </label>
+    </div>
+  % }
+% end
+
+% my $input_error = begin
+  % my ($type, $label, $name, $value, $error, $opt) = @_;
+  % if ($type eq 'text') {
+    <div class="form-group has-error">
+      <label class="control-label" for="<%= $name %>"><%= $label %></label>
+      <input class="form-control <%= $opt->{class} %>" type="text" name="<%= $name %>" value="<%= $value %>">
+      <span class="help-block text-danger"><%= $error %></span>
+      % if (my $help = $opt->{help}) {
+        <span class="help-block"><%= $help %></span>
+      % }
+    </div>
+  % } elsif ($type eq 'text-append') {
+    <div class="form-group has-error">
+      <label class="control-label" for="<%= $name %>"><%= $label %></label>
+      <input class="form-control <%= $opt->{class} %>" type="text" name="<%= $name %>" value="<%= $value %>" placeholder="<%= $opt->{placeholder} %>">
+      <span class="add-on"><%= $opt->{add} %></span>
+      <span class="help-inline text-danger"><%= $error %></span>
+    </div>
+  % } elsif ($type eq 'textarea') {
+    <div class="form-group has-error">
+      <label class="control-label" for="<%= $name %>"><%= $label %></label>
+      <textarea class="form-control <%= $opt->{class} %>" rows="3" name="<%= $name %>"><%= $value %></textarea>
+      <span class="help-inline text-danger"><%= $error %></span>
+      % if (my $help = $opt->{help}) {
+        <span class="help-block"><%= $help %></span>
+      % }
+    </div>
+  % } elsif ($type eq 'select') {
+    <div class="form-group has-error">
+      <label class="control-label" for="<%= $name %>"><%= $label %></label>
+      <select class="form-control <%= $opt->{class} %>" name="<%= $name %>">
+        % for my $option (@{$opt->{options}}) {
+          % if ($option eq $value) {
+            <option selected="selected"><%= $option %></option>
+          % } else {
+            <option><%= $option %></option>
+          % }
+        % }
+      </select>
+      <span class="help-inline text-danger"><%= $error %></span>
+      % if (my $help = $opt->{help}) {
+        <span class="help-block"><%= $help %></span>
+      % }
+    </div>
+  % } elsif ($type eq 'file') {
+    <div class="form-group has-error">
+      <label class="control-label" for="<%= $name %>"><%= $label %></label>
+      <input class="form-control <%= $opt->{class} %>" type="file" name="<%= $name %>">
+      <span class="help-inline text-danger"><%= $error %></span>
+    </div>
+  % }
+% end
+
+% my $field = begin
+  % my ($type, $label, $name, $value, $opt) = @_;
+  % if (validation->has_error($name)) {
+    % my $err = 'Required';
+    % $err = validation->error($name)->[-1] if (scalar (@{validation->error($name)}) > 1);
+    %= $input_error->($type, $label, $name, validation->input->{$name}, $err, $opt);
+  % } else {
+    %= $input->($type, $label, $name, (validation->param($name) ? validation->param($name) : $value), $opt);
+  % }
+% end
+
+
+%= $field->($type, $label, $name, $value, $opt);
