@@ -2,7 +2,7 @@
   <p>
     Hi <%= $login %>, <b><%= $user %></b> write a new correct solution in <%= $tname %> task:
     <pre>
-      <%= $code %>
+<%= $code %>
     </pre>
 
   </p>
