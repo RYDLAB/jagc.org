@@ -35,6 +35,7 @@
               <li class="<%= $link_class->('index|task.+') %>"><a href="<%= url_for('index') %>">Tasks</a></li>
               <li class="<%= $link_class->('event') %>"><a href="<%= url_for('event_info', page => 1) %>">Events</a></li>
               <li class="<%= $link_class->('about') %>"><a href="<%= url_for('about') %>">About</a></li>
+              <li class="<%= $link_class->('news') %>"><a href="<%= url_for('news') %>">News</a></li>
             </ul>
             <p class="navbar-text">
               <a href="<%= url_for('paid') %>">Get paid to create task</a>

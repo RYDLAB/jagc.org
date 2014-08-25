@@ -105,6 +105,7 @@ sub startup {
     ->name('event_user_info');
 
   $br->get('/about')->to('main#about')->name('about');
+  $br->get('/news')->to('main#news')->name('news');
   $br->get('/paid')->to('main#paid')->name('paid');
   $br->get('/examples')->to('main#example')->name('examples');
 
