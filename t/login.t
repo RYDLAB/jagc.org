@@ -16,6 +16,7 @@ $t->post_ok('/user/register' => form => {email => $user_email, login => $user_lo
 
 my $confirm_link = $t->tx->res->headers->header('X-Confirm-Link');
 like $confirm_link, qr/user.*${user_email}/, 'link ok';
+
 $t->get_ok('/')->status_is(200)
   ->text_is('div.alert.alert-info strong' =>
     'To complete the registration and confirmation email address, go to the link from the mail.');

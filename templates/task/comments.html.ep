@@ -7,7 +7,7 @@
   <div class="col-lg-10">
     <blockquote>
       <h3><%= $task->{name} %></h3>
-      <p class="content-desciption"><pre class="text_desciption"><%= $task->{desc} %></pre></p>
+      <p class="content-description"><pre class="text_description"><%= $task->{desc} %></pre></p>
       <footer>
         <a href="<%= url_for('user_tasks_owner', login => $task->{owner}{login}) %>">
           <%= $task->{owner}{login} %>
