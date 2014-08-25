@@ -63,6 +63,7 @@ sub startup {
   $br->get('/oauth/vk')->to('oauth#vk')->name('oauth_vk');
   $br->get('/oauth/linkedin')->to('oauth#linkedin')->name('oauth_linkedin');
   $br->get('/oauth/fb')->to('oauth#fb')->name('oauth_fb');
+  $br->get('/oauth/test')->to('oauth#test')->name('oauth_test') if $mode eq 'test';
 
   $br->post('/task/add')->to('task#add')->name('task_add');
   $br->get('/task/add')->to('task#add_view')->name('task_add_view');

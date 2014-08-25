@@ -312,6 +312,17 @@ sub fb {
   );
 }
 
+sub test {
+  my $c = shift;
+
+  my $id        = $c->param('id');
+  my $jagc_name = $c->param('name');
+  my $pic       = $c->param('pic');
+  my $email     = $c->param('email');
+
+  $c->_user('test', $id, $jagc_name, $pic, $email);
+}
+
 sub _user {
   my $c = shift;
   my ($type, $id, $name, $pic, $email) = @_;

@@ -255,6 +255,7 @@ sub register {
       delete $c->session->{semail};
 
       my $link = $c->url_for('user_confirmation', uid => "$uid", email => $email, code => $code)->to_abs;
+      $c->res->headers->header('X-Confirm-Link' => $link) if $c->app->mode eq 'test';
       $c->app->minion->enqueue(
         email => [$login, $email, $link] => sub {
           $c->flash(info =>
