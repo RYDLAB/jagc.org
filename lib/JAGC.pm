@@ -22,11 +22,13 @@ sub startup {
   $app->sessions->default_expiration(30 * 86400);
 
   $app->plugin(Minion => {Mango => $app->config->{mango}{uri}});
-  $app->minion->add_task(check               => sub { JAGC::Task::check->new->call(@_) });
-  $app->minion->add_task(email               => sub { JAGC::Task::email->new->call(@_) });
-  $app->minion->add_task(notice_new_task     => sub { JAGC::Task::notice_new_task->new->call(@_) });
-  $app->minion->add_task(notice_new_comment  => sub { JAGC::Task::notice_new_comment->new->call(@_) });
-  $app->minion->add_task(notice_new_solution => sub { JAGC::Task::notice_new_solution->new->call(@_) });
+  $app->minion->add_task(check => sub { JAGC::Task::check->new->call(@_) });
+  unless ($mode eq 'test') {
+    $app->minion->add_task(email               => sub { JAGC::Task::email->new->call(@_) });
+    $app->minion->add_task(notice_new_task     => sub { JAGC::Task::notice_new_task->new->call(@_) });
+    $app->minion->add_task(notice_new_comment  => sub { JAGC::Task::notice_new_comment->new->call(@_) });
+    $app->minion->add_task(notice_new_solution => sub { JAGC::Task::notice_new_solution->new->call(@_) });
+  }
 
   push @{$app->commands->namespaces}, 'JAGC::Command';
 
@@ -108,8 +110,6 @@ sub startup {
   $br->get('/news')->to('main#news')->name('news');
   $br->get('/paid')->to('main#paid')->name('paid');
   $br->get('/examples')->to('main#example')->name('examples');
-
-  $br->post('/md2html')->to('main#md2html')->name('md2html');
 
   $app->helper(
     db => sub {

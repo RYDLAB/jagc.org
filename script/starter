@@ -5,11 +5,11 @@ use IPC::Run qw/run timeout/;
 use POSIX::1003::Limit ':rlimit';
 use JSON::PP 'encode_json';
 
-my $interpret = shift // q{/usr/bin/perl};
-my $dir       = shift // q{/home/guest/};
+my $interpret = shift // '/usr/bin/perl';
+my $dir       = shift // '/home/guest/';
 my $timeout   = shift // 10;
-my $code      = shift // q{/home/guest/code};
-my $input     = shift // q{./input};
+my $code      = shift // '/home/guest/code';
+my $input     = shift // './input';
 my $arguments = shift // '';
 
 my $guest = getpwnam 'guest';
