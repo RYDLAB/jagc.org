@@ -64,15 +64,16 @@ sub run {
 
   my %users;
   for my $task (@$tasks) {
-    for my $idx (0 .. $#{$task->{user}}) {
-      my $user = $task->{user}->[$idx];
-      my $uid  = $user->{uid};
+    my ($score, $pos) = (10, 1);
+    for my $user (@{$task->{user}}) {
+      my $uid = $user->{uid};
       $users{$uid}{login} = $user->{login};
       $users{$uid}{pic}   = $user->{pic};
       unless ($users{$uid}{tasks}{$task->{_id}{tid}}) {
-        $users{$uid}{t_ok} += 1;
-        $users{$uid}{score} += ($idx < 10) ? 10 - $idx : 0;
-        $users{$uid}{tasks}{$task->{_id}{tid}}{pos}  = $idx + 1;
+        $users{$uid}{t_ok}  += 1;
+        $users{$uid}{score} += $score--;
+        $score = 0 if $score < 0;
+        $users{$uid}{tasks}{$task->{_id}{tid}}{pos}  = $pos++;
         $users{$uid}{tasks}{$task->{_id}{tid}}{sid}  = $user->{sid};
         $users{$uid}{tasks}{$task->{_id}{tid}}{name} = $task->{_id}{name};
       }
