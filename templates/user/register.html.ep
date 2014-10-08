@@ -14,17 +14,17 @@
 
 <form action="<%= url_for('user_register') %>" method="POST">
   <div class="row">
-    <div class="col-lg-6">
+    <div class="col-sm-6">
       %= include 'field', type => 'text', label => 'Email', name => 'email', value => $email, opt => {class => 'input-lg', placeholder => 'Email'}
     </div>
   </div>
   <div class="row">
-    <div class="col-lg-6">
+    <div class="col-sm-6">
       %= include 'field', type => 'text', label => 'Login', name => 'login', value => $login, opt => {class => 'input-lg', placeholder => 'Login'}
     </div>
   </div>
   <div class="row">
-    <div class="col-lg-6">
+    <div class="col-sm-6">
       <fieldset disabled>
         % my $url = app->config->{site_url} . 'user/' . $login;
         %= include 'field', type => 'text', label => 'Login will be used in url', name => 'url', value => $url, opt => {class => 'input-lg', placeholder => ''}

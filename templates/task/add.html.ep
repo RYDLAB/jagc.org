@@ -10,13 +10,13 @@
   <div id="<%= $number %>">
     <label>Test #<%= $number %></label>
     <div class="row">
-      <div class="col-lg-4">
+      <div class="col-sm-4">
         %= include 'field', type => 'textarea', label => 'STDIN', name => "test_${number}_in", value => '', opt => {class => 'input-lg'}
       </div>
-      <div class="col-lg-4">
+      <div class="col-sm-4">
         %= include 'field', type => 'textarea', label => 'STDOUT', name => "test_${number}_out", value => '', opt => {class => 'input-lg'}
       </div>
-      <div class="col-lg-1">
+      <div class="col-sm-1">
         <button type="button" class="btn btn-default btn-xs" onclick="delete_test(<%= $number %>)">
           <span class="glyphicon glyphicon-remove"></span> delete
         </button>
@@ -81,17 +81,17 @@
   <form action="<%= url_for('task_add') %>" method="POST">
     <fieldset>
       <div class="row">
-        <div class="col-lg-6">
+        <div class="col-sm-6">
           %= include 'field', type => 'text', label => 'Task name', name => 'name', value => '', opt => {class => 'input-lg'}
         </div>
       </div>
       <div class="row">
-        <div class="col-lg-6">
+        <div class="col-sm-6">
           %= include 'field', type => 'textarea', label => 'Task description', name => 'description', value => '', opt => {class => 'input-lg'}
         </div>
       </div>
 
-      <h3 class="col-lg-offset-3">Tests </h3>
+      <h3 class="col-sm-offset-3">Tests </h3>
       <div id="tests">
         % if (validation->has_error) {
           % my $n = 1;
@@ -102,7 +102,7 @@
           %= $test_template->(1);
         %}
       </div>
-      <div class="col-lg-offset-3">
+      <div class="col-sm-offset-3">
         <button id="test_add" type="button" class="btn btn-default btn-sm">
           <span class="glyphicon glyphicon-plus"></span> Add more tests
         </button>

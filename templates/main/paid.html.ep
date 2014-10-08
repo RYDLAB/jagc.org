@@ -2,7 +2,7 @@
 % title 'Get paid to create task';
 
 <div class="row">
-  <div class="col-lg-8">
+  <div class="col-sm-8">
     <h2>Get paid to create task <small>beta</small></h2>
 
     <p>
@@ -29,8 +29,7 @@
       <li>Get paid and be happy.</li>
     </ul>
   </div>
-  <div class="col-lg-4">
+  <div class="col-sm-4">
     <img src="/images/logo_v.png" class="pull-right">
   </div>
-
 </div>

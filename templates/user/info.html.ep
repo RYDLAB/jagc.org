@@ -2,10 +2,10 @@
 % title 'Information about ' . $user_stat->{login};
 
 <div class="row">
-  <div class="col-lg-2">
+  <div class="col-sm-2">
     <img class="social_img_normal" src="<%= $user_stat->{pic} %>"><h3 class="snuggle"><b><%= $user_stat->{login} %></b></h3>
   </div>
-  <div class="col-lg-10">
+  <div class="col-sm-10">
     <ul class="nav nav-pills nav-justified">
       <li class="active"><a href="#">Score</a></li>
       <li><a href="<%= url_for('user_tasks_owner', login => $user_stat->{login}) %>">Tasks</a></li>

@@ -2,13 +2,15 @@
 % title 'About';
 
 <div class="row">
-  <div class="col-lg-10">
-    <div class="col-lg-9" id="padding_header0"><h1>JAGC &mdash; Just Another Golf Coding</h1></div>
+  <div class="col-sm-8">
+    <div class="col-sm-9" id="padding_header0"><h1>JAGC &mdash; Just Another Golf Coding</h1></div>
+  </div>
+  <div class="col-sm-4">
     <img src="/images/logo_v.png" class="pull-right">
   </div>
 </div>
 <div class="row">
-  <div class="col-lg-8">
+  <div class="col-sm-8">
     <hr>
 
     <h2>About</h2>

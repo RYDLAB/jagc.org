@@ -2,7 +2,7 @@
 % title 'Admin';
 
 <div class="row">
-  <div class="col-lg-12">
+  <div class="col-sm-12">
     <form class="navbar-form navbar-left" action="<%= url_for('login_as') %>" method="POST">
     <div class="form-group">
       <input type="text" name="uid" class="form-control" placeholder="MongoDB uid">

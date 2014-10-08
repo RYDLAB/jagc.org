@@ -2,7 +2,7 @@
 % title 'JAGC';
 
 <div class="row">
-  <div class="col-lg-9">
+  <div class="col-sm-9">
     <ul class="nav nav-tabs">
       <li class="active"><a href="#recent" data-toggle="tab">Recent</a></li>
       <li><a href="#popular"  data-toggle="tab">Popular</a></li>
@@ -17,7 +17,7 @@
       </div>
     </div>
   </div>
-  <div class="col-lg-3">
+  <div class="col-sm-3">
     <table class="table table-hover table-striped">
     <caption>Top users <small><a href="<%= url_for('user_all') %>">(All users)</a></small></caption>
     <thead>

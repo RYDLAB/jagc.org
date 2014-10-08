@@ -2,10 +2,10 @@
   <div class="panel panel-default">
     <div class="panel-heading">
       <div class="row">
-        <div class="col-lg-7">
+        <div class="col-sm-7">
           <span>Leave a comment</span>
         </div>
-        <div class="col-lg-5">
+        <div class="col-sm-5">
           <p class="pull-right">
             Parsed as Markdown <span class="glyphicon glyphicon-question-sign"></span>
           </p>

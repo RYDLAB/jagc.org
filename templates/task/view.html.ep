@@ -30,7 +30,7 @@
 </script>
 
 <div class="row"> 
-  <div class="col-lg-9">
+  <div class="col-sm-9">
     <blockquote>
       <h3>
         <%= $task->{name} %>
@@ -44,7 +44,7 @@
       </footer>
     </blockquote>
   </div>
-  <div class="col-lg-3">
+  <div class="col-sm-3">
     <p class="text-right">
       <a href="<%= url_for('task_comments', id => $task->{_id}) %>">
         Comments <span class="badge"><%= $comments_count || '' %></span>
@@ -97,11 +97,11 @@
             % for my $test (@{$task->{tests}}) {
               <div class="anchor tab-pane <%= $n++ ? '' : 'active' %>" id="<%= $test->{_id} %>">
                 <div class="row">
-                  <div class="col-lg-6">
+                  <div class="col-sm-6">
                     <p class="text-info">IN</p>
                     <pre><%= decode 'UTF-8', $test->{in} %></pre>
                   </div>
-                  <div class="col-lg-6">
+                  <div class="col-sm-6">
                     <p class="text-info">OUT</p>
                     <pre><%= decode 'UTF-8', $test->{out} %></pre>
                   </div>
@@ -127,16 +127,16 @@
         <form action="<%= url_for('solution_add', tid => $task->{_id}) %>" method="POST">
           <fieldset>
             <div class="row">
-              <div class="col-lg-10">
+              <div class="col-sm-10">
                 %= include 'field', type => 'textarea', label => 'Code', name => 'code', value => '', opt => {class => 'code', rows => 6}
               </div>
-              <div class="col-lg-2">
+              <div class="col-sm-2">
                 %= include 'field', type => 'select', label => 'Language', name => 'language', value => session('lang') // '', opt => {options => $languages}
                 <div id="code_length"></div>
               </div>
             </div>
             <div class="row">
-              <div class="col-lg-12">
+              <div class="col-sm-12">
                 % if (session('uid')) {
                   <button type="submit" class="btn btn-primary">Submit</button>
                 % } else {

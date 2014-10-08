@@ -8,7 +8,7 @@
 </script>
 
 <div class="row">
-  <div class="col-lg-6">
+  <div class="col-sm-6">
     <table class="table table-hover">
       <caption><b>Socials</b></caption>
       <thead>
@@ -49,7 +49,7 @@
     </table>
   </div>
 
-  <div class="col-lg-6">
+  <div class="col-sm-6">
     <h5 class="text-center" style="margin-bottom:30px"><b>Screen name</b></h5>
     <form class="form-horizontal" action="<%= url_for('user_change_name', login => $user->{login}) %>" method="POST">
         <div class="row">
@@ -60,15 +60,15 @@
         </div>
         <div class="row">
             <div class="form-group">
-              <label for="screen_name" class="col-lg-3 control-label">Screen Name</label>
-              <div class="col-lg-9">
+              <label for="screen_name" class="col-sm-3 control-label">Screen Name</label>
+              <div class="col-sm-9">
                 <input type="text" class="form-control" onkeyup="change_url(this)" onchange="change_url(this)" id="screen_name" name="name" placeholder="<%= $user->{login} %>">
               </div>
             </div>
             <fieldset disabled>
               <div class="form-group">
-                <label for="url" class="col-lg-3 control-label">URL</label>
-                <div class="col-lg-9">
+                <label for="url" class="col-sm-3 control-label">URL</label>
+                <div class="col-sm-9">
                   <input type="text" class="form-control" id="url" placeholder="<%= app->config->{site_url} . '/user/' . $user->{login} %>">
                 </div>
               </div>

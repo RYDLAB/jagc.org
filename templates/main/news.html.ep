@@ -2,13 +2,13 @@
 % title 'News';
 
 <div class="row">
-  <div class="col-lg-10">
-    <div class="col-lg-9" id="padding_header0"><h1>JAGC &mdash; Just Another Golf Coding</h1></div>
+  <div class="col-sm-10">
+    <div class="col-sm-9" id="padding_header0"><h1>JAGC &mdash; Just Another Golf Coding</h1></div>
     <img src="/images/logo_v.png" class="pull-right">
   </div>
 </div>
 <div class="row">
-  <div class="col-lg-8">
+  <div class="col-sm-8">
     <hr>
     <a class="twitter-timeline" href="https://twitter.com/JagcOrg" data-widget-id="503958195266523136">Tweets by @JagcOrg</a>
     <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>

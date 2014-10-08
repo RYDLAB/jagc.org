@@ -1,5 +1,5 @@
 <div class="row">
-  <div class="col-lg-7">
+  <div class="col-sm-7">
     <blockquote>
       <%== $comment->{html} %>
       <footer>
@@ -10,7 +10,7 @@
       </footer>
     </blockquote>
   </div>
-  <div class="col-lg-5">
+  <div class="col-sm-5">
     % my ($datetime, $cdate) = tz $comment->{ts};
     <p class="text-right">
       <abbr class="timeago" title="<%= $datetime %>"><%= $cdate %></abbr>
