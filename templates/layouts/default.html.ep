@@ -40,6 +40,9 @@
             <p class="navbar-text">
               <a href="<%= url_for('paid') %>">Get paid to create task</a>
             </p>
+            <p class="navbar-text">
+              <a href="https://github.com/RYDLAB/jagc.org">JAGC on GitHub</a>
+            </p>
 
             <ul class="nav navbar-nav navbar-right">
               <li class="dropdown">
