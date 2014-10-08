@@ -21,7 +21,7 @@ my $surl = "${turl}/solution/add";
 $t->post_ok($surl => form => {code => '1', language => 'test'})->status_is(302)
   ->header_is(Location => '/user/u3/events');
 $t->get_ok('/user/u3/events')->status_is(200)
-  ->text_is('div.panel-group div.row:nth-child(1) div.col-lg-3 a'        => 't')
+  ->text_is('div.panel-group div.row:nth-child(1) div.col-sm-3 a'        => 't')
   ->text_is('div.panel-group div.row:nth-child(1) div:nth-child(4) span' => 'Not tested yet')
   ->text_is('div.panel-group div.row:nth-child(1) div:nth-child(5)'      => 'test');
 
