@@ -456,7 +456,7 @@ sub comment_add {
       my ($delay, $err, $cid) = @_;
       return $c->render_exception("Error while insert comment: $err") if $err;
 
-      $c->minion->enqueue(notice_new_comment => [$cid, $c->stash('solution')->{task}{name}] => sub { });
+      $c->minion->enqueue(notice_new_comment => [$cid, $c->stash('task')->{name}] => sub { });
       $c->redirect_to('task_comments', id => $id);
     }
   );
