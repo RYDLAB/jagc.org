@@ -162,9 +162,10 @@ sub view {
           ->fields({task => 0})->sort(bson_doc(ts => 1))->limit(20);
       }
       $cursor->all($delay->begin);
-      $db->collection('comment')->find(bson_doc(type => 'task', tid => $id))->count($delay->begin);
+      $db->collection('comment')->find(bson_doc(type => 'task', tid => $id, del => bson_false))
+        ->count($delay->begin);
       $db->collection('comment')->aggregate([
-          {'$match' => bson_doc(tid => $id, type => 'solution')},
+          {'$match' => bson_doc(tid => $id, type => 'solution', del => bson_false)},
           {'$group' => bson_doc(_id => '$sid', count => {'$sum' => 1})}
         ]
       )->all($delay->begin);
