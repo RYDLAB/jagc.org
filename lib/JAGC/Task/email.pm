@@ -25,8 +25,11 @@ sub call {
   );
 
   if (my $err = $tx->error) {
-    $job->app->log->error("[mandrill] $err->{code} response: $err->{message}") if $err->{code};
-    $job->app->log->error("[mandrill] Connection error: $err->{message}");
+    my $message =
+      $err->{code}
+      ? "[mandrill] $err->{code} response: $err->{message}"
+      : "[mandrill] Connection error: $err->{message}";
+    $job->app->log->error($message);
   }
 
   $job->finish;
