@@ -22,7 +22,8 @@ sub startup {
   $app->sessions->default_expiration(30 * 86400);
 
   $app->plugin(Minion => {Mango => $app->config->{mango}{uri}});
-  $app->minion->add_task(check => sub { JAGC::Task::check->new->call(@_) });
+  $app->minion->add_task(check   => sub { JAGC::Task::check->new->call(@_) });
+  $app->minion->add_task(recheck => sub { JAGC::Task::recheck->new->call(@_) });
   unless ($mode eq 'test') {
     $app->minion->add_task(email               => sub { JAGC::Task::email->new->call(@_) });
     $app->minion->add_task(notice_new_task     => sub { JAGC::Task::notice_new_task->new->call(@_) });
