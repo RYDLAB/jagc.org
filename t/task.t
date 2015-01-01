@@ -3,7 +3,14 @@ use Mojo::Base -strict;
 use Test::More;
 use Test::Mojo;
 
-my $t = Test::Mojo->new('JAGC');
+BEGIN { $ENV{MOJO_MODE} = 'test' }
+
+my $t = Test::Mojo->new('JAGC')->tap(
+  sub {
+    $_->ua->max_connections(0);
+    $_->app->db->command({dropDatabase => 1});
+  }
+);
 
 my $user_email = 'u2@jagc.org';
 my $user_login = 'u2';

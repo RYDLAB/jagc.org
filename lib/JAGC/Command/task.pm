@@ -25,6 +25,9 @@ sub run {
       $db->collection('solution')->remove({'task.tid' => $tid});
     }
     when ('recheck') {
+      $db->collection('solution')->update({'task.tid' => $tid}, {'$set' => {s => 'inactive'}}, {multi => 1});
+      $db->collection('task')
+        ->update({_id => $tid}, {'$set' => {'stat.all' => 0, 'stat.ok' => 0}, '$unset' => {winner => 1}});
       $self->app->minion->enqueue(recheck => [$tid] => {priority => 0});
     }
     default {

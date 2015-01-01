@@ -6,6 +6,7 @@ use Mango::BSON ':bson';
 use Time::Piece;
 
 use JAGC::Task::check;
+use JAGC::Task::recheck;
 use JAGC::Task::email;
 use JAGC::Task::notice_new_task;
 use JAGC::Task::notice_new_comment;

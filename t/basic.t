@@ -3,7 +3,15 @@ use Mojo::Base -strict;
 use Test::More;
 use Test::Mojo;
 
-my $t = Test::Mojo->new('JAGC');
+BEGIN { $ENV{MOJO_MODE} = 'test' }
+
+my $t = Test::Mojo->new('JAGC')->tap(
+  sub {
+    $_->ua->max_connections(0);
+    $_->app->db->command({dropDatabase => 1});
+  }
+);
+
 $t->get_ok('/')->status_is(200)->text_is('html head title' => 'JAGC')
   ->text_is('div.navbar-collapse ul.navbar-nav li:nth-child(1) > a' => 'Tasks')
   ->text_is('div.navbar-collapse ul.navbar-nav li:nth-child(2) > a' => 'Events')

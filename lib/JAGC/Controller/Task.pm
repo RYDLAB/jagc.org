@@ -305,18 +305,20 @@ sub edit {
       $delay->data(tname           => $v->param('name'));
       $delay->data(is_change_tests => $is_change_tests);
 
-      my $set_opt = {name => $v->param('name'), desc => $v->param('description'), ts => bson_time};
-      my $update_opt = {'$set' => $set_opt};
-      $update_opt->{'$set'}{tests} = \@tests if $is_change_tests;
-
-      $db->collection('task')->update(({_id => $tid}, $update_opt) => $delay->begin);
-      if ($task->{name} ne $v->param('name')) {
-        $db->collection('solution')->update(
-          {'task.tid' => $tid},
-          {'$set'     => {'task.name' => $v->param('name')}},
-          {multi      => 1} => $delay->begin
-        );
+      my $tupdate_opt =
+        {'$set' => {name => $v->param('name'), desc => $v->param('description'), ts => bson_time}};
+      if ($is_change_tests) {
+        $tupdate_opt->{'$set'}{tests}      = \@tests;
+        $tupdate_opt->{'$set'}{'stat.all'} = 0;
+        $tupdate_opt->{'$set'}{'stat.ok'}  = 0;
+        $tupdate_opt->{'$unset'}{'winner'} = 1;
       }
+      $db->collection('task')->update(({_id => $tid}, $tupdate_opt) => $delay->begin);
+
+      my $supdate_opt = {'task.name' => $v->param('name')};
+      $supdate_opt->{s} = 'inactive' if $is_change_tests;
+      $db->collection('solution')
+        ->update({'task.tid' => $tid}, {'$set' => $supdate_opt}, {multi => 1} => $delay->begin);
     },
     sub {
       my ($delay, $err, $num, $uerr, $update) = @_;
