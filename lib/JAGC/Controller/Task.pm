@@ -307,12 +307,7 @@ sub edit {
 
       my $set_opt = {name => $v->param('name'), desc => $v->param('description'), ts => bson_time};
       my $update_opt = {'$set' => $set_opt};
-      if ($is_change_tests) {
-        $update_opt->{'$unset'}->{winner}  = 1;
-        $update_opt->{'$set'}->{tests}     = \@tests;
-        $update_opt->{'$set'}->{stat}{all} = 0;
-        $update_opt->{'$set'}->{stat}{ok}  = 0;
-      }
+      $update_opt->{'$set'}{tests} = \@tests if $is_change_tests;
 
       $db->collection('task')->update(({_id => $tid}, $update_opt) => $delay->begin);
       if ($task->{name} ne $v->param('name')) {
@@ -328,37 +323,8 @@ sub edit {
       return $c->render_exception("Error while update task: $err")       if $err;
       return $c->render_exception("Error while update solutions: $uerr") if $uerr;
 
-      Mojo::IOLoop->next_tick(
-        sub {
-          Mojo::IOLoop->delay(
-            sub {
-              my $delay = shift;
+      $c->minion->enqueue(recheck => [$tid] => {priority => 0}) if $delay->data('is_change_tests');
 
-              $db->collection('solution')
-                ->update(
-                ({'task.tid' => $tid}, {'$set' => {s => 'inactive'}}, {multi => 1}) => $delay->begin);
-              $db->collection('task')
-                ->update({_id => $tid}, {'$set' => {'stat.all' => 0, 'stat.ok' => 0}} => $delay->begin);
-            },
-            sub {
-              my ($delay, $err, $num, $terr, $tnum) = @_;
-              return $c->render_exception("Error while update solution when update task: $err") if $err;
-              return $c->render_exception("Error while update task when update task: $terr")    if $terr;
-
-              my $cursor =
-                $db->collection('solution')->find({'task.tid' => $tid})->fields({_id => 1})->sort({ts => 1});
-
-              my $callback;
-              $callback = sub {
-                my ($cursor, $err, $s) = @_;
-                return unless $s;
-                $c->minion->enqueue(check => [$s->{_id}] => {priority => 0} => $cursor->next($callback));
-              };
-              $cursor->next($callback);
-            }
-          );
-        }
-      ) if $delay->data('is_change_tests');
       return $c->redirect_to('task_view', id => $tid);
     }
   );

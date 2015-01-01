@@ -24,6 +24,9 @@ sub run {
       }
       $db->collection('solution')->remove({'task.tid' => $tid});
     }
+    when ('recheck') {
+      $self->app->minion->enqueue(recheck => [$tid] => {priority => 0});
+    }
     default {
       warn "Invalid COMMAND\n";
     }
@@ -43,5 +46,6 @@ JAGC::Command::task - Control JAGC tasks.
   Usage: APPLICATION task [COMMAND] [ID]
 
   ./script/jagc task remove 533b4e2b5867b4c72b0a0000
+  ./script/jagc task recheck 533b4e2b5867b4c72b0a0000
 
 =cut
