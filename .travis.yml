@@ -1,8 +1,6 @@
 language: perl
 perl:
   - "5.18"
-env:
-  - "MOJO_MODE=test"
 before_install:
   - "sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 7F0CEB10"
   - "echo 'deb http://downloads-distro.mongodb.org/repo/ubuntu-upstart dist 10gen' | sudo tee /etc/apt/sources.list.d/mongodb.list"
@@ -13,6 +11,6 @@ install:
 before_script:
   - "until nc -z localhost 27017; do echo Waiting for MongoDB; sleep 1; done"
 script:
-  - "./script/jagc test -v"
+  - "prove -lv t/"
 notifications:
   email: avkhozov@gmail.com
