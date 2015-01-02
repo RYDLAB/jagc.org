@@ -9,23 +9,23 @@ sub index {
   my $db = $c->db;
   $c->delay(
     sub {
-      my $delay = shift;
+      my $d = shift;
 
       $db->collection('task')->find()->limit(20)->sort({ts => -1})->fields({desc => 0, tests => 0})
-        ->all($delay->begin);
+        ->all($d->begin);
       $db->collection('task')->find()->limit(20)->sort({'stat.all' => -1})->fields({desc => 0, tests => 0})
-        ->all($delay->begin);
+        ->all($d->begin);
       $db->collection('stat')->find()->fields({score => 1, pic => 1, login => 1})
-        ->sort(bson_doc(score => -1, t_all => -1, t_ok => -1))->limit(-10)->all($delay->begin);
+        ->sort(bson_doc(score => -1, t_all => -1, t_ok => -1))->limit(-10)->all($d->begin);
       $db->collection('solution')->aggregate([
           {'$match' => {s   => 'finished'}},
           {'$group' => {_id => '$lng', c => {'$sum' => 1}}},
           {'$sort' => bson_doc(c => -1, _id => 1)}
         ]
-      )->all($delay->begin);
+      )->all($d->begin);
     },
     sub {
-      my ($delay, $terr, $tasks, $pterr, $ptasks, $serr, $stats, $lerr, $languages) = @_;
+      my ($d, $terr, $tasks, $pterr, $ptasks, $serr, $stats, $lerr, $languages) = @_;
       return $c->render_exception("Error while find task: $terr")     if $terr;
       return $c->render_exception("Error while find task: $pterr")    if $pterr;
       return $c->render_exception("Error while find stat: $serr")     if $serr;
@@ -96,18 +96,18 @@ sub tasks {
   my $db = $c->db;
   $c->delay(
     sub {
-      my $delay = shift;
+      my $d = shift;
 
-      $db->collection('task')->find()->count($delay->begin);
+      $db->collection('task')->find()->count($d->begin);
       $db->collection('solution')->aggregate([
           {'$match' => {s   => 'finished'}},
           {'$group' => {_id => '$lng', c => {'$sum' => 1}}},
           {'$sort' => {c => -1, _id => 1}}
         ]
-      )->all($delay->begin);
+      )->all($d->begin);
     },
     sub {
-      my ($delay, $cerr, $tasks_number, $lerr, $languages) = @_;
+      my ($d, $cerr, $tasks_number, $lerr, $languages) = @_;
       return $c->render_exception("Error while count tasks: $cerr")   if $cerr;
       return $c->render_exception("Error while get languages: $lerr") if $lerr;
       return $c->render_not_found if (($page - 1) * $limit + 1 > $tasks_number);
@@ -118,10 +118,10 @@ sub tasks {
 
       my $skip = ($page - 1) * $limit;
       $db->collection('task')->find()->sort({ts => -1})->skip($skip)->limit($limit)
-        ->fields({desc => 0, tests => 0})->all($delay->begin);
+        ->fields({desc => 0, tests => 0})->all($d->begin);
     },
     sub {
-      my ($delay, $terr, $tasks) = @_;
+      my ($d, $terr, $tasks) = @_;
       return $c->render_exception("Error while find tasks: $terr") if $terr;
 
       $c->stash(tasks => $tasks);

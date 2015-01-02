@@ -36,7 +36,7 @@ sub twitter {
       $c->ua->post($twitter->{url_request_token} => {Authorization => $auth_header} => shift->begin);
     },
     sub {
-      my ($delay, $tx) = @_;
+      my ($d, $tx) = @_;
 
       if (my $res = $tx->success) {
         my $params      = Mojo::Parameters->new($res->body);
@@ -133,16 +133,16 @@ sub remove_social {
       $db->collection('user')->find_one($uid => shift->begin);
     },
     sub {
-      my ($delay, $err, $user) = @_;
+      my ($d, $err, $user) = @_;
       return $c->render_exception("Error while get user: $err") if $err;
       return $c->render_not_found unless $user;
       return $c->render_not_found if @{$user->{social}} == 1;
 
       my @socials = grep { !($social eq $_->{type}) } @{$user->{social}};
-      $db->collection('user')->update(({_id => $uid}, {'$set' => {social => \@socials}}) => $delay->begin);
+      $db->collection('user')->update(({_id => $uid}, {'$set' => {social => \@socials}}) => $d->begin);
     },
     sub {
-      my ($delay, $err, $num) = @_;
+      my ($d, $err, $num) = @_;
       return $c->render_exception("Error while update user: $err") if $err;
 
       return $c->redirect_to('user_settings', login => $login);

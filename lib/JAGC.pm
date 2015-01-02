@@ -86,6 +86,7 @@ sub startup {
   $br->get('/solution/:id/comments' => [id => $oid])->to('task#solution_comments')->name('solution_comments');
   $br->post('/solution/:id/comment' => [id => $oid])->to('task#solution_comment_add')
     ->name('solution_comment_add');
+  $br->get('/comment/:id/delete' => [id => $oid])->to('task#comment_delete')->name('comment_delete');
 
   $br->post('/task/:id/solution/add/' => [id => $oid])->to('task#solution_add')->name('solution_add');
 

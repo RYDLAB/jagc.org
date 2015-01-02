@@ -21,26 +21,26 @@ sub info {
       $db->collection('solution')->find($event_opt)->count(shift->begin);
     },
     sub {
-      my ($delay, $err, $count) = @_;
+      my ($d, $err, $count) = @_;
       return $c->render_exception("Error while get count of elements in solution : $err") if $err;
       return $c->render_not_found if $count > 0 && $count <= $skip;
 
       $c->stash(need_next_btn => ($count - $skip > $limit ? 1 : 0));
       $db->collection('solution')->find($event_opt)->sort({ts => -1})->skip($skip)->limit($limit)
-        ->all($delay->begin);
+        ->all($d->begin);
     },
     sub {
-      my ($delay, $qerr, $events) = @_;
+      my ($d, $qerr, $events) = @_;
       return $c->render_exception("Error while get solutions: $qerr") if $qerr;
 
       my %sid;
       map { $sid{$_->{task}{tid}} = undef } @{$events // []};
       $c->stash(events => $events // []);
 
-      $db->collection('task')->find({_id => {'$in' => [map { bson_oid $_ } keys %sid]}})->all($delay->begin);
+      $db->collection('task')->find({_id => {'$in' => [map { bson_oid $_ } keys %sid]}})->all($d->begin);
     },
     sub {
-      my ($delay, $terr, $tasks) = @_;
+      my ($d, $terr, $tasks) = @_;
       return $c->render_exception("Error while get tasks for solutions: $terr") if $terr;
 
       my %tasks;
@@ -52,10 +52,10 @@ sub info {
       if (@{$c->stash('events')}) {
         return $c->render(action => 'user', user => $c->stash('events')->[0]->{user});
       }
-      $db->collection('user')->find_one({login => $login}, {login => 1, pic => 1} => $delay->begin);
+      $db->collection('user')->find_one({login => $login}, {login => 1, pic => 1} => $d->begin);
     },
     sub {
-      my ($delay, $uerr, $user) = @_;
+      my ($d, $uerr, $user) = @_;
       return $c->render_exception("Error get user: $uerr") if $uerr;
       return $c->render_not_found unless $user;
 

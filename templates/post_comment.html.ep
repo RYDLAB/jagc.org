@@ -27,3 +27,18 @@
     </div>
   </div>
 </div>
+
+<script>
+$(document).ready(function() {
+  $(".comment").click(function () {
+    var cid = $(this).attr("data-cid");
+    $('blockquote[data-cid="' + cid +'"]').hide(0);
+    $('div[data-cid="' + cid +'"]').show(0);
+  });
+  $("button.cancel").click(function () {
+    var cid = $(this).attr("data-cid");
+    $('blockquote[data-cid="' + cid +'"]').show(0);
+    $('div[data-cid="' + cid +'"]').hide(0);
+  });
+});
+</script>

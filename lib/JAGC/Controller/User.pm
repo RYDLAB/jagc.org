@@ -16,7 +16,7 @@ sub info {
       $db->collection('stat')->find_one({login => $login} => shift->begin);
     },
     sub {
-      my ($delay, $serr, $user_stat) = @_;
+      my ($d, $serr, $user_stat) = @_;
       return $c->render_exception("Error while find user $login: $serr") if $serr;
 
       if ($user_stat) {
@@ -24,10 +24,10 @@ sub info {
         return $c->render;
       }
 
-      $db->collection('user')->find_one({login => $login}, {login => 1, pic => 1} => $delay->begin);
+      $db->collection('user')->find_one({login => $login}, {login => 1, pic => 1} => $d->begin);
     },
     sub {
-      my ($delay, $uerr, $user_stat) = @_;
+      my ($d, $uerr, $user_stat) = @_;
       return $c->render_exception("Error while find user $login: $uerr") if $uerr;
       return $c->render_not_found unless $user_stat;
 
@@ -46,14 +46,14 @@ sub tasks_owner {
   my $db    = $c->db;
   $c->delay(
     sub {
-      my $delay = shift;
+      my $d = shift;
 
-      $db->collection('user')->find_one({login => $login}, {login => 1, pic => 1} => $delay->begin);
+      $db->collection('user')->find_one({login => $login}, {login => 1, pic => 1} => $d->begin);
       $db->collection('task')->find({'owner.login' => $login})->sort({ts => -1})->fields({name => 1})
-        ->all($delay->begin);
+        ->all($d->begin);
     },
     sub {
-      my ($delay, $uerr, $owner, $terr, $tasks) = @_;
+      my ($d, $uerr, $owner, $terr, $tasks) = @_;
       return $c->render_exception("Error while find user by login: $uerr") if $uerr;
       return $c->render_exception("Error while find tasks by uid: $terr")  if $terr;
       return $c->render_not_found unless $owner;
@@ -65,10 +65,10 @@ sub tasks_owner {
           {'$group' => {_id => {t => '$task.tid', u => '$user.uid'}}},
           {'$group' => {_id => '$_id.t', u => {'$sum' => 1}}}
         ]
-      )->all($delay->begin);
+      )->all($d->begin);
     },
     sub {
-      my ($delay, $err, $tcount) = @_;
+      my ($d, $err, $tcount) = @_;
 
       my %tcount;
       map { $tcount{$_->{_id}} = $_->{u} } @$tcount;
@@ -95,7 +95,7 @@ sub settings {
       $db->collection('user')->find_one($uid => shift->begin);
     },
     sub {
-      my ($delay, $uerr, $user) = @_;
+      my ($d, $uerr, $user) = @_;
       return $c->render_exception("Error while find user $uid: $uerr") if $uerr;
       return $c->render_not_found unless $user;
 
@@ -117,19 +117,19 @@ sub notification_new {
       $db->collection('user')->find_one($uid => shift->begin);
     },
     sub {
-      my ($delay, $uerr, $user) = @_;
+      my ($d, $uerr, $user) = @_;
       return $c->render_exception("Error while find user $uid: $uerr") if $uerr;
       return $c->render_not_found unless $user;
 
-      $delay->data(login => $user->{login});
+      $d->data(login => $user->{login});
       $db->collection('user')->update({_id => $uid},
-        {'$set' => {'notice.new' => $user->{notice}{new} ? bson_false : bson_true}} => $delay->begin);
+        {'$set' => {'notice.new' => $user->{notice}{new} ? bson_false : bson_true}} => $d->begin);
     },
     sub {
-      my ($delay, $err, $doc) = @_;
+      my ($d, $err, $doc) = @_;
       return $c->render_exception("Error while update user $uid: $err") if $err;
 
-      $c->redirect_to('user_settings', login => $delay->data('login'));
+      $c->redirect_to('user_settings', login => $d->data('login'));
     }
   );
 }
@@ -148,7 +148,7 @@ sub notification {
       $db->collection('notification')->find_one(bson_doc(uid => $uid, tid => $tid) => shift->begin);
     },
     sub {
-      my ($delay, $err, $notification) = @_;
+      my ($d, $err, $notification) = @_;
       return $c->render_exception("Error while find notification $uid: $err") if $err;
 
       my $action = '$addToSet';
@@ -156,14 +156,11 @@ sub notification {
         $action = '$pull' if grep { $_ eq $type } @{$notification->{for}};
       }
 
-      $db->collection('notification')->update(
-        bson_doc(uid => $uid, tid => $tid),
-        {$action => {for => $type}},
-        {upsert  => 1}   => $delay->begin
-      );
+      $db->collection('notification')
+        ->update(bson_doc(uid => $uid, tid => $tid), {$action => {for => $type}}, {upsert => 1} => $d->begin);
     },
     sub {
-      my ($delay, $err, $doc) = @_;
+      my ($d, $err, $doc) = @_;
       return $c->render_exception("Error while upsert notification: $err") if $err;
 
       $c->redirect_to('task_view', id => $tid);
@@ -238,12 +235,12 @@ sub register {
       $db->collection('user')->insert($user_opt => shift->begin);
     },
     sub {
-      my ($delay, $err, $uid) = @_;
+      my ($d, $err, $uid) = @_;
 
       if ($err) {
         if ($err =~ /11000/) {
           return $db->collection('user')->find({'$or' => [{login => $login}, {email => $email}]})
-            ->next($delay->begin);
+            ->next($d->begin);
         }
         return $c->render_exception("Error while insert new user: $err");
       }
@@ -265,7 +262,7 @@ sub register {
       );
     },
     sub {
-      my ($delay, $err, $user) = @_;
+      my ($d, $err, $user) = @_;
       return $c->render_exception("Error while find user by login or email: $err") if $err;
       return $c->render_exception("Error: user not exist but it must be") unless $user;
 
@@ -297,7 +294,7 @@ sub confirmation {
       $db->collection('user')->find_and_modify($user_opt => shift->begin);
     },
     sub {
-      my ($delay, $err, $user) = @_;
+      my ($d, $err, $user) = @_;
       return $c->render_exception("Error while insert new user: $err") if $err;
       return $c->render_not_found unless $user;
 
@@ -321,16 +318,16 @@ sub all {
       $db->collection('stat')->find({})->count(shift->begin);
     },
     sub {
-      my ($delay, $err, $count) = @_;
+      my ($d, $err, $count) = @_;
       return $c->render_exception("Error while find users: $err") if $err;
       return $c->render_not_found if $count <= $skip;
 
-      $delay->pass($count);
+      $d->pass($count);
       $db->collection('stat')->find({})->sort(bson_doc(score => -1, t_all => -1, t_ok => -1))->skip($skip)
-        ->fields({tasks => 0})->all($delay->begin);
+        ->fields({tasks => 0})->all($d->begin);
     },
     sub {
-      my ($delay, $count, $err, $users) = @_;
+      my ($d, $count, $err, $users) = @_;
       return $c->render_exception("Error while find users: $err") if $err;
 
       $c->stash(users => $users, next_btn => ($count - $skip > $limit) ? 1 : 0);
@@ -369,7 +366,7 @@ sub change_name {
       $db->collection('user')->update({login => $rlogin}, {'$set' => {login => $nlogin}} => shift->begin);
     },
     sub {
-      my ($delay, $uerr, $unum) = @_;
+      my ($d, $uerr, $unum) = @_;
       if ($uerr) {
         if ($uerr =~ m/E11000/) {
           $c->flash(error => "Error: this login already exist.");
@@ -380,22 +377,22 @@ sub change_name {
 
       $c->session(login => $nlogin);
 
-      $db->collection('stat')->update({login => $rlogin}, {'$set' => {login => $nlogin}} => $delay->begin);
+      $db->collection('stat')->update({login => $rlogin}, {'$set' => {login => $nlogin}} => $d->begin);
       $db->collection('solution')
         ->update(
-        ({'user.login' => $rlogin}, {'$set' => {'user.login' => $nlogin}}, {multi => 1}) => $delay->begin);
+        ({'user.login' => $rlogin}, {'$set' => {'user.login' => $nlogin}}, {multi => 1}) => $d->begin);
       $db->collection('task')
         ->update(
-        ({'owner.login' => $rlogin}, {'$set' => {'owner.login' => $nlogin}}, {multi => 1}) => $delay->begin);
+        ({'owner.login' => $rlogin}, {'$set' => {'owner.login' => $nlogin}}, {multi => 1}) => $d->begin);
       $db->collection('task')
-        ->update(({'winner.login' => $rlogin}, {'$set' => {'winner.login' => $nlogin}}, {multi => 1}) =>
-          $delay->begin);
+        ->update(
+        ({'winner.login' => $rlogin}, {'$set' => {'winner.login' => $nlogin}}, {multi => 1}) => $d->begin);
       $db->collection('comment')
         ->update(
-        ({'user.login' => $rlogin}, {'$set' => {'user.login' => $nlogin}}, {multi => 1}) => $delay->begin);
+        ({'user.login' => $rlogin}, {'$set' => {'user.login' => $nlogin}}, {multi => 1}) => $d->begin);
     },
     sub {
-      my ($delay, $serr, $snum, $soerr, $sonum, $toerr, $tonum, $twerr, $twnum, $cerr, $cnum) = @_;
+      my ($d, $serr, $snum, $soerr, $sonum, $toerr, $tonum, $twerr, $twnum, $cerr, $cnum) = @_;
       return $c->render_exception("Error while update user login: $serr")                    if $serr;
       return $c->render_exception("Error while update solution when update user: $soerr")    if $soerr;
       return $c->render_exception("Error while update task owner when update user: $toerr")  if $toerr;

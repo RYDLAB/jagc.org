@@ -1,6 +1,6 @@
 <div class="row">
-  <div class="col-sm-7">
-    <blockquote>
+  <div class="col-sm-8">
+    <blockquote data-cid="<%= $comment->{_id} %>">
       <%== $comment->{html} %>
       <footer>
         <a href="<%= url_for('user_info', login => $comment->{user}{login}) %>">
@@ -9,10 +9,35 @@
         </a>
       </footer>
     </blockquote>
+    <div style="display: none" class="anchor" data-cid="<%= $comment->{_id} %>">
+      <div class="panel panel-default">
+        <div class="panel-body">
+          % my $url = $comment->{sid} ? url_for('solution_comment_add', id => $comment->{sid}) : url_for('comment_add', id => $comment->{tid});
+          % $url->query(cid => $comment->{_id});
+          <form action="<%= $url %>" method="POST">
+            <fieldset>
+              %= include 'field', type => 'textarea', label => '', name => 'text', value => $comment->{text} // '', opt => {rows => 5}
+              <button type="submit" class="btn btn-primary">Submit</button>
+              <button data-cid="<%= $comment->{_id} %>" type="button" class="btn btn-primary cancel">Cancel</button>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
   </div>
-  <div class="col-sm-5">
+  <div class="col-sm-4">
     % my ($datetime, $cdate) = tz $comment->{ts};
     <p class="text-right">
+      % if ((session->{login} // '') eq $comment->{user}{login}) {
+        <span data-cid="<%= $comment->{_id} %>" style="cursor: pointer" class="glyphicon glyphicon-pencil comment"></span>
+        <a href="<%= url_for('comment_delete', id => $comment->{_id}) %>" onclick="return confirm('Do you really want to delete the comment?')">
+          <span class="glyphicon glyphicon-remove"></span>
+        </a>
+      % } else {
+        % if ($comment->{edit}) {
+          <span class="glyphicon glyphicon-pushpin"></span>
+        % }
+      % }
       <abbr class="timeago" title="<%= $datetime %>"><%= $cdate %></abbr>
     </p>
   </div>

@@ -88,14 +88,14 @@ sub comments {
   my $db = $c->db;
   $c->delay(
     sub {
-      my $delay = shift;
+      my $d = shift;
 
-      $db->collection('task')->find_one($id => $delay->begin);
+      $db->collection('task')->find_one($id => $d->begin);
       $db->collection('comment')->find(bson_doc(type => 'task', tid => $id, del => bson_false))
-        ->sort(bson_doc(ts => 1))->all($delay->begin);
+        ->sort(bson_doc(ts => 1))->all($d->begin);
     },
     sub {
-      my ($delay, $terr, $task, $cerr, $comments) = @_;
+      my ($d, $terr, $task, $cerr, $comments) = @_;
       return $c->render_exception("Error while find_one task with $id: $terr") if $terr;
       return $c->render_not_found unless $task;
       return $c->render_exception("Error while find comments: $cerr") if $cerr;
@@ -113,14 +113,14 @@ sub solution_comments {
   my $db = $c->db;
   $c->delay(
     sub {
-      my $delay = shift;
+      my $d = shift;
 
-      $db->collection('solution')->find_one($id => $delay->begin);
+      $db->collection('solution')->find_one($id => $d->begin);
       $db->collection('comment')->find(bson_doc(type => 'solution', sid => $id, del => bson_false))
-        ->sort(bson_doc(ts => 1))->all($delay->begin);
+        ->sort(bson_doc(ts => 1))->all($d->begin);
     },
     sub {
-      my ($delay, $serr, $solution, $cerr, $comments) = @_;
+      my ($d, $serr, $solution, $cerr, $comments) = @_;
       return $c->render_exception("Error while find_one solution with $id: $serr") if $serr;
       return $c->render_not_found unless $solution;
       return $c->render_exception("Error while find comments: $cerr") if $cerr;
@@ -138,13 +138,13 @@ sub view {
   my $db = $c->db;
   $c->delay(
     sub {
-      my $delay = shift;
+      my $d = shift;
 
-      $db->collection('task')->find_one($id => $delay->begin);
-      $db->collection('language')->find({})->fields({name => 1, _id => 0})->all($delay->begin);
+      $db->collection('task')->find_one($id => $d->begin);
+      $db->collection('language')->find({})->fields({name => 1, _id => 0})->all($d->begin);
     },
     sub {
-      my ($delay, $terr, $task, $lerr, $languages) = @_;
+      my ($d, $terr, $task, $lerr, $languages) = @_;
       return $c->render_exception("Error while find_one task with $id: $terr") if $terr;
       return $c->render_not_found unless $task;
       return $c->render_exception("Error while find languages: $lerr") if $lerr;
@@ -161,21 +161,21 @@ sub view {
           $collection->find(bson_doc('task.tid' => $id, s => {'$in' => [qw/incorrect timeout error/]}))
           ->fields({task => 0})->sort(bson_doc(ts => 1))->limit(20);
       }
-      $cursor->all($delay->begin);
+      $cursor->all($d->begin);
       $db->collection('comment')->find(bson_doc(type => 'task', tid => $id, del => bson_false))
-        ->count($delay->begin);
+        ->count($d->begin);
       $db->collection('comment')->aggregate([
           {'$match' => bson_doc(tid => $id, type => 'solution', del => bson_false)},
           {'$group' => bson_doc(_id => '$sid', count => {'$sum' => 1})}
         ]
-      )->all($delay->begin);
+      )->all($d->begin);
       if (my $uid = $c->session('uid')) {
         $db->collection('notification')
-          ->find_one(bson_doc(uid => bson_oid($uid), tid => $id), {for => 1}, $delay->begin);
+          ->find_one(bson_doc(uid => bson_oid($uid), tid => $id), {for => 1}, $d->begin);
       }
     },
     sub {
-      my ($delay, $err, $solutions, $cerr, $comments_count, $ccerr, $solution_comments, $nerr, $notice) = @_;
+      my ($d, $err, $solutions, $cerr, $comments_count, $ccerr, $solution_comments, $nerr, $notice) = @_;
       return $c->render_exception("Error while find solution: $err")                if $err;
       return $c->render_exception("Error while count comments for $id: $cerr")      if $cerr;
       return $c->render_exception("Error while find comments for solution: $ccerr") if $ccerr;
@@ -208,7 +208,7 @@ sub edit_view {
       $db->collection('task')->find_one($tid => shift->begin);
     },
     sub {
-      my ($delay, $terr, $task) = @_;
+      my ($d, $terr, $task) = @_;
       return $c->render_exception("Error while find_one task $tid: $terr") if $terr;
       return $c->render_not_found unless $task;
 
@@ -236,7 +236,7 @@ sub edit {
       $db->collection('task')->find_one($tid => shift->begin);
     },
     sub {
-      my ($delay, $terr, $task) = @_;
+      my ($d, $terr, $task) = @_;
       return $c->render_exception("Error while find_one task $tid: $terr") if $terr;
       return $c->render_not_found unless $task;
 
@@ -302,8 +302,8 @@ sub edit {
         }
       }
 
-      $delay->data(tname           => $v->param('name'));
-      $delay->data(is_change_tests => $is_change_tests);
+      $d->data(tname           => $v->param('name'));
+      $d->data(is_change_tests => $is_change_tests);
 
       my $tupdate_opt =
         {'$set' => {name => $v->param('name'), desc => $v->param('description'), ts => bson_time}};
@@ -313,19 +313,19 @@ sub edit {
         $tupdate_opt->{'$set'}{'stat.ok'}  = 0;
         $tupdate_opt->{'$unset'}{'winner'} = 1;
       }
-      $db->collection('task')->update(({_id => $tid}, $tupdate_opt) => $delay->begin);
+      $db->collection('task')->update(({_id => $tid}, $tupdate_opt) => $d->begin);
 
       my $supdate_opt = {'task.name' => $v->param('name')};
       $supdate_opt->{s} = 'inactive' if $is_change_tests;
       $db->collection('solution')
-        ->update({'task.tid' => $tid}, {'$set' => $supdate_opt}, {multi => 1} => $delay->begin);
+        ->update({'task.tid' => $tid}, {'$set' => $supdate_opt}, {multi => 1} => $d->begin);
     },
     sub {
-      my ($delay, $err, $num, $uerr, $update) = @_;
+      my ($d, $err, $num, $uerr, $update) = @_;
       return $c->render_exception("Error while update task: $err")       if $err;
       return $c->render_exception("Error while update solutions: $uerr") if $uerr;
 
-      $c->minion->enqueue(recheck => [$tid] => {priority => 0}) if $delay->data('is_change_tests');
+      $c->minion->enqueue(recheck => [$tid] => {priority => 0}) if $d->data('is_change_tests');
 
       return $c->redirect_to('task_view', id => $tid);
     }
@@ -343,7 +343,7 @@ sub view_solutions {
   my $db = $c->db;
   $c->delay(
     sub {
-      my $delay = shift;
+      my $d = shift;
 
       my $collection = $db->collection('solution');
       my $cursor;
@@ -353,26 +353,45 @@ sub view_solutions {
         $cursor =
           $collection->find(bson_doc('task.tid' => $id, s => {'$in' => [qw/incorrect timeout error/]}));
       }
-      $delay->data(cursor => $cursor);
-      $cursor->count($delay->begin);
+      $d->data(cursor => $cursor);
+      $cursor->count($d->begin);
     },
     sub {
-      my ($delay, $cerr, $count) = @_;
+      my ($d, $cerr, $count) = @_;
       return $c->render_exception("Error while count solutions: $cerr") if $cerr;
       return $c->render_not_found if $count <= $skip;
 
       $c->stash(need_next_btn => ($count - $skip > $limit ? 1 : 0));
-      $delay->data('cursor')->all($delay->begin);
-      $db->collection('task')->find_one($id, {tests => 1} => $delay->begin);
+      $d->data('cursor')->all($d->begin);
+      $db->collection('task')->find_one($id, {tests => 1} => $d->begin);
     },
     sub {
-      my ($delay, $serr, $solutions, $terr, $task) = @_;
+      my ($d, $serr, $solutions, $terr, $task) = @_;
       return $c->render_exception("Error while find solution: $serr")     if $serr;
       return $c->render_exception("Error while find_one task $id: $terr") if $terr;
       return $c->render_not_found unless $task;
 
       $c->stash(solutions => $solutions, task => $task);
       $c->render(action => 'solution');
+    }
+  );
+}
+
+sub comment_delete {
+  my $c = shift;
+
+  my $uid = $c->session('uid');
+  return $c->render_not_found unless $uid;
+
+  my $id = bson_oid $c->stash('id');
+  $c->db->collection('comment')->update(
+    {_id => $id, 'user.uid' => $uid},
+    {'$set' => {del => bson_true}},
+    sub {
+      my ($db, $err, $upd) = @_;
+      return $c->render_exception("Error while update comment with $id: $err") if $err;
+
+      $c->redirect_to($c->req->headers->referrer);
     }
   );
 }
@@ -391,7 +410,7 @@ sub comment_add {
       $db->collection('task')->find_one($id => shift->begin);
     },
     sub {
-      my ($delay, $err, $task) = @_;
+      my ($d, $err, $task) = @_;
       return $c->render_exception("Error while find_one task with $id: $err") if $err;
       return $c->render_not_found unless $task;
 
@@ -399,33 +418,38 @@ sub comment_add {
       my $v = $c->validation;
       $v->required('text')->size(1, 100000, 'Length of comment must be no more than 100000 characters');
 
-      if ($v->has_error) {
-        return $c->comments;
-      }
+      return $c->comments if $v->has_error;
 
       my $html = markdown $v->param('text');
       my $hss  = HTML::StripScripts::Parser->new;
       $html = $hss->filter_html($html);
-      $db->collection('comment')->insert(
-        bson_doc(
-          type => 'task',
-          tid  => $id,
-          sid  => undef,
-          ts   => bson_time,
-          del  => bson_false,
-          edit => bson_false,
-          user =>
-            bson_doc(uid => $c->session('uid'), login => $c->session('login'), pic => $c->session('pic')),
-          text => $v->param('text'),
-          html => $html
-        ) => $delay->begin
-      );
+
+      if (my $cid = $c->req->param('cid')) {
+        $d->data(update => 1);
+        $db->collection('comment')->update({_id => bson_oid($cid), 'user.uid' => $uid},
+          {'$set' => {text => $v->param('text'), html => $html, edit => bson_true}} => $d->begin);
+      } else {
+        $db->collection('comment')->insert(
+          bson_doc(
+            type => 'task',
+            tid  => $id,
+            sid  => undef,
+            ts   => bson_time,
+            del  => bson_false,
+            edit => bson_false,
+            user => bson_doc(uid => $uid, login => $c->session('login'), pic => $c->session('pic')),
+            text => $v->param('text'),
+            html => $html
+          ) => $d->begin
+        );
+      }
     },
     sub {
-      my ($delay, $err, $cid) = @_;
+      my ($d, $err, $cid) = @_;
       return $c->render_exception("Error while insert comment: $err") if $err;
 
-      $c->minion->enqueue(notice_new_comment => [$cid, $c->stash('task')->{name}] => sub { });
+      $c->minion->enqueue(notice_new_comment => [$cid, $c->stash('task')->{name}] => sub { })
+        unless $d->data('update');
       $c->redirect_to('task_comments', id => $id);
     }
   );
@@ -444,7 +468,7 @@ sub solution_comment_add {
       $db->collection('solution')->find_one($id => shift->begin);
     },
     sub {
-      my ($delay, $err, $solution) = @_;
+      my ($d, $err, $solution) = @_;
       return $c->render_exception("Error while find_one solution with $id: $err") if $err;
       return $c->render_not_found unless $solution;
 
@@ -452,33 +476,39 @@ sub solution_comment_add {
       my $v = $c->validation;
       $v->required('text')->size(1, 100000, 'Length of comment must be no more than 100000 characters');
 
-      if ($v->has_error) {
-        return $c->solution_comments;
-      }
+      return $c->solution_comments if $v->has_error;
 
       my $html = markdown $v->param('text');
       my $hss  = HTML::StripScripts::Parser->new;
       $html = $hss->filter_html($html);
-      $db->collection('comment')->insert(
-        bson_doc(
-          type => 'solution',
-          tid  => $solution->{task}{tid},
-          sid  => $solution->{_id},
-          ts   => bson_time,
-          del  => bson_false,
-          edit => bson_false,
-          user =>
-            bson_doc(uid => $c->session('uid'), login => $c->session('login'), pic => $c->session('pic')),
-          text => $v->param('text'),
-          html => $html
-        ) => $delay->begin
-      );
+
+      if (my $cid = $c->req->param('cid')) {
+        $d->data(update => 1);
+        $db->collection('comment')->update({_id => bson_oid($cid), 'user.uid' => $c->session('uid')},
+          {'$set' => {text => $v->param('text'), html => $html, edit => bson_true}} => $d->begin);
+      } else {
+        $db->collection('comment')->insert(
+          bson_doc(
+            type => 'solution',
+            tid  => $solution->{task}{tid},
+            sid  => $solution->{_id},
+            ts   => bson_time,
+            del  => bson_false,
+            edit => bson_false,
+            user =>
+              bson_doc(uid => $c->session('uid'), login => $c->session('login'), pic => $c->session('pic')),
+            text => $v->param('text'),
+            html => $html
+          ) => $d->begin
+        );
+      }
     },
     sub {
-      my ($delay, $err, $cid) = @_;
+      my ($d, $err, $cid) = @_;
       return $c->render_exception("Error while insert comment: $err") if $err;
 
-      $c->minion->enqueue(notice_new_comment => [$cid, $c->stash('solution')->{task}{name}] => sub { });
+      $c->minion->enqueue(notice_new_comment => [$cid, $c->stash('solution')->{task}{name}] => sub { })
+        unless $d->data('update');
       $c->redirect_to('solution_comments', id => $id);
     }
   );
@@ -499,19 +529,19 @@ sub solution_add {
   my $db = $c->db;
   $c->delay(
     sub {
-      my $delay = shift;
-      $db->collection('task')->find_one($tid => $delay->begin);
-      $db->collection('language')->find({})->all($delay->begin);
+      my $d = shift;
+      $db->collection('task')->find_one($tid => $d->begin);
+      $db->collection('language')->find({})->all($d->begin);
     },
     sub {
-      my ($delay, $terr, $task, $lerr, $languages) = @_;
+      my ($d, $terr, $task, $lerr, $languages) = @_;
       return $c->render_exception("Error while find_one task with $tid: $terr") if $terr;
       return $c->render_exception("Error while find languages: $lerr")          if $lerr;
       return $c->render_not_found unless $task;
 
       my $langs = [map { $_->{name} } @$languages];
-      $delay->data(languages => $langs);
-      $delay->data(tname     => $task->{name});
+      $d->data(languages => $langs);
+      $d->data(tname     => $task->{name});
 
       my $code = $c->param('code');
       $code =~ s/\r\n?/\n/g;
@@ -539,7 +569,7 @@ sub solution_add {
         $v->output->{code} =~ s/^#![^\s]+/#!$used_lang->{path}/;
       }
 
-      $delay->data(code => $v->param('code'));
+      $d->data(code => $v->param('code'));
       $c->session(lang => $v->param('language'));
 
       $db->collection('solution')->insert(
@@ -551,11 +581,11 @@ sub solution_add {
           size => $code_length,
           s    => 'inactive',
           ts   => bson_time
-        ) => $delay->begin
+        ) => $d->begin
       );
     },
     sub {
-      my ($delay, $serr, $sid) = @_;
+      my ($d, $serr, $sid) = @_;
       return $c->render_exception("Error while insert solution: $serr") if $serr;
 
       $c->minion->enqueue(check => [$sid] => {priority => 1} => sub { });
