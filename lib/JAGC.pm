@@ -134,7 +134,7 @@ sub startup {
   $app->hook(
     before_routes => sub {
       my $c = shift;
-      $c->req->url->base(Mojo::URL->new($app->config->{site_url}));
+      $c->req->url->base(Mojo::URL->new($app->config->{site_url})) unless $app->mode eq 'test';
     }
   );
 
