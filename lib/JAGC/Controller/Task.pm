@@ -70,7 +70,7 @@ sub add {
       my ($collection, $err, $oid) = @_;
       return $c->render_exception("Error while insert task: $err") if $err;
 
-      $c->app->minion->enqueue(notice_new_task => [$oid] => sub { });
+      $c->app->minion->enqueue(notice_new_task => [$oid]);
       return $c->redirect_to('task_view', id => $oid);
     }
   );
@@ -448,8 +448,7 @@ sub comment_add {
       my ($d, $err, $cid) = @_;
       return $c->render_exception("Error while insert comment: $err") if $err;
 
-      $c->minion->enqueue(notice_new_comment => [$cid, $c->stash('task')->{name}] => sub { })
-        unless $d->data('update');
+      $c->minion->enqueue(notice_new_comment => [$cid, $c->stash('task')->{name}]) unless $d->data('update');
       $c->redirect_to('task_comments', id => $id);
     }
   );
@@ -507,7 +506,7 @@ sub solution_comment_add {
       my ($d, $err, $cid) = @_;
       return $c->render_exception("Error while insert comment: $err") if $err;
 
-      $c->minion->enqueue(notice_new_comment => [$cid, $c->stash('solution')->{task}{name}] => sub { })
+      $c->minion->enqueue(notice_new_comment => [$cid, $c->stash('solution')->{task}{name}])
         unless $d->data('update');
       $c->redirect_to('solution_comments', id => $id);
     }
@@ -588,7 +587,7 @@ sub solution_add {
       my ($d, $serr, $sid) = @_;
       return $c->render_exception("Error while insert solution: $serr") if $serr;
 
-      $c->minion->enqueue(check => [$sid] => {priority => 1} => sub { });
+      $c->minion->enqueue(check => [$sid] => {priority => 1});
       return $c->redirect_to('event_user_info', login => $login);
     }
   );

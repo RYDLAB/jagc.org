@@ -1,9 +1,10 @@
 requires 'EV' => '4.18';
 requires 'HTML::StripScripts::Parser';
-requires 'Mango'          => '1.14';
-requires 'Minion'         => '== 0.37';
-requires 'Mojolicious'    => '5.47';
-requires 'IO::Socket::IP' => '0.31';
-requires 'IO::Socket::SSL';
-requires 'IPC::Run' => '0.92';
+requires 'IO::Socket::IP'         => '0.36';
+requires 'IO::Socket::SSL'        => '2.009';
+requires 'IPC::Run'               => '0.92';
+requires 'Mango'                  => '1.14';
+requires 'Minion'                 => '1.05';
+requires 'Minion::Backend::Mango' => '0.91';
+requires 'Mojolicious'            => '5.72';
 requires 'Text::Markdown';
