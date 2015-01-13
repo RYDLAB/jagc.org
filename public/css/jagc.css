@@ -162,3 +162,7 @@ table tr > td.text-to-center {
   border: none;
   padding: 0;
 }
+
+pre.tests {
+  word-wrap: normal;
+}
