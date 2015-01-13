@@ -8,3 +8,4 @@ requires 'Minion'                 => '1.05';
 requires 'Minion::Backend::Mango' => '0.91';
 requires 'Mojolicious'            => '5.72';
 requires 'Text::Markdown';
+requires 'XML::RSS';

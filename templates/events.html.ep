@@ -22,18 +22,18 @@
           </div>
           <div class="col-sm-2">
             % if ($event->{s} eq 'incorrect') {
-              <a class="text-danger" href="<%=url_for('task_view_incorrect', id => $event->{task}{tid})%><%=='?#' . $event->{terr}%>">
+              <a class="text-danger" href="<%= url_for('task_view_incorrect', id => $event->{task}{tid})->fragment($event->{terr}) %>">
                 Wrong answer
               </a>
               <a data-toggle="collapse" href="#sa-<%= $event->{_id} %>">
                 <span class="glyphicon glyphicon-question-sign"></span>
               </a>
             % } elsif ($event->{s} eq 'timeount') {
-              <a class="text-danger" href="<%=url_for('task_view_incorrect', id => $event->{task}{tid})%><%=='?#' . $event->{terr}%>">
+              <a class="text-danger" href="<%= url_for('task_view_incorrect', id => $event->{task}{tid})->fragment($event->{terr}) %>">
                 Timeout
               </a>
             % } elsif ($event->{s} eq 'error') {
-              <a class="text-danger" href="<%=url_for('task_view_incorrect', id => $event->{task}{tid})%><%=='?#' . $event->{terr}%>">
+              <a class="text-danger" href="<%= url_for('task_view_incorrect', id => $event->{task}{tid})->fragment($event->{terr}) %>">
                 Code error
               </a>
               <a data-toggle="collapse" href="#s-<%= $event->{_id} %>">
@@ -46,7 +46,9 @@
             % } elsif ($event->{s} eq 'testing') {
               <span class="text-info">Testing now</span>
             % } elsif ($event->{s} eq 'finished') {
-              <a class="text-success" href="<%= url_for('task_view', id => $event->{task}{tid})%><%=='?#'. $event->{_id}%>">Success</a>
+              <a class="text-success" href="<%= url_for('task_view', id => $event->{task}{tid})->fragment($event->{_id}) %>">
+                Success
+              </a>
             % } else {
               <span class="text-info"><%= $event->{s} %></span>
             % }

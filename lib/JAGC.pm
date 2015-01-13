@@ -105,13 +105,16 @@ sub startup {
       [uid => $oid, email => qr/.+@.+\.[^.]+/, code => qr/[0-9a-f]{32}/])->to('user#confirmation')
     ->name('user_confirmation');
 
-  $br->get('/events/:page'             => [page => $num])->to('event#info', page => 1)->name('event_info');
+  $br->get('/events/:page'             => [page => $num, format => 0])->to('event#info', page => 1)->name('event_info');
   $br->get('/user/:login/events/:page' => [page => $num])->to('event#info', page => 1)
     ->name('event_user_info');
 
   $br->get('/about')->to('main#about')->name('about');
   $br->get('/paid')->to('main#paid')->name('paid');
   $br->get('/examples')->to('main#example')->name('examples');
+
+  # RSS
+  $r->get('/events' => [format => [qw/rss xml/]])->to('event#rss')->name('events_rss');
 
   $app->helper(
     db => sub {
