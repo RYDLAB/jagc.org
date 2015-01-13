@@ -33,7 +33,7 @@
                   <div id="sa-<%= $solution->{_id} %>" class="panel-collapse collapse">
                     <div class="row">
                       <div class="col-sm-5">
-                        <pre><%= $solution->{out} %></pre>
+                        <pre class="tests"><%= $solution->{out} %></pre>
                       </div>
                       <div class="col-sm-2">instead of</div>
                       <div class="col-sm-5">

@@ -65,7 +65,7 @@
             <br />
             <div class="row">
               <div class="col-sm-5">
-                <pre><%= $event->{out} %></pre>
+                <pre class="tests"><%= $event->{out} %></pre>
               </div>
               <div class="col-sm-2">instead of</div>
               <div class="col-sm-5">
