@@ -53,6 +53,7 @@ sub run_test {
   close $input;
 
   my ($out, $filename) = tempfile;
+  binmode $out, ':utf8';
 
   $self->app->log->debug(sprintf 'Run test %s', $test->{_id});
   my $cmd = join ' ', 'lxc-start', '-L', $filename, '-n', $self->image, '/usr/bin/env', 'LANG=en_US.UTF-8',
