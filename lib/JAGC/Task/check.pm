@@ -59,7 +59,7 @@ sub run_test {
     'LC_ALL=en_US.UTF-8', 'HOME=/home/guest/', '/usr/bin/perl', '/starter', $bin;
   system $cmd;
 
-  my $result = decode_json <$out>;
+  my $result = eval { decode_json <$out> };
   unlink $filename;
   return $result;
 }
