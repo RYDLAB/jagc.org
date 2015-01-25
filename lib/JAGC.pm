@@ -40,7 +40,7 @@ sub startup {
   my $r = $app->routes;
   $r->namespaces(['JAGC::Controller']);
 
-  my $br = $r->bridge('/')->to('main#verify');
+  my $br = $r->under('/')->to('main#verify');
 
   $r->get('/')->to('main#index')->name('index');
   $br->get('/logout')->to('main#logout')->name('logout');
@@ -57,7 +57,7 @@ sub startup {
   $br->get('/login/remove')->to('login#remove_social')->name('remove_social');
 
   # Admin
-  my $admin = $r->bridge('/admin')->to('main#admin');
+  my $admin = $r->under('/admin')->to('main#admin');
   $admin->get('index')->to('admin#index');
   $admin->post('/login/as')->to('login#as')->name('login_as');
 
@@ -105,7 +105,7 @@ sub startup {
       [uid => $oid, email => qr/.+@.+\.[^.]+/, code => qr/[0-9a-f]{32}/])->to('user#confirmation')
     ->name('user_confirmation');
 
-  $br->get('/events/:page'             => [page => $num, format => 0])->to('event#info', page => 1)->name('event_info');
+  $br->get('/events/:page' => [page => $num, format => 0])->to('event#info', page => 1)->name('event_info');
   $br->get('/user/:login/events/:page' => [page => $num])->to('event#info', page => 1)
     ->name('event_user_info');
 
