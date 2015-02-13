@@ -97,7 +97,9 @@
             %= $test_template->($n++);
           % }
         % } else {
-          %= $test_template->(1);
+          % for (1..5) {
+            %= $test_template->($_);
+          % }
         %}
       </div>
       <div class="col-sm-offset-3">
