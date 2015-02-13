@@ -8,7 +8,7 @@ sub info {
   my $c = shift;
 
   my $page = int $c->stash('page');
-  return $c->render_not_found if $page < 1;
+  return $c->reply->not_found if $page < 1;
 
   my $login = $c->stash('login');
   my $event_opt = $login ? {'user.login' => $login} : {};
@@ -23,8 +23,8 @@ sub info {
     },
     sub {
       my ($d, $err, $count) = @_;
-      return $c->render_exception("Error while get count of elements in solution : $err") if $err;
-      return $c->render_not_found if $count > 0 && $count <= $skip;
+      return $c->reply->exception("Error while get count of elements in solution: $err") if $err;
+      return $c->reply->not_found if $count > 0 && $count <= $skip;
 
       $c->stash(need_next_btn => ($count - $skip > $limit ? 1 : 0));
       $db->collection('solution')->find($event_opt)->sort({ts => -1})->skip($skip)->limit($limit)
@@ -32,7 +32,7 @@ sub info {
     },
     sub {
       my ($d, $qerr, $events) = @_;
-      return $c->render_exception("Error while get solutions: $qerr") if $qerr;
+      return $c->reply->exception("Error while get solutions: $qerr") if $qerr;
 
       my %sid;
       map { $sid{$_->{task}{tid}} = undef } @{$events // []};
@@ -42,7 +42,7 @@ sub info {
     },
     sub {
       my ($d, $terr, $tasks) = @_;
-      return $c->render_exception("Error while get tasks for solutions: $terr") if $terr;
+      return $c->reply->exception("Error while get tasks for solutions: $terr") if $terr;
 
       my %tasks;
       map { $tasks{$_->{_id}} = $_ } @$tasks;
@@ -57,8 +57,8 @@ sub info {
     },
     sub {
       my ($d, $uerr, $user) = @_;
-      return $c->render_exception("Error get user: $uerr") if $uerr;
-      return $c->render_not_found unless $user;
+      return $c->reply->exception("Error get user: $uerr") if $uerr;
+      return $c->reply->not_found unless $user;
 
       $c->render(action => 'user', user => $user);
     }
@@ -74,7 +74,7 @@ sub rss {
     },
     sub {
       my ($d, $err, $events) = @_;
-      return $c->render_exception("Error while get events: $err") if $err;
+      return $c->reply->exception("Error while get events: $err") if $err;
 
       my $rss = XML::RSS->new(version => '2.0');
       $rss->channel(

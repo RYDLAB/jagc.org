@@ -17,7 +17,7 @@ sub info {
     },
     sub {
       my ($d, $serr, $user_stat) = @_;
-      return $c->render_exception("Error while find user $login: $serr") if $serr;
+      return $c->reply->exception("Error while find user $login: $serr") if $serr;
 
       if ($user_stat) {
         $c->stash(user_stat => $user_stat);
@@ -28,8 +28,8 @@ sub info {
     },
     sub {
       my ($d, $uerr, $user_stat) = @_;
-      return $c->render_exception("Error while find user $login: $uerr") if $uerr;
-      return $c->render_not_found unless $user_stat;
+      return $c->reply->exception("Error while find user $login: $uerr") if $uerr;
+      return $c->reply->not_found unless $user_stat;
 
       $user_stat->{score} = 0;
       $user_stat->{tasks} = [];
@@ -54,10 +54,10 @@ sub tasks_owner {
     },
     sub {
       my ($d, $uerr, $owner, $terr, $tasks) = @_;
-      return $c->render_exception("Error while find user by login: $uerr") if $uerr;
-      return $c->render_exception("Error while find tasks by uid: $terr")  if $terr;
-      return $c->render_not_found unless $owner;
-      return $c->render_not_found unless $tasks;
+      return $c->reply->exception("Error while find user by login: $uerr") if $uerr;
+      return $c->reply->exception("Error while find tasks by uid: $terr")  if $terr;
+      return $c->reply->not_found unless $owner;
+      return $c->reply->not_found unless $tasks;
 
       $c->stash(owner => $owner, tasks => $tasks);
       $db->collection('solution')->aggregate([
@@ -82,12 +82,12 @@ sub tasks_owner {
 sub settings {
   my $c = shift;
 
-  return $c->render_not_found unless my $uid = $c->session('uid');
+  return $c->reply->not_found unless my $uid = $c->session('uid');
   $uid = bson_oid $uid;
 
   my $login  = $c->stash('login');
   my $rlogin = $c->session('login');
-  return $c->render_not_found if ($login ne $rlogin);
+  return $c->reply->not_found if ($login ne $rlogin);
 
   my $db = $c->db;
   $c->delay(
@@ -96,8 +96,8 @@ sub settings {
     },
     sub {
       my ($d, $uerr, $user) = @_;
-      return $c->render_exception("Error while find user $uid: $uerr") if $uerr;
-      return $c->render_not_found unless $user;
+      return $c->reply->exception("Error while find user $uid: $uerr") if $uerr;
+      return $c->reply->not_found unless $user;
 
       $c->stash(user => $user);
       $c->render;
@@ -108,7 +108,7 @@ sub settings {
 sub notification_new {
   my $c = shift;
 
-  return $c->render_not_found unless my $uid = $c->session('uid');
+  return $c->reply->not_found unless my $uid = $c->session('uid');
   $uid = bson_oid $uid;
 
   my $db = $c->db;
@@ -118,8 +118,8 @@ sub notification_new {
     },
     sub {
       my ($d, $uerr, $user) = @_;
-      return $c->render_exception("Error while find user $uid: $uerr") if $uerr;
-      return $c->render_not_found unless $user;
+      return $c->reply->exception("Error while find user $uid: $uerr") if $uerr;
+      return $c->reply->not_found unless $user;
 
       $d->data(login => $user->{login});
       $db->collection('user')->update({_id => $uid},
@@ -127,7 +127,7 @@ sub notification_new {
     },
     sub {
       my ($d, $err, $doc) = @_;
-      return $c->render_exception("Error while update user $uid: $err") if $err;
+      return $c->reply->exception("Error while update user $uid: $err") if $err;
 
       $c->redirect_to('user_settings', login => $d->data('login'));
     }
@@ -137,7 +137,7 @@ sub notification_new {
 sub notification {
   my $c = shift;
 
-  return $c->render_not_found unless my $uid = $c->session('uid');
+  return $c->reply->not_found unless my $uid = $c->session('uid');
   $uid = bson_oid $uid;
   my $tid  = bson_oid $c->stash('tid');
   my $type = $c->stash('type');
@@ -149,7 +149,7 @@ sub notification {
     },
     sub {
       my ($d, $err, $notification) = @_;
-      return $c->render_exception("Error while find notification $uid: $err") if $err;
+      return $c->reply->exception("Error while find notification $uid: $err") if $err;
 
       my $action = '$addToSet';
       if ($notification) {
@@ -161,7 +161,7 @@ sub notification {
     },
     sub {
       my ($d, $err, $doc) = @_;
-      return $c->render_exception("Error while upsert notification: $err") if $err;
+      return $c->reply->exception("Error while upsert notification: $err") if $err;
 
       $c->redirect_to('task_view', id => $tid);
     }
@@ -242,7 +242,7 @@ sub register {
           return $db->collection('user')->find({'$or' => [{login => $login}, {email => $email}]})
             ->next($d->begin);
         }
-        return $c->render_exception("Error while insert new user: $err");
+        return $c->reply->exception("Error while insert new user: $err");
       }
 
       delete $c->session->{stype};
@@ -260,8 +260,8 @@ sub register {
     },
     sub {
       my ($d, $err, $user) = @_;
-      return $c->render_exception("Error while find user by login or email: $err") if $err;
-      return $c->render_exception("Error: user not exist but it must be") unless $user;
+      return $c->reply->exception("Error while find user by login or email: $err") if $err;
+      return $c->reply->exception("Error: user not exist but it must be") unless $user;
 
       my $socials = join ', ', (map { $_->{type} } @{$user->{social}});
       $c->flash(error =>
@@ -292,8 +292,8 @@ sub confirmation {
     },
     sub {
       my ($d, $err, $user) = @_;
-      return $c->render_exception("Error while insert new user: $err") if $err;
-      return $c->render_not_found unless $user;
+      return $c->reply->exception("Error while insert new user: $err") if $err;
+      return $c->reply->not_found unless $user;
 
       $c->session(uid => "$user->{_id}", pic => $user->{pic}, login => $user->{login});
       $c->flash(success => 'You are successfully registered');
@@ -316,8 +316,8 @@ sub all {
     },
     sub {
       my ($d, $err, $count) = @_;
-      return $c->render_exception("Error while find users: $err") if $err;
-      return $c->render_not_found if $count <= $skip;
+      return $c->reply->exception("Error while find users: $err") if $err;
+      return $c->reply->not_found if $count <= $skip;
 
       $d->pass($count);
       $db->collection('stat')->find({})->sort(bson_doc(score => -1, t_all => -1, t_ok => -1))->skip($skip)
@@ -325,7 +325,7 @@ sub all {
     },
     sub {
       my ($d, $count, $err, $users) = @_;
-      return $c->render_exception("Error while find users: $err") if $err;
+      return $c->reply->exception("Error while find users: $err") if $err;
 
       $c->stash(users => $users, next_btn => ($count - $skip > $limit) ? 1 : 0);
       $c->render;
@@ -338,7 +338,7 @@ sub change_name {
 
   my $login  = $c->stash('login');
   my $rlogin = $c->session('login');
-  return $c->render_not_found unless $rlogin;
+  return $c->reply->not_found unless $rlogin;
 
   my $nlogin = trim $c->param('name');
 
@@ -369,7 +369,7 @@ sub change_name {
           $c->flash(error => "Error: this login already exist.");
           return $c->redirect_to('user_settings', login => $rlogin);
         }
-        return $c->render_exception("Error while update user login: $uerr");
+        return $c->reply->exception("Error while update user login: $uerr");
       }
 
       $c->session(login => $nlogin);
@@ -390,11 +390,11 @@ sub change_name {
     },
     sub {
       my ($d, $serr, $snum, $soerr, $sonum, $toerr, $tonum, $twerr, $twnum, $cerr, $cnum) = @_;
-      return $c->render_exception("Error while update user login: $serr")                    if $serr;
-      return $c->render_exception("Error while update solution when update user: $soerr")    if $soerr;
-      return $c->render_exception("Error while update task owner when update user: $toerr")  if $toerr;
-      return $c->render_exception("Error while update task winner when update user: $twerr") if $twerr;
-      return $c->render_exception("Error while update comment when update user: $cerr")      if $cerr;
+      return $c->reply->exception("Error while update user login: $serr")                    if $serr;
+      return $c->reply->exception("Error while update solution when update user: $soerr")    if $soerr;
+      return $c->reply->exception("Error while update task owner when update user: $toerr")  if $toerr;
+      return $c->reply->exception("Error while update task winner when update user: $twerr") if $twerr;
+      return $c->reply->exception("Error while update comment when update user: $cerr")      if $cerr;
 
       return $c->redirect_to('user_settings', login => $nlogin);
     }

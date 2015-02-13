@@ -26,10 +26,10 @@ sub index {
     },
     sub {
       my ($d, $terr, $tasks, $pterr, $ptasks, $serr, $stats, $lerr, $languages) = @_;
-      return $c->render_exception("Error while find task: $terr")     if $terr;
-      return $c->render_exception("Error while find task: $pterr")    if $pterr;
-      return $c->render_exception("Error while find stat: $serr")     if $serr;
-      return $c->render_exception("Error while find solution: $lerr") if $lerr;
+      return $c->reply->exception("Error while find task: $terr")     if $terr;
+      return $c->reply->exception("Error while find task: $pterr")    if $pterr;
+      return $c->reply->exception("Error while find stat: $serr")     if $serr;
+      return $c->reply->exception("Error while find solution: $lerr") if $lerr;
 
       $c->stash(tasks => $tasks, ptasks => $ptasks, stats => $stats, languages => $languages);
       return $c->render;
@@ -48,7 +48,7 @@ sub admin {
 
   my $uid = $c->session('uid');
   unless ($uid) {
-    $c->render_exception('Oops');
+    $c->reply->exception('Oops');
     return undef;
   }
 
@@ -67,7 +67,7 @@ sub verify {
   $db->collection('user')->find_one(
     ($uid, {ban => 1}) => sub {
       my ($col, $err, $user) = @_;
-      return $c->render_exception("Error in bridge verify: $err") if $err;
+      return $c->reply->exception("Error in bridge verify: $err") if $err;
 
       unless ($user) {
         delete $c->session->{uid};
@@ -108,9 +108,9 @@ sub tasks {
     },
     sub {
       my ($d, $cerr, $tasks_number, $lerr, $languages) = @_;
-      return $c->render_exception("Error while count tasks: $cerr")   if $cerr;
-      return $c->render_exception("Error while get languages: $lerr") if $lerr;
-      return $c->render_not_found if (($page - 1) * $limit + 1 > $tasks_number);
+      return $c->reply->exception("Error while count tasks: $cerr")   if $cerr;
+      return $c->reply->exception("Error while get languages: $lerr") if $lerr;
+      return $c->reply->not_found if (($page - 1) * $limit + 1 > $tasks_number);
 
       my $need_next_btn = 0;
       $need_next_btn = 1 if $page * $limit < $tasks_number;
@@ -122,7 +122,7 @@ sub tasks {
     },
     sub {
       my ($d, $terr, $tasks) = @_;
-      return $c->render_exception("Error while find tasks: $terr") if $terr;
+      return $c->reply->exception("Error while find tasks: $terr") if $terr;
 
       $c->stash(tasks => $tasks);
       return $c->render;

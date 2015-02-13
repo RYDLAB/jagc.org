@@ -340,9 +340,9 @@ sub _user {
       },
       sub {
         my ($d, $err, $user, $ex_err, $ex_user) = @_;
-        return $c->render_exception("Error while find user: $err")                if $err;
-        return $c->render_exception("Error while find user by user id:  $ex_err") if $ex_err;
-        return $c->render_exception("Error user $uid not exist") unless $user;
+        return $c->reply->exception("Error while find user: $err")                if $err;
+        return $c->reply->exception("Error while find user by user id:  $ex_err") if $ex_err;
+        return $c->reply->exception("Error user $uid not exist") unless $user;
 
         if ($ex_user) {
           $c->flash(error => 'Error: this social account already exist');
@@ -370,7 +370,7 @@ sub _user {
       },
       sub {
         my ($d, $err, $user) = @_;
-        return $c->render_exception("Error while find_one user: $err") if $err;
+        return $c->reply->exception("Error while find_one user: $err") if $err;
 
         $c->_profile($user, $type);
         return $c->redirect_to(delete $c->session->{'base_url'} // 'index');
@@ -386,7 +386,7 @@ sub _user {
       },
       sub {
         my ($d, $err, $user) = @_;
-        return $c->render_exception("Error while find_one user: $err") if $err;
+        return $c->reply->exception("Error while find_one user: $err") if $err;
 
         unless ($user) {
           $c->session(
@@ -433,10 +433,10 @@ sub _user {
       },
       sub {
         my ($d, $err, $user) = (shift, shift, shift);
-        return $c->render_exception("Error while find_and_modify user: $err") if $err;
+        return $c->reply->exception("Error while find_and_modify user: $err") if $err;
         for (1 .. (scalar @_) / 2) {
           my ($err, $num) = (shift, shift);
-          return $c->render_exception("Error while update user pic: $err") if $err;
+          return $c->reply->exception("Error while update user pic: $err") if $err;
         }
 
         $c->_profile($user, $type);

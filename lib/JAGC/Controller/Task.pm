@@ -11,7 +11,7 @@ sub add {
   $c->render_later;
   my $db = $c->db;
 
-  return $c->render_not_found unless my $uid = $c->session('uid');
+  return $c->reply->not_found unless my $uid = $c->session('uid');
   $uid = bson_oid($uid);
 
   my $params      = $c->req->body_params;
@@ -61,7 +61,7 @@ sub add {
       tests => \@tests
       ) => sub {
       my ($collection, $err, $oid) = @_;
-      return $c->render_exception("Error while insert task: $err") if $err;
+      return $c->reply->exception("Error while insert task: $err") if $err;
 
       $c->app->minion->enqueue(notice_new_task => [$oid]);
       return $c->redirect_to('task_view', id => $oid);
@@ -89,9 +89,9 @@ sub comments {
     },
     sub {
       my ($d, $terr, $task, $cerr, $comments) = @_;
-      return $c->render_exception("Error while find_one task with $id: $terr") if $terr;
-      return $c->render_not_found unless $task;
-      return $c->render_exception("Error while find comments: $cerr") if $cerr;
+      return $c->reply->exception("Error while find_one task with $id: $terr") if $terr;
+      return $c->reply->not_found unless $task;
+      return $c->reply->exception("Error while find comments: $cerr") if $cerr;
 
       $c->stash(task => $task, comments => $comments);
       $c->render(action => 'comments');
@@ -114,9 +114,9 @@ sub solution_comments {
     },
     sub {
       my ($d, $serr, $solution, $cerr, $comments) = @_;
-      return $c->render_exception("Error while find_one solution with $id: $serr") if $serr;
-      return $c->render_not_found unless $solution;
-      return $c->render_exception("Error while find comments: $cerr") if $cerr;
+      return $c->reply->exception("Error while find_one solution with $id: $serr") if $serr;
+      return $c->reply->not_found unless $solution;
+      return $c->reply->exception("Error while find comments: $cerr") if $cerr;
 
       $c->stash(solution => $solution, comments => $comments);
       $c->render(action => 'solution_comments');
@@ -138,9 +138,9 @@ sub view {
     },
     sub {
       my ($d, $terr, $task, $lerr, $languages) = @_;
-      return $c->render_exception("Error while find_one task with $id: $terr") if $terr;
-      return $c->render_not_found unless $task;
-      return $c->render_exception("Error while find languages: $lerr") if $lerr;
+      return $c->reply->exception("Error while find_one task with $id: $terr") if $terr;
+      return $c->reply->not_found unless $task;
+      return $c->reply->exception("Error while find languages: $lerr") if $lerr;
 
       $c->stash(task => $task, languages => [map { $_->{name} } @$languages]);
 
@@ -169,10 +169,10 @@ sub view {
     },
     sub {
       my ($d, $err, $solutions, $cerr, $comments_count, $ccerr, $solution_comments, $nerr, $notice) = @_;
-      return $c->render_exception("Error while find solution: $err")                if $err;
-      return $c->render_exception("Error while count comments for $id: $cerr")      if $cerr;
-      return $c->render_exception("Error while find comments for solution: $ccerr") if $ccerr;
-      return $c->render_exception("Error while find notification for task: $nerr")  if $nerr;
+      return $c->reply->exception("Error while find solution: $err")                if $err;
+      return $c->reply->exception("Error while count comments for $id: $cerr")      if $cerr;
+      return $c->reply->exception("Error while find comments for solution: $ccerr") if $ccerr;
+      return $c->reply->exception("Error while find notification for task: $nerr")  if $nerr;
 
       my %solution_comments;
       map { $solution_comments{$_->{_id}} = $_->{count} } @$solution_comments;
@@ -192,7 +192,7 @@ sub edit_view {
   my $c = shift;
 
   my $uid = $c->session('uid');
-  return $c->render_not_found unless $uid;
+  return $c->reply->not_found unless $uid;
 
   my $tid = bson_oid $c->stash('tid');
   my $db  = $c->db;
@@ -202,12 +202,12 @@ sub edit_view {
     },
     sub {
       my ($d, $terr, $task) = @_;
-      return $c->render_exception("Error while find_one task $tid: $terr") if $terr;
-      return $c->render_not_found unless $task;
+      return $c->reply->exception("Error while find_one task $tid: $terr") if $terr;
+      return $c->reply->not_found unless $task;
 
       unless ($task->{owner}{uid} eq $uid) {
         $c->app->log->error("Error: not owner attempt to modify task");
-        return $c->render_not_found;
+        return $c->reply->not_found;
       }
       $c->stash(task => $task);
       $c->render(action => 'edit');
@@ -219,7 +219,7 @@ sub edit {
   my $c = shift;
 
   my $uid = $c->session('uid');
-  return $c->render_not_found unless $uid;
+  return $c->reply->not_found unless $uid;
 
   my $tid    = bson_oid $c->stash('tid');
   my $db     = $c->db;
@@ -230,12 +230,12 @@ sub edit {
     },
     sub {
       my ($d, $terr, $task) = @_;
-      return $c->render_exception("Error while find_one task $tid: $terr") if $terr;
-      return $c->render_not_found unless $task;
+      return $c->reply->exception("Error while find_one task $tid: $terr") if $terr;
+      return $c->reply->not_found unless $task;
 
       unless ($task->{owner}{uid} eq $uid) {
         $c->app->log->error("Error: not owner attempt to modify task");
-        return $c->render_not_found;
+        return $c->reply->not_found;
       }
 
       my $hparams = $params->to_hash;
@@ -310,8 +310,8 @@ sub edit {
     },
     sub {
       my ($d, $err, $num, $uerr, $update) = @_;
-      return $c->render_exception("Error while update task: $err")       if $err;
-      return $c->render_exception("Error while update solutions: $uerr") if $uerr;
+      return $c->reply->exception("Error while update task: $err")       if $err;
+      return $c->reply->exception("Error while update solutions: $uerr") if $uerr;
 
       $c->minion->enqueue(recheck => [$tid] => {priority => 0}) if $d->data('is_change_tests');
 
@@ -346,8 +346,8 @@ sub view_solutions {
     },
     sub {
       my ($d, $cerr, $count) = @_;
-      return $c->render_exception("Error while count solutions: $cerr") if $cerr;
-      return $c->render_not_found if $count <= $skip;
+      return $c->reply->exception("Error while count solutions: $cerr") if $cerr;
+      return $c->reply->not_found if $count <= $skip;
 
       $c->stash(need_next_btn => ($count - $skip > $limit ? 1 : 0));
       $d->data('cursor')->all($d->begin);
@@ -355,9 +355,9 @@ sub view_solutions {
     },
     sub {
       my ($d, $serr, $solutions, $terr, $task) = @_;
-      return $c->render_exception("Error while find solution: $serr")     if $serr;
-      return $c->render_exception("Error while find_one task $id: $terr") if $terr;
-      return $c->render_not_found unless $task;
+      return $c->reply->exception("Error while find solution: $serr")     if $serr;
+      return $c->reply->exception("Error while find_one task $id: $terr") if $terr;
+      return $c->reply->not_found unless $task;
 
       $c->stash(solutions => $solutions, task => $task);
       $c->render(action => 'solution');
@@ -369,7 +369,7 @@ sub comment_delete {
   my $c = shift;
 
   my $uid = $c->session('uid');
-  return $c->render_not_found unless $uid;
+  return $c->reply->not_found unless $uid;
 
   my $id = bson_oid $c->stash('id');
   $c->db->collection('comment')->update(
@@ -377,7 +377,7 @@ sub comment_delete {
     {'$set' => {del => bson_true}},
     sub {
       my ($db, $err, $upd) = @_;
-      return $c->render_exception("Error while update comment with $id: $err") if $err;
+      return $c->reply->exception("Error while update comment with $id: $err") if $err;
 
       $c->redirect_to($c->req->headers->referrer);
     }
@@ -388,7 +388,7 @@ sub comment_add {
   my $c = shift;
 
   my $uid = $c->session('uid');
-  return $c->render_not_found unless $uid;
+  return $c->reply->not_found unless $uid;
 
   my $id = bson_oid $c->stash('id');
 
@@ -399,8 +399,8 @@ sub comment_add {
     },
     sub {
       my ($d, $err, $task) = @_;
-      return $c->render_exception("Error while find_one task with $id: $err") if $err;
-      return $c->render_not_found unless $task;
+      return $c->reply->exception("Error while find_one task with $id: $err") if $err;
+      return $c->reply->not_found unless $task;
 
       $c->stash(task => $task);
       my $v = $c->validation;
@@ -434,7 +434,7 @@ sub comment_add {
     },
     sub {
       my ($d, $err, $cid) = @_;
-      return $c->render_exception("Error while insert comment: $err") if $err;
+      return $c->reply->exception("Error while insert comment: $err") if $err;
 
       $c->minion->enqueue(notice_new_comment => [$cid, $c->stash('task')->{name}]) unless $d->data('update');
       $c->redirect_to('task_comments', id => $id);
@@ -446,7 +446,7 @@ sub solution_comment_add {
   my $c = shift;
 
   my $uid = $c->session('uid');
-  return $c->render_not_found unless $uid;
+  return $c->reply->not_found unless $uid;
 
   my $id = bson_oid $c->stash('id');
   my $db = $c->db;
@@ -456,8 +456,8 @@ sub solution_comment_add {
     },
     sub {
       my ($d, $err, $solution) = @_;
-      return $c->render_exception("Error while find_one solution with $id: $err") if $err;
-      return $c->render_not_found unless $solution;
+      return $c->reply->exception("Error while find_one solution with $id: $err") if $err;
+      return $c->reply->not_found unless $solution;
 
       $c->stash(solution => $solution);
       my $v = $c->validation;
@@ -492,7 +492,7 @@ sub solution_comment_add {
     },
     sub {
       my ($d, $err, $cid) = @_;
-      return $c->render_exception("Error while insert comment: $err") if $err;
+      return $c->reply->exception("Error while insert comment: $err") if $err;
 
       $c->minion->enqueue(notice_new_comment => [$cid, $c->stash('solution')->{task}{name}])
         unless $d->data('update');
@@ -504,7 +504,7 @@ sub solution_comment_add {
 sub solution_add {
   my $c = shift;
 
-  return $c->render_not_found unless my $uid = $c->session('uid');
+  return $c->reply->not_found unless my $uid = $c->session('uid');
   $uid = bson_oid $uid;
 
   my $login = $c->session('login');
@@ -522,9 +522,9 @@ sub solution_add {
     },
     sub {
       my ($d, $terr, $task, $lerr, $languages) = @_;
-      return $c->render_exception("Error while find_one task with $tid: $terr") if $terr;
-      return $c->render_exception("Error while find languages: $lerr")          if $lerr;
-      return $c->render_not_found unless $task;
+      return $c->reply->exception("Error while find_one task with $tid: $terr") if $terr;
+      return $c->reply->exception("Error while find languages: $lerr")          if $lerr;
+      return $c->reply->not_found unless $task;
 
       my $langs = [map { $_->{name} } @$languages];
       $d->data(languages => $langs);
@@ -573,7 +573,7 @@ sub solution_add {
     },
     sub {
       my ($d, $serr, $sid) = @_;
-      return $c->render_exception("Error while insert solution: $serr") if $serr;
+      return $c->reply->exception("Error while insert solution: $serr") if $serr;
 
       $c->minion->enqueue(check => [$sid] => {priority => 1});
       return $c->redirect_to('event_user_info', login => $login);

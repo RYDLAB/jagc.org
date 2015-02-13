@@ -12,7 +12,7 @@ sub as {
   $c->db->collection('user')->find_one(
     bson_oid($c->param('uid')) => sub {
       my ($collection, $err, $user) = @_;
-      return $c->render_exception("Error while find user: $err") if $err;
+      return $c->reply->exception("Error while find user: $err") if $err;
 
       $c->session(uid => $user->{_id}, pic => $user->{pic}, login => $user->{login});
       return $c->redirect_to('index');
@@ -47,7 +47,7 @@ sub twitter {
           my $url = Mojo::URL->new($twitter->{url_redirect_auth})->query(oauth_token => $oauth_token);
           return $c->redirect_to($url);
         } else {
-          return $c->render_exception;
+          return $c->reply->exception;
         }
       } else {
         my $err = $tx->error;
@@ -108,8 +108,8 @@ sub fb {
 sub add_social {
   my $c   = shift;
   my $uid = $c->session('uid');
-  return $c->render_not_found unless $uid;
-  return $c->render_not_found unless $c->param('social');
+  return $c->reply->not_found unless $uid;
+  return $c->reply->not_found unless $c->param('social');
 
   my $url_name = 'login_' . $c->param('social');
 
@@ -122,8 +122,8 @@ sub remove_social {
 
   my $uid   = $c->session('uid');
   my $login = $c->session('login');
-  return $c->render_not_found unless $uid;
-  return $c->render_not_found unless $c->param('social');
+  return $c->reply->not_found unless $uid;
+  return $c->reply->not_found unless $c->param('social');
   $uid = bson_oid $uid;
 
   my $social = $c->param('social');
@@ -134,16 +134,16 @@ sub remove_social {
     },
     sub {
       my ($d, $err, $user) = @_;
-      return $c->render_exception("Error while get user: $err") if $err;
-      return $c->render_not_found unless $user;
-      return $c->render_not_found if @{$user->{social}} == 1;
+      return $c->reply->exception("Error while get user: $err") if $err;
+      return $c->reply->not_found unless $user;
+      return $c->reply->not_found if @{$user->{social}} == 1;
 
       my @socials = grep { !($social eq $_->{type}) } @{$user->{social}};
       $db->collection('user')->update(({_id => $uid}, {'$set' => {social => \@socials}}) => $d->begin);
     },
     sub {
       my ($d, $err, $num) = @_;
-      return $c->render_exception("Error while update user: $err") if $err;
+      return $c->reply->exception("Error while update user: $err") if $err;
 
       return $c->redirect_to('user_settings', login => $login);
     }
