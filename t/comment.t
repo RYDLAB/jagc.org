@@ -20,7 +20,19 @@ $t->get_ok("/oauth/test?id=4&name=${user_login}&pic=jagc.org/u4.png&email=${user
 $t->post_ok('/user/register' => form => {email => $user_email, login => $user_login});
 $t->get_ok($t->tx->res->headers->header('X-Confirm-Link'));
 
-$t->post_ok('/task/add' => form => {name => 't', description => 't', test_1_in => '1', test_1_out => '2'});
+my @tests = (
+  test_1_in  => 1,
+  test_1_out => 2,
+  test_2_in  => 2,
+  test_2_out => 3,
+  test_3_in  => 3,
+  test_3_out => 4,
+  test_4_in  => 4,
+  test_4_out => 5,
+  test_5_in  => 5,
+  test_5_out => 6
+);
+$t->post_ok('/task/add' => form => {name => 't', description => 't', @tests});
 my $turl = $t->tx->res->headers->location;
 $t->post_ok("$turl/solution/add" => form => {code => '1', language => 'test'});
 

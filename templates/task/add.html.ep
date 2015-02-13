@@ -1,8 +1,6 @@
 % layout 'default';
 % title 'Add task';
 
-% my $uid = session 'uid';
-
 <h2>Add new task</h2>
 
 % my $test_template = begin
@@ -77,7 +75,7 @@
   }
 </script>
 
-% if ($uid) {
+% if (session 'uid') {
   <form action="<%= url_for('task_add') %>" method="POST">
     <fieldset>
       <div class="row">

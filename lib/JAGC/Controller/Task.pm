@@ -14,9 +14,6 @@ sub add {
   return $c->render_not_found unless my $uid = $c->session('uid');
   $uid = bson_oid($uid);
 
-  my $login = $c->session('login');
-  my $pic   = $c->session('pic');
-
   my $params      = $c->req->body_params;
   my $hparams     = $params->to_hash;
   my @test_fields = grep { /^test_/ } $params->param;
@@ -26,29 +23,25 @@ sub add {
     $hparams->{$_} =~ s/^\n*|\n*$//g;
   }
 
-  my $name        = trim $hparams->{name};
-  my $description = trim $hparams->{description};
-  my $to_validate = {name => $name, description => $description};
+  my $to_validate = {name => trim($hparams->{name}), description => trim($hparams->{description})};
   $to_validate->{$_} = $hparams->{$_} for @test_fields;
 
-  my $validation = $c->validation;
-  $validation->input($to_validate);
-  $validation->required('name')->size(1, 50, 'Length of task name must be no more than 50 characters');
-  $validation->required('description')
-    ->size(1, 500, 'Length of description must be no more than 500 characters');
-  $validation->required($_)->size(1, 100000, 'Length of test must be no more than 100000 characters')
-    for @test_fields;
+  my $v = $c->validation;
+  $v->input($to_validate);
+  $v->required('name')->size(1, 50, 'Length of task name must be no more than 50 characters');
+  $v->required('description')->size(1, 500, 'Length of description must be no more than 500 characters');
+  $v->required($_)->size(1, 100000, 'Length of test must be no more than 100000 characters') for @test_fields;
 
-  if ($validation->has_error || scalar @test_fields == 0) {
-    $c->stash(alert_error => 'You must add at least one test') if scalar @test_fields == 0;
+  if ($v->has_error || @test_fields < 5) {
+    $c->stash(alert_error => 'You need create at least 5 tests') if @test_fields < 5;
     return $c->add_view;
   }
 
   my @tests;
   for my $tin (grep { /^test_\d+_in$/ } $params->param) {
     (my $tout = $tin) =~ s/in/out/;
-    my $test_in  = $validation->param($tin);
-    my $test_out = $validation->param($tout);
+    my $test_in  = $v->param($tin);
+    my $test_out = $v->param($tout);
     my $test     = bson_doc(
       _id => bson_oid,
       in  => bson_bin(encode 'UTF-8', $test_in),
@@ -60,9 +53,9 @@ sub add {
 
   $db->collection('task')->insert(
     bson_doc(
-      name  => $validation->param('name'),
-      desc  => $validation->param('description'),
-      owner => bson_doc(uid => $uid, login => $login, pic => $pic),
+      name  => $v->param('name'),
+      desc  => $v->param('description'),
+      owner => bson_doc(uid => $uid, login => $c->session('login'), pic => $c->session('pic')),
       stat  => bson_doc(all => 0, ok => 0),
       ts    => bson_time,
       tests => \@tests
@@ -253,9 +246,7 @@ sub edit {
         $hparams->{$_} =~ s/^\n*|\n*$//g;
       }
 
-      my $name        = trim $hparams->{name};
-      my $description = trim $hparams->{description};
-      my $to_validate = {name => $name, description => $description};
+      my $to_validate = {name => trim($hparams->{name}), description => trim($hparams->{description})};
       $to_validate->{$_} = $hparams->{$_} for @test_fields;
 
       my $v = $c->validation;
@@ -265,9 +256,9 @@ sub edit {
       $v->required($_)->size(1, 100000, 'Length of test must be no more than 100000 characters')
         for @test_fields;
 
-      if ($v->has_error || scalar @test_fields == 0) {
-        $c->stash(alert_error => 'You must add at least one test') if scalar @test_fields == 0;
-        return $c->edit_view();
+      if ($v->has_error || @test_fields < 5) {
+        $c->stash(alert_error => 'You need add at least 5 tests') if @test_fields < 5;
+        return $c->edit_view;
       }
 
       my $is_change_tests = 0;
@@ -279,10 +270,7 @@ sub edit {
           my $out_o = decode 'UTF-8', $task->{tests}->[$_ - 1]->{out};
           my $in_n  = $v->param('test_' . $_ . '_in');
           my $out_n = $v->param('test_' . $_ . '_out');
-          unless ($in_o eq $in_n && $out_o eq $out_n) {
-            $is_change_tests = 1;
-            last;
-          }
+          unless ($in_o eq $in_n && $out_o eq $out_n) { $is_change_tests = 1; last }
         }
       }
 
