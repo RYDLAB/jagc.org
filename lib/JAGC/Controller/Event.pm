@@ -67,7 +67,7 @@ sub rss {
   my $c = shift;
 
   $c->delay(
-    sub { $c->db->c('solution')->find->sort({ts => -1})->limit(4)->all(shift->begin) },
+    sub { $c->db->c('solution')->find->sort({ts => -1})->limit(40)->all(shift->begin) },
     sub {
       my ($d, $err, $events) = @_;
       return $c->reply->exception("Error while get events: $err") if $err;
