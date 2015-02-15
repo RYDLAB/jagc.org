@@ -273,18 +273,15 @@ sub register {
 }
 
 sub confirmation {
-  my $c = shift;
-
-
-  my $uid   = $c->stash('uid');
-  my $email = $c->stash('email');
-  my $code  = $c->stash('code');
-
+  my $c  = shift;
   my $db = $c->db;
+
+  my $uid = $c->stash('uid');
+
   $c->delay(
     sub {
       my $user_opt = {
-        query => {_id => bson_oid($uid), email => $email, 'code.c' => $code},
+        query => {_id => bson_oid($uid), email => $c->stash('email'), 'code.c' => $c->stash('code')},
         update => {'$set' => {'code.confirm' => bson_true, 'code.tsc' => bson_time}}
       };
 
@@ -311,23 +308,21 @@ sub all {
 
   my $db = $c->db;
   $c->delay(
-    sub {
-      $db->collection('stat')->find({})->count(shift->begin);
-    },
+    sub { $db->collection('stat')->find({})->count(shift->begin) },
     sub {
       my ($d, $err, $count) = @_;
       return $c->reply->exception("Error while find users: $err") if $err;
       return $c->reply->not_found if $count <= $skip;
 
       $d->pass($count);
-      $db->collection('stat')->find({})->sort(bson_doc(score => -1, t_all => -1, t_ok => -1))->skip($skip)
-        ->fields({tasks => 0})->all($d->begin);
+      $db->collection('stat')->find({})->sort(bson_doc(score => -1, t_all => -1, t_ok => -1))->limit($limit)
+        ->skip($skip)->fields({tasks => 0})->all($d->begin);
     },
     sub {
       my ($d, $count, $err, $users) = @_;
       return $c->reply->exception("Error while find users: $err") if $err;
 
-      $c->stash(users => $users, next_btn => ($count - $skip > $limit) ? 1 : 0);
+      $c->stash(users => $users, skip => $skip, next_btn => ($count - $skip > $limit) ? 1 : 0);
       $c->render;
     }
   );

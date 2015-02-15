@@ -13,7 +13,7 @@
         <th>User name</th>
       </tr>
     </thead>
-    % my $count = 1;
+    % my $count = $skip + 1;
     % for my $user (@$users) {
       <tr>
         <td><%= $count %></td>
