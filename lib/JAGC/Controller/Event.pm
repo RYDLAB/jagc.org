@@ -2,6 +2,7 @@ package JAGC::Controller::Event;
 use Mojo::Base 'Mojolicious::Controller';
 
 use Mango::BSON ':bson';
+use Mojo::Util 'xml_escape';
 use XML::RSS;
 
 sub info {
@@ -66,9 +67,7 @@ sub rss {
   my $c = shift;
 
   $c->delay(
-    sub {
-      $c->db->c('solution')->find->sort({ts => -1})->limit(40)->all(shift->begin);
-    },
+    sub { $c->db->c('solution')->find->sort({ts => -1})->limit(4)->all(shift->begin) },
     sub {
       my ($d, $err, $events) = @_;
       return $c->reply->exception("Error while get events: $err") if $err;
@@ -86,7 +85,7 @@ sub rss {
           title => sprintf('Solution for "%s" by %s' => $event->{task}{name}, $event->{user}{login}),
           permaLink => $c->url_for($event->{s} eq 'finished' ? 'task_view' : 'task_view_incorrect',
             id => $event->{task}{tid})->fragment($event->{_id})->to_abs,
-          description => $event->{code},
+          description => sprintf('<![CDATA[<html><pre>%s</pre></html>]]>', xml_escape $event->{code}),
           pubDate     => $event->{ts}->to_datetime
         );
       }
