@@ -12,8 +12,7 @@ sub call {
   my $task = $db->c('task')->find_one($tid);
   my $users = $db->c('user')->find({'notice.new' => bson_true}, {email => 1, login => 1})->all;
 
-  my $c    = $job->app->build_controller;
-  my $base = Mojo::URL->new($config->{site_url});
+  my $c = $job->app->build_controller;
 
   for my $user (@$users) {
     my $data = $c->render_to_string(
@@ -21,8 +20,8 @@ sub call {
       format  => 'email',
       login   => $user->{login},
       tname   => $task->{name},
-      tlink   => $c->url_for('task_view', id => $task->{_id})->to_abs($base),
-      profile => $c->url_for('user_settings', login => $user->{login})->to_abs($base)
+      tlink   => $c->url_for('task_view', id => $task->{_id})->to_abs,
+      profile => $c->url_for('user_settings', login => $user->{login})->to_abs
     );
 
     my $tx = $job->app->ua->post(

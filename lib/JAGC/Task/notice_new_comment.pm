@@ -14,8 +14,7 @@ sub call {
   my $users =
     $db->c('user')->find({_id => {'$in' => [map { $_->{uid} } @$notes]}}, {email => 1, login => 1})->all;
 
-  my $c    = $job->app->build_controller;
-  my $base = Mojo::URL->new($config->{site_url});
+  my $c = $job->app->build_controller;
 
   for my $user (@$users) {
     next if $user->{login} eq $comment->{user}{login};
@@ -27,9 +26,9 @@ sub call {
       tname   => $tname,
       comment => $comment->{html},
       clink   => $comment->{sid}
-      ? $c->url_for('solution_comments', id => $comment->{sid})->to_abs($base)
-      : $c->url_for('task_comments',     id => $comment->{tid})->to_abs($base),
-      tlink => $c->url_for('task_view', id => $comment->{tid})->to_abs($base),
+      ? $c->url_for('solution_comments', id => $comment->{sid})->to_abs
+      : $c->url_for('task_comments',     id => $comment->{tid})->to_abs,
+      tlink => $c->url_for('task_view', id => $comment->{tid})->to_abs
     );
 
     my $tx = $job->app->ua->post(
