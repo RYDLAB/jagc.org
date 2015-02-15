@@ -51,7 +51,7 @@ sub add {
     push @tests, $test;
   }
 
-  $db->collection('task')->insert(
+  $db->c('task')->insert(
     bson_doc(
       name  => $v->param('name'),
       desc  => $v->param('description'),
@@ -83,8 +83,8 @@ sub comments {
     sub {
       my $d = shift;
 
-      $db->collection('task')->find_one($id => $d->begin);
-      $db->collection('comment')->find(bson_doc(type => 'task', tid => $id, del => bson_false))
+      $db->c('task')->find_one($id => $d->begin);
+      $db->c('comment')->find(bson_doc(type => 'task', tid => $id, del => bson_false))
         ->sort(bson_doc(ts => 1))->all($d->begin);
     },
     sub {
@@ -108,8 +108,8 @@ sub solution_comments {
     sub {
       my $d = shift;
 
-      $db->collection('solution')->find_one($id => $d->begin);
-      $db->collection('comment')->find(bson_doc(type => 'solution', sid => $id, del => bson_false))
+      $db->c('solution')->find_one($id => $d->begin);
+      $db->c('comment')->find(bson_doc(type => 'solution', sid => $id, del => bson_false))
         ->sort(bson_doc(ts => 1))->all($d->begin);
     },
     sub {
@@ -133,8 +133,8 @@ sub view {
     sub {
       my $d = shift;
 
-      $db->collection('task')->find_one($id => $d->begin);
-      $db->collection('language')->find({})->fields({name => 1, _id => 0})->all($d->begin);
+      $db->c('task')->find_one($id => $d->begin);
+      $db->c('language')->find({})->fields({name => 1, _id => 0})->all($d->begin);
     },
     sub {
       my ($d, $terr, $task, $lerr, $languages) = @_;
@@ -144,7 +144,7 @@ sub view {
 
       $c->stash(task => $task, languages => [map { $_->{name} } @$languages]);
 
-      my $collection = $db->collection('solution');
+      my $collection = $db->c('solution');
       my $cursor;
       if ($c->stash('s') == 1) {
         $cursor = $collection->find(bson_doc('task.tid' => $id, s => 'finished'))->fields({task => 0})
@@ -155,16 +155,14 @@ sub view {
           ->fields({task => 0})->sort(bson_doc(ts => 1))->limit(20);
       }
       $cursor->all($d->begin);
-      $db->collection('comment')->find(bson_doc(type => 'task', tid => $id, del => bson_false))
-        ->count($d->begin);
-      $db->collection('comment')->aggregate([
+      $db->c('comment')->find(bson_doc(type => 'task', tid => $id, del => bson_false))->count($d->begin);
+      $db->c('comment')->aggregate([
           {'$match' => bson_doc(tid => $id, type => 'solution', del => bson_false)},
           {'$group' => bson_doc(_id => '$sid', count => {'$sum' => 1})}
         ]
       )->all($d->begin);
       if (my $uid = $c->session('uid')) {
-        $db->collection('notification')
-          ->find_one(bson_doc(uid => bson_oid($uid), tid => $id), {for => 1}, $d->begin);
+        $db->c('notification')->find_one(bson_doc(uid => bson_oid($uid), tid => $id), {for => 1}, $d->begin);
       }
     },
     sub {
@@ -198,7 +196,7 @@ sub edit_view {
   my $db  = $c->db;
   $c->delay(
     sub {
-      $db->collection('task')->find_one($tid => shift->begin);
+      $db->c('task')->find_one($tid => shift->begin);
     },
     sub {
       my ($d, $terr, $task) = @_;
@@ -226,7 +224,7 @@ sub edit {
   my $params = $c->req->body_params;
   $c->delay(
     sub {
-      $db->collection('task')->find_one($tid => shift->begin);
+      $db->c('task')->find_one($tid => shift->begin);
     },
     sub {
       my ($d, $terr, $task) = @_;
@@ -301,12 +299,11 @@ sub edit {
         $tupdate_opt->{'$set'}{'stat.ok'}  = 0;
         $tupdate_opt->{'$unset'}{'winner'} = 1;
       }
-      $db->collection('task')->update(({_id => $tid}, $tupdate_opt) => $d->begin);
+      $db->c('task')->update(({_id => $tid}, $tupdate_opt) => $d->begin);
 
       my $supdate_opt = {'task.name' => $v->param('name')};
       $supdate_opt->{s} = 'inactive' if $is_change_tests;
-      $db->collection('solution')
-        ->update({'task.tid' => $tid}, {'$set' => $supdate_opt}, {multi => 1} => $d->begin);
+      $db->c('solution')->update({'task.tid' => $tid}, {'$set' => $supdate_opt}, {multi => 1} => $d->begin);
     },
     sub {
       my ($d, $err, $num, $uerr, $update) = @_;
@@ -333,7 +330,7 @@ sub view_solutions {
     sub {
       my $d = shift;
 
-      my $collection = $db->collection('solution');
+      my $collection = $db->c('solution');
       my $cursor;
       if ($c->stash('s') == 1) {
         $cursor = $collection->find(bson_doc('task.tid' => $id, s => 'finished'));
@@ -351,7 +348,7 @@ sub view_solutions {
 
       $c->stash(need_next_btn => ($count - $skip > $limit ? 1 : 0));
       $d->data('cursor')->all($d->begin);
-      $db->collection('task')->find_one($id, {tests => 1} => $d->begin);
+      $db->c('task')->find_one($id, {tests => 1} => $d->begin);
     },
     sub {
       my ($d, $serr, $solutions, $terr, $task) = @_;
@@ -372,7 +369,7 @@ sub comment_delete {
   return $c->reply->not_found unless $uid;
 
   my $id = bson_oid $c->stash('id');
-  $c->db->collection('comment')->update(
+  $c->db->c('comment')->update(
     {_id => $id, 'user.uid' => $uid},
     {'$set' => {del => bson_true}},
     sub {
@@ -395,7 +392,7 @@ sub comment_add {
   my $db = $c->db;
   $c->delay(
     sub {
-      $db->collection('task')->find_one($id => shift->begin);
+      $db->c('task')->find_one($id => shift->begin);
     },
     sub {
       my ($d, $err, $task) = @_;
@@ -414,10 +411,10 @@ sub comment_add {
 
       if (my $cid = $c->req->param('cid')) {
         $d->data(update => 1);
-        $db->collection('comment')->update({_id => bson_oid($cid), 'user.uid' => $uid},
+        $db->c('comment')->update({_id => bson_oid($cid), 'user.uid' => $uid},
           {'$set' => {text => $v->param('text'), html => $html, edit => bson_true}} => $d->begin);
       } else {
-        $db->collection('comment')->insert(
+        $db->c('comment')->insert(
           bson_doc(
             type => 'task',
             tid  => $id,
@@ -452,7 +449,7 @@ sub solution_comment_add {
   my $db = $c->db;
   $c->delay(
     sub {
-      $db->collection('solution')->find_one($id => shift->begin);
+      $db->c('solution')->find_one($id => shift->begin);
     },
     sub {
       my ($d, $err, $solution) = @_;
@@ -471,10 +468,10 @@ sub solution_comment_add {
 
       if (my $cid = $c->req->param('cid')) {
         $d->data(update => 1);
-        $db->collection('comment')->update({_id => bson_oid($cid), 'user.uid' => $c->session('uid')},
+        $db->c('comment')->update({_id => bson_oid($cid), 'user.uid' => $c->session('uid')},
           {'$set' => {text => $v->param('text'), html => $html, edit => bson_true}} => $d->begin);
       } else {
-        $db->collection('comment')->insert(
+        $db->c('comment')->insert(
           bson_doc(
             type => 'solution',
             tid  => $solution->{task}{tid},
@@ -517,8 +514,8 @@ sub solution_add {
   $c->delay(
     sub {
       my $d = shift;
-      $db->collection('task')->find_one($tid => $d->begin);
-      $db->collection('language')->find({})->all($d->begin);
+      $db->c('task')->find_one($tid => $d->begin);
+      $db->c('language')->find({})->all($d->begin);
     },
     sub {
       my ($d, $terr, $task, $lerr, $languages) = @_;
@@ -559,7 +556,7 @@ sub solution_add {
       $d->data(code => $v->param('code'));
       $c->session(lang => $v->param('language'));
 
-      $db->collection('solution')->insert(
+      $db->c('solution')->insert(
         bson_doc(
           task => {tid => $tid, name  => $task->{name}},
           user => {uid => $uid, login => $login, pic => $pic},

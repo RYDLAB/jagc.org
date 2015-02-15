@@ -11,7 +11,7 @@ my $t = Test::Mojo->new('JAGC')->tap(
     $_->app->db->command({dropDatabase => 1});
   }
 );
-$t->app->db->collection('language')->insert({name => 'test', path => '/usr/bin/test'});
+$t->app->db->c('language')->insert({name => 'test', path => '/usr/bin/test'});
 
 my $user_email = 'u3@jagc.org';
 my $user_login = 'u3';

@@ -17,7 +17,7 @@ sub run {
 
   given ($command) {
     when ('remove') {
-      my $doc = $db->collection('solution')->remove({_id => $sid});
+      my $doc = $db->c('solution')->remove({_id => $sid});
       warn "Solution [$sid] doesn't exist\n" unless $doc->{n} > 0;
     }
     default {

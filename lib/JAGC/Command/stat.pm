@@ -16,7 +16,7 @@ sub run {
 
   $log->debug('Start calculate statistic');
 
-  my $tasks = $db->collection('solution')->aggregate([
+  my $tasks = $db->c('solution')->aggregate([
       {'$match' => {s => 'finished'}},
       {'$sort' => bson_doc(size => 1, ts => 1)},
       {
@@ -36,7 +36,7 @@ sub run {
     ]
   )->all;
 
-  my $users_cnt = $db->collection('solution')->aggregate([{
+  my $users_cnt = $db->c('solution')->aggregate([{
         '$group' => {
           _id   => {uid      => '$user.uid', tid => '$task.tid'},
           ts    => {'$max'   => '$ts'},
@@ -88,7 +88,7 @@ sub run {
       push @tasks, {tid => bson_oid($tid), pos => $t->{pos}, sid => $t->{sid}, name => $t->{name}};
     }
 
-    $db->collection('stat_tmp')->insert(
+    $db->c('stat_tmp')->insert(
       bson_doc(
         _id    => bson_oid($uid),
         login  => $u->{login},
@@ -109,8 +109,8 @@ sub run {
   my $admin = $db->mango->db('admin');
   $admin->command(
     bson_doc(
-      renameCollection => $db->collection('stat_tmp')->full_name,
-      to               => $db->collection('stat')->full_name,
+      renameCollection => $db->c('stat_tmp')->full_name,
+      to               => $db->c('stat')->full_name,
       dropTarget       => bson_true
     )
   );

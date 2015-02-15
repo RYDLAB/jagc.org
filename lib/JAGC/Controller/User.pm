@@ -13,7 +13,7 @@ sub info {
   my $db    = $c->db;
   $c->delay(
     sub {
-      $db->collection('stat')->find_one({login => $login} => shift->begin);
+      $db->c('stat')->find_one({login => $login} => shift->begin);
     },
     sub {
       my ($d, $serr, $user_stat) = @_;
@@ -24,7 +24,7 @@ sub info {
         return $c->render;
       }
 
-      $db->collection('user')->find_one({login => $login}, {login => 1, pic => 1} => $d->begin);
+      $db->c('user')->find_one({login => $login}, {login => 1, pic => 1} => $d->begin);
     },
     sub {
       my ($d, $uerr, $user_stat) = @_;
@@ -48,9 +48,8 @@ sub tasks_owner {
     sub {
       my $d = shift;
 
-      $db->collection('user')->find_one({login => $login}, {login => 1, pic => 1} => $d->begin);
-      $db->collection('task')->find({'owner.login' => $login})->sort({ts => -1})->fields({name => 1})
-        ->all($d->begin);
+      $db->c('user')->find_one({login => $login}, {login => 1, pic => 1} => $d->begin);
+      $db->c('task')->find({'owner.login' => $login})->sort({ts => -1})->fields({name => 1})->all($d->begin);
     },
     sub {
       my ($d, $uerr, $owner, $terr, $tasks) = @_;
@@ -60,7 +59,7 @@ sub tasks_owner {
       return $c->reply->not_found unless $tasks;
 
       $c->stash(owner => $owner, tasks => $tasks);
-      $db->collection('solution')->aggregate([
+      $db->c('solution')->aggregate([
           {'$match' => {s => 'finished', 'task.tid' => {'$in' => [map { $_->{_id} } @$tasks]}}},
           {'$group' => {_id => {t => '$task.tid', u => '$user.uid'}}},
           {'$group' => {_id => '$_id.t', u => {'$sum' => 1}}}
@@ -92,7 +91,7 @@ sub settings {
   my $db = $c->db;
   $c->delay(
     sub {
-      $db->collection('user')->find_one($uid => shift->begin);
+      $db->c('user')->find_one($uid => shift->begin);
     },
     sub {
       my ($d, $uerr, $user) = @_;
@@ -114,7 +113,7 @@ sub notification_new {
   my $db = $c->db;
   $c->delay(
     sub {
-      $db->collection('user')->find_one($uid => shift->begin);
+      $db->c('user')->find_one($uid => shift->begin);
     },
     sub {
       my ($d, $uerr, $user) = @_;
@@ -122,7 +121,7 @@ sub notification_new {
       return $c->reply->not_found unless $user;
 
       $d->data(login => $user->{login});
-      $db->collection('user')->update({_id => $uid},
+      $db->c('user')->update({_id => $uid},
         {'$set' => {'notice.new' => $user->{notice}{new} ? bson_false : bson_true}} => $d->begin);
     },
     sub {
@@ -145,7 +144,7 @@ sub notification {
   my $db = $c->db;
   $c->delay(
     sub {
-      $db->collection('notification')->find_one(bson_doc(uid => $uid, tid => $tid) => shift->begin);
+      $db->c('notification')->find_one(bson_doc(uid => $uid, tid => $tid) => shift->begin);
     },
     sub {
       my ($d, $err, $notification) = @_;
@@ -156,7 +155,7 @@ sub notification {
         $action = '$pull' if grep { $_ eq $type } @{$notification->{for}};
       }
 
-      $db->collection('notification')
+      $db->c('notification')
         ->update(bson_doc(uid => $uid, tid => $tid), {$action => {for => $type}}, {upsert => 1} => $d->begin);
     },
     sub {
@@ -232,15 +231,14 @@ sub register {
         code => {confirm => bson_false, c => $code, tss => bson_time, tsc => bson_time}
       };
 
-      $db->collection('user')->insert($user_opt => shift->begin);
+      $db->c('user')->insert($user_opt => shift->begin);
     },
     sub {
       my ($d, $err, $uid) = @_;
 
       if ($err) {
         if ($err =~ /11000/) {
-          return $db->collection('user')->find({'$or' => [{login => $login}, {email => $email}]})
-            ->next($d->begin);
+          return $db->c('user')->find({'$or' => [{login => $login}, {email => $email}]})->next($d->begin);
         }
         return $c->reply->exception("Error while insert new user: $err");
       }
@@ -285,7 +283,7 @@ sub confirmation {
         update => {'$set' => {'code.confirm' => bson_true, 'code.tsc' => bson_time}}
       };
 
-      $db->collection('user')->find_and_modify($user_opt => shift->begin);
+      $db->c('user')->find_and_modify($user_opt => shift->begin);
     },
     sub {
       my ($d, $err, $user) = @_;
@@ -308,14 +306,14 @@ sub all {
 
   my $db = $c->db;
   $c->delay(
-    sub { $db->collection('stat')->find({})->count(shift->begin) },
+    sub { $db->c('stat')->find({})->count(shift->begin) },
     sub {
       my ($d, $err, $count) = @_;
       return $c->reply->exception("Error while find users: $err") if $err;
       return $c->reply->not_found if $count <= $skip;
 
       $d->pass($count);
-      $db->collection('stat')->find({})->sort(bson_doc(score => -1, t_all => -1, t_ok => -1))->limit($limit)
+      $db->c('stat')->find({})->sort(bson_doc(score => -1, t_all => -1, t_ok => -1))->limit($limit)
         ->skip($skip)->fields({tasks => 0})->all($d->begin);
     },
     sub {
@@ -355,7 +353,7 @@ sub change_name {
   my $db = $c->db;
   $c->delay(
     sub {
-      $db->collection('user')->update({login => $rlogin}, {'$set' => {login => $nlogin}} => shift->begin);
+      $db->c('user')->update({login => $rlogin}, {'$set' => {login => $nlogin}} => shift->begin);
     },
     sub {
       my ($d, $uerr, $unum) = @_;
@@ -369,17 +367,17 @@ sub change_name {
 
       $c->session(login => $nlogin);
 
-      $db->collection('stat')->update({login => $rlogin}, {'$set' => {login => $nlogin}} => $d->begin);
-      $db->collection('solution')
+      $db->c('stat')->update({login => $rlogin}, {'$set' => {login => $nlogin}} => $d->begin);
+      $db->c('solution')
         ->update(
         ({'user.login' => $rlogin}, {'$set' => {'user.login' => $nlogin}}, {multi => 1}) => $d->begin);
-      $db->collection('task')
+      $db->c('task')
         ->update(
         ({'owner.login' => $rlogin}, {'$set' => {'owner.login' => $nlogin}}, {multi => 1}) => $d->begin);
-      $db->collection('task')
+      $db->c('task')
         ->update(
         ({'winner.login' => $rlogin}, {'$set' => {'winner.login' => $nlogin}}, {multi => 1}) => $d->begin);
-      $db->collection('comment')
+      $db->c('comment')
         ->update(
         ({'user.login' => $rlogin}, {'$set' => {'user.login' => $nlogin}}, {multi => 1}) => $d->begin);
     },

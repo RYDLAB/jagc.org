@@ -334,8 +334,8 @@ sub _user {
     Mojo::IOLoop->delay(
       sub {
         my $d = shift;
-        $db->collection('user')->find_one(bson_oid($uid) => $d->begin);
-        $db->collection('user')
+        $db->c('user')->find_one(bson_oid($uid) => $d->begin);
+        $db->c('user')
           ->find_one({social => {'$elemMatch' => bson_doc(type => $type, id => $id)}} => $d->begin);
       },
       sub {
@@ -366,7 +366,7 @@ sub _user {
           },
           new => bson_true
         };
-        $db->collection('user')->find_and_modify($user_opt => $d->begin);
+        $db->c('user')->find_and_modify($user_opt => $d->begin);
       },
       sub {
         my ($d, $err, $user) = @_;
@@ -379,7 +379,7 @@ sub _user {
   } else {
     Mojo::IOLoop->delay(
       sub {
-        $db->collection('user')->find_one(
+        $db->c('user')->find_one(
           {social => {'$elemMatch' => bson_doc(type => $type, id => $id)}},
           {login => 1, pic => 1, code => 1, type => 1} => shift->begin
         );
@@ -407,7 +407,7 @@ sub _user {
         my $set_opt = {'social.$.name' => $name, 'social.$.pic' => $pic, 'social.$.email' => $email};
         $set_opt->{pic} = $pic if ($type eq $user->{type} && $pic ne $user->{pic});
 
-        $db->collection('user')->find_and_modify({
+        $db->c('user')->find_and_modify({
             query  => {social => {'$elemMatch' => bson_doc(type => $type, id => $id)}},
             update => {'$set' => $set_opt},
             new    => bson_true
@@ -415,18 +415,17 @@ sub _user {
         );
 
         if ($type eq $user->{type} && $pic ne $user->{pic}) {
-          $db->collection('task')
+          $db->c('task')
             ->update(({'winner.login' => $user->{login}}, {'$set' => {'winner.pic' => $pic}}, {multi => 1}) =>
               $d->begin);
-          $db->collection('task')
+          $db->c('task')
             ->update(({'owner.login' => $user->{login}}, {'$set' => {'owner.pic' => $pic}}, {multi => 1}) =>
               $d->begin);
-          $db->collection('solution')
+          $db->c('solution')
             ->update(
             ({'user.login' => $user->{login}}, {'$set' => {'user.pic' => $pic}}, {multi => 1}) => $d->begin);
-          $db->collection('stat')
-            ->update(({login => $user->{login}}, {'$set' => {pic => $pic}}) => $d->begin);
-          $db->collection('comment')
+          $db->c('stat')->update(({login => $user->{login}}, {'$set' => {pic => $pic}}) => $d->begin);
+          $db->c('comment')
             ->update(
             ({'user.login' => $user->{login}}, {'$set' => {'user.pic' => $pic}}, {multi => 1}) => $d->begin);
         }

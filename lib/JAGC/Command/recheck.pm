@@ -10,14 +10,12 @@ sub run {
   my $self = shift;
   my $db   = $self->app->db;
 
-  my $cursor = $db->collection('task')->find({})->fields({_id => 1, owner => 1});
+  my $cursor = $db->c('task')->find({})->fields({_id => 1, owner => 1});
   while (my $task = $cursor->next) {
-    $db->collection('solution')
-      ->update({'task.tid' => $task->{_id}}, {'$set' => {s => 'inactive'}}, {multi => 1});
-    $db->collection('task')->update({_id => $task->{_id}}, {'$set' => {'stat.all' => 0, 'stat.ok' => 0}});
+    $db->c('solution')->update({'task.tid' => $task->{_id}}, {'$set' => {s => 'inactive'}}, {multi => 1});
+    $db->c('task')->update({_id => $task->{_id}}, {'$set' => {'stat.all' => 0, 'stat.ok' => 0}});
 
-    my $cursor =
-      $db->collection('solution')->find({'task.tid' => $task->{_id}})->fields({_id => 1})->sort({ts => 1});
+    my $cursor = $db->c('solution')->find({'task.tid' => $task->{_id}})->fields({_id => 1})->sort({ts => 1});
     while (my $s = $cursor->next) {
       $self->app->minion->enqueue(check => [$s->{_id}] => {priority => 0});
     }

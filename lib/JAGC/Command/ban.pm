@@ -13,7 +13,7 @@ sub run {
   eval { $uid = bson_oid $uid; };
   die "Invalid [UID]: $uid\n" if $@;
 
-  my $doc = $db->collection('user')->update({_id => $uid}, {'$set' => {ban => bson_true}});
+  my $doc = $db->c('user')->update({_id => $uid}, {'$set' => {ban => bson_true}});
   unless ($doc->{n} > 0) {
     warn "User [UID] doesn't exist";
   } else {

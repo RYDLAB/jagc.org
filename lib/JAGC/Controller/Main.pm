@@ -11,13 +11,12 @@ sub index {
     sub {
       my $d = shift;
 
-      $db->collection('task')->find()->limit(20)->sort({ts => -1})->fields({desc => 0, tests => 0})
+      $db->c('task')->find()->limit(20)->sort({ts => -1})->fields({desc => 0, tests => 0})->all($d->begin);
+      $db->c('task')->find()->limit(20)->sort({'stat.all' => -1})->fields({desc => 0, tests => 0})
         ->all($d->begin);
-      $db->collection('task')->find()->limit(20)->sort({'stat.all' => -1})->fields({desc => 0, tests => 0})
-        ->all($d->begin);
-      $db->collection('stat')->find()->fields({score => 1, pic => 1, login => 1})
+      $db->c('stat')->find()->fields({score => 1, pic => 1, login => 1})
         ->sort(bson_doc(score => -1, t_all => -1, t_ok => -1))->limit(-10)->all($d->begin);
-      $db->collection('solution')->aggregate([
+      $db->c('solution')->aggregate([
           {'$match' => {s   => 'finished'}},
           {'$group' => {_id => '$lng', c => {'$sum' => 1}}},
           {'$sort' => bson_doc(c => -1, _id => 1)}
@@ -64,7 +63,7 @@ sub verify {
   $uid = bson_oid $uid;
 
   my $db = $c->db;
-  $db->collection('user')->find_one(
+  $db->c('user')->find_one(
     ($uid, {ban => 1}) => sub {
       my ($col, $err, $user) = @_;
       return $c->reply->exception("Error in bridge verify: $err") if $err;
@@ -98,8 +97,8 @@ sub tasks {
     sub {
       my $d = shift;
 
-      $db->collection('task')->find()->count($d->begin);
-      $db->collection('solution')->aggregate([
+      $db->c('task')->find()->count($d->begin);
+      $db->c('solution')->aggregate([
           {'$match' => {s   => 'finished'}},
           {'$group' => {_id => '$lng', c => {'$sum' => 1}}},
           {'$sort' => {c => -1, _id => 1}}
@@ -117,8 +116,8 @@ sub tasks {
       $c->stash(need_next_btn => $need_next_btn, languages => $languages);
 
       my $skip = ($page - 1) * $limit;
-      $db->collection('task')->find()->sort({ts => -1})->skip($skip)->limit($limit)
-        ->fields({desc => 0, tests => 0})->all($d->begin);
+      $db->c('task')->find()->sort({ts => -1})->skip($skip)->limit($limit)->fields({desc => 0, tests => 0})
+        ->all($d->begin);
     },
     sub {
       my ($d, $terr, $tasks) = @_;

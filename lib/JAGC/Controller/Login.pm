@@ -9,7 +9,7 @@ sub as {
   my $c = shift;
   $c->render_later;
 
-  $c->db->collection('user')->find_one(
+  $c->db->c('user')->find_one(
     bson_oid($c->param('uid')) => sub {
       my ($collection, $err, $user) = @_;
       return $c->reply->exception("Error while find user: $err") if $err;
@@ -130,7 +130,7 @@ sub remove_social {
   my $db     = $c->db;
   $c->delay(
     sub {
-      $db->collection('user')->find_one($uid => shift->begin);
+      $db->c('user')->find_one($uid => shift->begin);
     },
     sub {
       my ($d, $err, $user) = @_;
@@ -139,7 +139,7 @@ sub remove_social {
       return $c->reply->not_found if @{$user->{social}} == 1;
 
       my @socials = grep { !($social eq $_->{type}) } @{$user->{social}};
-      $db->collection('user')->update(({_id => $uid}, {'$set' => {social => \@socials}}) => $d->begin);
+      $db->c('user')->update(({_id => $uid}, {'$set' => {social => \@socials}}) => $d->begin);
     },
     sub {
       my ($d, $err, $num) = @_;

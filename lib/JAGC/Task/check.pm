@@ -21,7 +21,7 @@ sub prepare_container {
 
   open my $code, '>', "$self->{lxc_root}/home/guest/code" or do {
     my $error = q{Can't create code inside container};
-    $self->app->db->collection('solution')
+    $self->app->db->c('solution')
       ->update({_id => $sid}, {'$set' => {s => 'fail', terr => undef, err => $error}});
     $job->fail($error);
     return;
@@ -79,12 +79,12 @@ sub call {
 
   return $job->fail('LXC container is missing') unless $self->check_container;
 
-  my $solution = $db->collection('solution')
-    ->find_and_modify({query => {_id => $sid}, update => {'$set' => {s => 'testing'}}});
-  my $language = $db->collection('language')->find_one({name => $solution->{lng}});
+  my $solution =
+    $db->c('solution')->find_and_modify({query => {_id => $sid}, update => {'$set' => {s => 'testing'}}});
+  my $language = $db->c('language')->find_one({name => $solution->{lng}});
   return $job->fail("Invalid language: $solution->{lng}") unless $language;
 
-  my $task = $db->collection('task')->find_one($solution->{task}{tid});
+  my $task = $db->c('task')->find_one($solution->{task}{tid});
 
   return unless $self->prepare_container($job, $solution->{code}, $sid);
 
@@ -113,17 +113,17 @@ sub call {
     }
 
     unless ($status) {
-      $db->collection('solution')
+      $db->c('solution')
         ->update({_id => $sid}, {'$set' => {s => $s, terr => $test->{_id}, err => $err, out => $stdout}});
-      $db->collection('task')
+      $db->c('task')
         ->find_and_modify({query => {_id => $task->{_id}}, update => {'$inc' => {'stat.all' => 1}}});
       last;
     }
   }
 
   if ($status) {
-    $db->collection('solution')->update({_id => $sid}, {'$set' => {s => 'finished'}});
-    $db->collection('task')
+    $db->c('solution')->update({_id => $sid}, {'$set' => {s => 'finished'}});
+    $db->c('task')
       ->find_and_modify(
       {query => {_id => $task->{_id}}, update => {'$inc' => {'stat.all' => 1, 'stat.ok' => 1}}});
 
@@ -133,7 +133,7 @@ sub call {
     $winner->{size} = $solution->{size};
     $winner->{ts}   = $solution->{ts};
 
-    $db->collection('task')->find_and_modify({
+    $db->c('task')->find_and_modify({
         query => {
           _id   => $task->{_id},
           '$or' => [

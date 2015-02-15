@@ -9,12 +9,10 @@ sub call {
   my $db     = $job->app->db;
   my $config = $job->app->config;
 
-  my $solution = $db->collection('solution')->find_one($sid);
-  my $notes =
-    $db->collection('notification')->find(bson_doc(tid => $solution->{task}{tid}, for => 'solution'))->all;
+  my $solution = $db->c('solution')->find_one($sid);
+  my $notes = $db->c('notification')->find(bson_doc(tid => $solution->{task}{tid}, for => 'solution'))->all;
   my $users =
-    $db->collection('user')->find({_id => {'$in' => [map { $_->{uid} } @$notes]}}, {email => 1, login => 1})
-    ->all;
+    $db->c('user')->find({_id => {'$in' => [map { $_->{uid} } @$notes]}}, {email => 1, login => 1})->all;
 
   my $c    = $job->app->build_controller;
   my $base = Mojo::URL->new($config->{site_url});

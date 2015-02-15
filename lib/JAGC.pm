@@ -116,6 +116,7 @@ sub startup {
   # RSS
   $r->get('/events' => [format => [qw/rss xml/]])->to('event#rss')->name('events_rss');
 
+  *Mango::Database::c = \&Mango::Database::collection;
   $app->helper(
     db => sub {
       state $mango = Mango->new($app->config->{mango}{uri})->max_connections(10);

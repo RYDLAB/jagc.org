@@ -9,8 +9,8 @@ sub call {
   my $db     = $job->app->db;
   my $config = $job->app->config;
 
-  my $task = $db->collection('task')->find_one($tid);
-  my $users = $db->collection('user')->find({'notice.new' => bson_true}, {email => 1, login => 1})->all;
+  my $task = $db->c('task')->find_one($tid);
+  my $users = $db->c('user')->find({'notice.new' => bson_true}, {email => 1, login => 1})->all;
 
   my $c    = $job->app->build_controller;
   my $base = Mojo::URL->new($config->{site_url});

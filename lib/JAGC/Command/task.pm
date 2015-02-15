@@ -17,16 +17,16 @@ sub run {
 
   given ($command) {
     when ('remove') {
-      my $doc = $db->collection('task')->remove({_id => $tid});
+      my $doc = $db->c('task')->remove({_id => $tid});
       unless ($doc->{n} > 0) {
         warn "Task [$tid] doesn't exist\n";
         break;
       }
-      $db->collection('solution')->remove({'task.tid' => $tid});
+      $db->c('solution')->remove({'task.tid' => $tid});
     }
     when ('recheck') {
-      $db->collection('solution')->update({'task.tid' => $tid}, {'$set' => {s => 'inactive'}}, {multi => 1});
-      $db->collection('task')
+      $db->c('solution')->update({'task.tid' => $tid}, {'$set' => {s => 'inactive'}}, {multi => 1});
+      $db->c('task')
         ->update({_id => $tid}, {'$set' => {'stat.all' => 0, 'stat.ok' => 0}, '$unset' => {winner => 1}});
       $self->app->minion->enqueue(recheck => [$tid] => {priority => 0});
     }

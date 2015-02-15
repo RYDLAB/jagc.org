@@ -19,26 +19,22 @@ sub run {
     when ('rename') {
       die "Set new login for user\n" unless $options;
 
-      $db->collection('user')->update({_id => $uid}, {'$set' => {login => $options}});
-      $db->collection('solution')
-        ->update({'user.uid' => $uid}, {'$set' => {'user.login' => $options}}, {multi => 1});
-      $db->collection('task')
-        ->update({'winner.uid' => $uid}, {'$set' => {'winner.login' => $options}}, {multi => 1});
-      $db->collection('task')
-        ->update({'owner.uid' => $uid}, {'$set' => {'owner.login' => $options}}, {multi => 1});
-      $db->collection('stat')->update({'_id' => $uid}, {'$set' => {'login' => $options}});
-      $db->collection('comment')
-        ->update({'user.uid' => $uid}, {'$set' => {'user.login' => $options}}, {multi => 1});
+      $db->c('user')->update({_id => $uid}, {'$set' => {login => $options}});
+      $db->c('solution')->update({'user.uid' => $uid}, {'$set' => {'user.login' => $options}}, {multi => 1});
+      $db->c('task')->update({'winner.uid' => $uid}, {'$set' => {'winner.login' => $options}}, {multi => 1});
+      $db->c('task')->update({'owner.uid'  => $uid}, {'$set' => {'owner.login'  => $options}}, {multi => 1});
+      $db->c('stat')->update({'_id'        => $uid}, {'$set' => {'login'        => $options}});
+      $db->c('comment')->update({'user.uid' => $uid}, {'$set' => {'user.login' => $options}}, {multi => 1});
 
       print "User [$uid] renamed to $options\n";
     }
     when ('remove') {
-      $db->collection('user')->remove({_id => $uid});
-      $db->collection('solution')->remove({'user.uid' => $uid});
-      $db->collection('task')->update({'winner.uid' => $uid}, {'$unset' => {winner => ''}}, {multi => 1});
-      $db->collection('task')->remove({'owner.uid' => $uid});
-      $db->collection('stat')->remove({_id         => $uid});
-      $db->collection('comment')->remove({'user.uid' => $uid});
+      $db->c('user')->remove({_id => $uid});
+      $db->c('solution')->remove({'user.uid' => $uid});
+      $db->c('task')->update({'winner.uid' => $uid}, {'$unset' => {winner => ''}}, {multi => 1});
+      $db->c('task')->remove({'owner.uid' => $uid});
+      $db->c('stat')->remove({_id         => $uid});
+      $db->c('comment')->remove({'user.uid' => $uid});
 
       print "User [$uid] removed\n";
     }
