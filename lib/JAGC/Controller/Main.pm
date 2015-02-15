@@ -4,17 +4,17 @@ use Mojo::Base 'Mojolicious::Controller';
 use Mango::BSON ':bson';
 
 sub index {
-  my $c = shift;
-
+  my $c  = shift;
   my $db = $c->db;
+
   $c->delay(
     sub {
       my $d = shift;
 
-      $db->c('task')->find()->limit(20)->sort({ts => -1})->fields({desc => 0, tests => 0})->all($d->begin);
-      $db->c('task')->find()->limit(20)->sort({'stat.all' => -1})->fields({desc => 0, tests => 0})
+      $db->c('task')->find->limit(20)->sort({ts => -1})->fields({desc => 0, tests => 0})->all($d->begin);
+      $db->c('task')->find->limit(20)->sort({'stat.all' => -1})->fields({desc => 0, tests => 0})
         ->all($d->begin);
-      $db->c('stat')->find()->fields({score => 1, pic => 1, login => 1})
+      $db->c('stat')->find->fields({score => 1, pic => 1, login => 1})
         ->sort(bson_doc(score => -1, t_all => -1, t_ok => -1))->limit(-10)->all($d->begin);
       $db->c('solution')->aggregate([
           {'$match' => {s   => 'finished'}},
@@ -25,13 +25,12 @@ sub index {
     },
     sub {
       my ($d, $terr, $tasks, $pterr, $ptasks, $serr, $stats, $lerr, $languages) = @_;
-      return $c->reply->exception("Error while find task: $terr")     if $terr;
-      return $c->reply->exception("Error while find task: $pterr")    if $pterr;
-      return $c->reply->exception("Error while find stat: $serr")     if $serr;
-      return $c->reply->exception("Error while find solution: $lerr") if $lerr;
+      if (my $e = $terr || $pterr || $serr || $lerr) {
+        return $c->reply->exception("Error while db query: $e");
+      }
 
       $c->stash(tasks => $tasks, ptasks => $ptasks, stats => $stats, languages => $languages);
-      return $c->render;
+      $c->render;
     }
   );
 }
@@ -62,8 +61,7 @@ sub verify {
   return 1 unless $uid;
   $uid = bson_oid $uid;
 
-  my $db = $c->db;
-  $db->c('user')->find_one(
+  $c->db->c('user')->find_one(
     ($uid, {ban => 1}) => sub {
       my ($col, $err, $user) = @_;
       return $c->reply->exception("Error in bridge verify: $err") if $err;
@@ -97,7 +95,7 @@ sub tasks {
     sub {
       my $d = shift;
 
-      $db->c('task')->find()->count($d->begin);
+      $db->c('task')->find->count($d->begin);
       $db->c('solution')->aggregate([
           {'$match' => {s   => 'finished'}},
           {'$group' => {_id => '$lng', c => {'$sum' => 1}}},
@@ -116,7 +114,7 @@ sub tasks {
       $c->stash(need_next_btn => $need_next_btn, languages => $languages);
 
       my $skip = ($page - 1) * $limit;
-      $db->c('task')->find()->sort({ts => -1})->skip($skip)->limit($limit)->fields({desc => 0, tests => 0})
+      $db->c('task')->find->sort({ts => -1})->skip($skip)->limit($limit)->fields({desc => 0, tests => 0})
         ->all($d->begin);
     },
     sub {
