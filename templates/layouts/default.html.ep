@@ -130,6 +130,12 @@
       }
     </script>
 
+    <script>
+      $('img').error(function() {
+        $(this).attr('src', '/images/avatar.png');
+      });
+    </script>
+
     % if (app->mode ne 'development') {
       <!-- Yandex.Metrika counter -->
       <script type="text/javascript">
