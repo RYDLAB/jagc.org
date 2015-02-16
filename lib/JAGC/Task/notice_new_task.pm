@@ -2,6 +2,7 @@ package JAGC::Task::notice_new_task;
 use Mojo::Base -base;
 
 use Mango::BSON ':bson';
+use Mojo::URL;
 
 sub call {
   my ($self, $job, $tid) = @_;
@@ -13,6 +14,7 @@ sub call {
   my $users = $db->c('user')->find({'notice.new' => bson_true}, {email => 1, login => 1})->all;
 
   my $c = $job->app->build_controller;
+  $c->req->url->base(Mojo::URL->new($config->{site_url}));
 
   for my $user (@$users) {
     my $data = $c->render_to_string(

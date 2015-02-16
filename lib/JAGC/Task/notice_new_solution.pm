@@ -2,6 +2,7 @@ package JAGC::Task::notice_new_solution;
 use Mojo::Base -base;
 
 use Mango::BSON ':bson';
+use Mojo::URL;
 
 sub call {
   my ($self, $job, $sid) = @_;
@@ -15,6 +16,7 @@ sub call {
     $db->c('user')->find({_id => {'$in' => [map { $_->{uid} } @$notes]}}, {email => 1, login => 1})->all;
 
   my $c = $job->app->build_controller;
+  $c->req->url->base(Mojo::URL->new($config->{site_url}));
 
   for my $user (@$users) {
     next if $user->{login} eq $solution->{user}{login};
