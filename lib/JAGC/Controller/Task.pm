@@ -16,7 +16,7 @@ sub add {
 
   my $params      = $c->req->body_params;
   my $hparams     = $params->to_hash;
-  my @test_fields = grep { /^test_/ } $params->param;
+  my @test_fields = grep { /^test_/ } @{$params->names};
 
   for (@test_fields) {
     $hparams->{$_} =~ s/\r\n/\n/g;
@@ -38,7 +38,7 @@ sub add {
   }
 
   my @tests;
-  for my $tin (grep { /^test_\d+_in$/ } $params->param) {
+  for my $tin (grep { /^test_\d+_in$/ } @{$params->names}) {
     (my $tout = $tin) =~ s/in/out/;
     my $test_in  = $v->param($tin);
     my $test_out = $v->param($tout);
@@ -237,7 +237,7 @@ sub edit {
       }
 
       my $hparams = $params->to_hash;
-      my @test_fields = grep { /^test_/ } $params->param;
+      my @test_fields = grep { /^test_/ } @{$params->names};
 
       for (@test_fields) {
         $hparams->{$_} =~ s/\r\n/\n/g;
@@ -260,7 +260,7 @@ sub edit {
       }
 
       my $is_change_tests = 0;
-      my $test_cnt = scalar grep { /^test_\d+_in$/ } $params->param;
+      my $test_cnt = scalar grep { /^test_\d+_in$/ } @{$params->names};
       $is_change_tests = 1 unless (scalar(@{$task->{tests}}) == $test_cnt);
       if ($is_change_tests == 0) {
         for (1 .. $test_cnt) {
@@ -274,7 +274,8 @@ sub edit {
 
       my @tests;
       if ($is_change_tests) {
-        for my $tin (grep { /^test_\d+_in$/ } $params->param) {
+
+        for my $tin (grep { /^test_\d+_in$/ } @{$params->names}) {
           (my $tout = $tin) =~ s/in/out/;
           my $test_in  = $v->param($tin);
           my $test_out = $v->param($tout);
