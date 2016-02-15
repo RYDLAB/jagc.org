@@ -6,13 +6,11 @@ use POSIX::1003::Limit ':rlimit';
 use JSON::PP 'encode_json';
 
 my $interpret = shift // '/usr/bin/perl';
-my $dir       = shift // '/home/guest/';
+my $dir       = shift // '/opt/share/';
 my $timeout   = shift // 10;
-my $code      = shift // '/home/guest/code';
+my $code      = shift // '/opt/share/code';
 my $input     = shift // './input';
 my $arguments = shift // '';
-
-my $guest = getpwnam 'guest';
 
 binmode STDOUT, ':utf8';
 binmode STDERR, ':utf8';
@@ -25,13 +23,7 @@ unless (setrlimit('RLIMIT_NPROC', 20, 25)) {
 }
 
 setrlimit('RLIMIT_NOFILE', 20, 25);
-
-POSIX::setuid $guest;
-my $eid = POSIX::geteuid;
-if ($eid != $guest) {
-  print STDERR "Can't change user eid";
-  exit INTERNAL_FAIL;
-}
+setrlimit('RLIMIT_FSIZE', 131072, 262144);
 
 open my $in, '<', $input or do {
   print STDERR "Can't open input file: $!";

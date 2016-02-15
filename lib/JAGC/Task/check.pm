@@ -3,24 +3,52 @@ use Mojo::Base -base;
 
 use Mango::BSON ':bson';
 use Mojo::JSON 'decode_json';
-use File::Temp 'tempfile';
+use File::Temp 'tempdir';
+use File::Copy 'cp';
+use Mojo::IOLoop::Delay;
 
-has [qw/app image lxc_root lxc_backup/];
-
-sub check_container {
-  my $self = shift;
-  return 1 if $self->app->mode eq 'test';
-
-  my $state = `lxc-info -n $self->{image} 2>/dev/null`;
-  return ($state // '') =~ /STOPPED/;
-}
+has [qw/ app container tmp_dir /];
 
 sub prepare_container {
-  my ($self, $job, $data, $sid) = @_;
+  my ($self, $job, $data, $sid, $bin) = @_;
+  my $api_server = $self->app->config->{worker}{api_server};
+  my $log        = $self->app->log;
+
   return 1 if $self->app->mode eq 'test';
 
-  open my $code, '>', "$self->{lxc_root}/home/guest/code" or do {
-    my $error = q{Can't create code inside container};
+  # just checking if the container exists
+  my $tx = $self->app->ua->get("$api_server/containers/solution_$sid/changes");
+
+  unless ($tx->success) {
+
+    my $tmp_dir = eval { tempdir(DIR => $self->app->config->{worker}{shared_volume_dir}) };
+
+    $log->error("Can't create temp dir! $@") and return undef if $@;
+    $self->tmp_dir($tmp_dir);
+
+
+    unless (cp($self->app->home->rel_file('script/starter'), $tmp_dir)) {
+      $log->error("Can't copy starter! $!");
+      return undef;
+    }
+
+    if (chmod(0755, $tmp_dir, "$tmp_dir/starter") < 2) {
+      $log->error("Can't set permissions for starter! $!");
+      return undef;
+    }
+
+    my $q = $self->app->config->{worker}{create_container_query};
+    $q->{Binds} = ["$tmp_dir:/opt/share"];
+    push @{$q->{Cmd}}, $bin;
+
+    $tx = $self->app->ua->post("$api_server/containers/create?name=solution_$sid" => json => $q);
+  }
+
+  $log->error(q(Can't create container!)) and return undef unless $tx->success;
+  $self->container($tx->res->json->{Id});
+
+  open my $code, '>', $self->tmp_dir . '/code' or do {
+    my $error = q{Can't create code inside shared volume};
     $self->app->db->c('solution')
       ->update({_id => $sid}, {'$set' => {s => 'fail', terr => undef, err => $error}});
     $job->fail($error);
@@ -31,53 +59,107 @@ sub prepare_container {
   return 1;
 }
 
-sub reset_container {
+sub destroy_container {
   my $self = shift;
   return if $self->app->mode eq 'test';
+  my $log = $self->app->log;
+  my $cid = $self->container;
 
-  $self->app->log->debug('Finish check solution');
-  `rsync -aAX --delete $self->{lxc_backup} $self->{lxc_root} 2>/dev/null`;
-  $self->app->log->debug('Finish restore image from backup');
+  $log->debug('Finish check solution');
+
+  unlink map { "$self->{tmp_dir}/$_" } (qw/ input code starter /);
+
+  my $tmp_dir = $self->{tmp_dir};
+
+  $log->warn("Can't remove directory $tmp_dir: $!") unless rmdir($tmp_dir);
+
+  my $api_server = $self->app->config->{worker}{api_server};
+
+  if ($cid) {
+    my $tx = $self->app->ua->delete("$api_server/containers/$cid?v=1");
+    return $log->error("Can't delete container '$cid'!") unless $tx->success;
+    $log->debug('Container was successfully destroyed!');
+  }
 }
 
 sub run_test {
-  my ($self, $test, $bin) = @_;
+
+  my ($self, $test) = @_;
+  my $api_server = $self->app->config->{worker}{api_server};
+  my $log        = $self->app->log;
+  my $cid        = $self->container;
+
   return {status => 'ok', stderr => '', stdout => "$test->{out}"} if $self->app->mode eq 'test';
 
-  open my $input, '>', "$self->{lxc_root}/home/guest/input" or do {
+  open my $input, '>', "$self->{tmp_dir}/input" or do {
     $self->app->log->warn("Can't create input test file: $!");
     return;
   };
+
   binmode $input;
   print $input $test->{in};
   close $input;
 
-  my ($out, $filename) = tempfile;
-  binmode $out, ':utf8';
+  $log->debug(sprintf 'Run test %s', $test->{_id});
 
-  $self->app->log->debug(sprintf 'Run test %s', $test->{_id});
-  my $cmd = join ' ', 'lxc-start', '-L', $filename, '-n', $self->image, '/usr/bin/env', 'LANG=en_US.UTF-8',
-    'LC_ALL=en_US.UTF-8', 'HOME=/home/guest/', '/usr/bin/perl', '/starter', $bin;
-  system $cmd;
+  my $delay = Mojo::IOLoop::Delay->new;
 
-  my $result = eval { decode_json <$out> };
-  unlink $filename;
-  return $result;
+  my $message = '';
+  my $end     = $delay->begin;
+  $self->app->ua->websocket(
+    "$api_server/containers/$cid/attach/ws?stream=1&stdout=1" => sub {
+      my ($ua, $tx) = @_;
+
+      $log->warn('WebSocket handshake failed!') and return unless $tx->is_websocket;
+
+      my $start_tx = $ua->post("$api_server/containers/$cid/start");
+
+      $log->error(q(Can't start container! Status code: ) . $start_tx->res->body) and return
+        unless $start_tx->success;
+
+      $tx->on(
+        finish => sub {
+          my ($tx, $code, $reason) = @_;
+          $self->app->ua->post("$api_server/containers/$cid/stop?t=1");
+          $end->();
+        }
+      );
+
+      $tx->on(
+        message => sub {
+          my ($tx, $msg) = @_;
+          $message = $msg;
+          $tx->finish;
+        }
+      );
+    }
+  );
+
+  $delay->wait();
+
+  my $res_json = eval { decode_json $message };
+
+  if ($@) {
+    $log->error("Attempt to parse json respons has failed: $@");
+    return undef;
+  }
+
+  $log->debug(sprintf 'Run test %s', $test->{_id});
+
+  return $res_json;
 }
 
 sub call {
   my ($self, $job, $sid) = @_;
+
+
+  $job->on(failed => sub { $self->destroy_container });
 
   my $log    = $job->app->log;
   my $config = $job->app->config->{worker};
   my $db     = $job->app->db;
 
   $self->app($job->app);
-  $self->image($config->{image});
-  $self->lxc_root(sprintf '%s%s/rootfs', $config->{lxc_base}, $config->{image});
-  $self->lxc_backup($config->{backup});
-
-  return $job->fail('LXC container is missing') unless $self->check_container;
 
   my $solution =
     $db->c('solution')->find_and_modify({query => {_id => $sid}, update => {'$set' => {s => 'testing'}}});
@@ -86,11 +168,16 @@ sub call {
 
   my $task = $db->c('task')->find_one($solution->{task}{tid});
 
-  return unless $self->prepare_container($job, $solution->{code}, $sid);
+  unless ($self->prepare_container($job, $solution->{code}, $sid, $language->{path})) {
+    $job->fail(q(Can't prepare container!));
+    return;
+  }
 
   my ($status, $s) = 1;
+
   for my $test (@{$task->{tests}}) {
-    my $result = $self->run_test($test, $language->{path});
+    my $result = $self->run_test($test);
+
     $status = 0 && last unless $result;
     my $rs = $result->{status};
 
@@ -147,7 +234,7 @@ sub call {
     );
   }
 
-  $self->reset_container;
+  $self->destroy_container;
   $job->finish;
 }
 

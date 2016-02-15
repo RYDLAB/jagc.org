@@ -1,4 +1,4 @@
 #!/bin/bash
 
 DIR=`dirname $0`;
-cp -f "$DIR/starter" $LXC_ROOTFS_PATH/starter
+cp -f "$DIR/starter" $SHARED_VOLUME_PATH/starter
