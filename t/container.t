@@ -7,27 +7,30 @@ use File::Temp 'tempdir';
 use File::Copy 'cp';
 use Mojo::IOLoop::Delay;
 
+plan skip_all => 'Run this test only after docker configuration';
+
 my $t = Test::Mojo->new('JAGC');
 
 my $c = $t->app->build_controller;
 
 my @scripts = (
-  {bin => get_bin('perl'),    in => "665\n2", out => "667", src => $c->render_to_string('perl')},
-  {bin => get_bin('bash'),    in => "665\n2", out => "667", src => $c->render_to_string('bash')},
-  {bin => get_bin('nodejs'),  in => "665\n2", out => "667", src => $c->render_to_string('nodejs')},
-  {bin => get_bin('ruby1.9'), in => "665\n2", out => "667", src => $c->render_to_string('ruby')},
-  {bin => get_bin('erlang'),  in => "665\n2", out => "667", src => $c->render_to_string('erlang')},
-  {bin => get_bin('php'),     in => "665\n2", out => "667", src => $c->render_to_string('php')},
-  {bin => get_bin('haskell'), in => "665\n2", out => "667", src => $c->render_to_string('haskell')}
+  {bin => '/usr/bin/perl',   in => "665\n2", out => "667", src => $c->render_to_string('perl')},
+  {bin => '/bin/bash',       in => "665\n2", out => "667", src => $c->render_to_string('bash')},
+  {bin => '/usr/bin/nodejs', in => "665\n2", out => "667", src => $c->render_to_string('nodejs')},
+  {bin => '/usr/bin/ruby',   in => "665\n2", out => "667", src => $c->render_to_string('ruby')},
+
+  #  {
+  #    bin => '/usr/bin/escript',
+  #    in  => "665\n2",
+  #    out => "667",
+  #    src => $c->render_to_string('erlang')
+  #  },
+  {bin => '/usr/bin/php',        in => "665\n2", out => "667", src => $c->render_to_string('php')},
+  {bin => '/usr/bin/runhaskell', in => "665\n2", out => "667", src => $c->render_to_string('haskell')}
 );
 
 plan tests => 5 + @scripts;
 
-
-sub get_bin {
-  my $lng = shift;
-  $t->app->db->c('language')->find({name => $lng})->next->{path};
-}
 
 my $shvd       = $t->app->config->{worker}{shared_volume_dir};
 my $api_server = $t->app->config->{worker}{api_server};
