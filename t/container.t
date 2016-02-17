@@ -7,7 +7,7 @@ use File::Temp 'tempdir';
 use File::Copy 'cp';
 use Mojo::IOLoop::Delay;
 
-plan skip_all => 'Run this test only after docker configuration';
+plan skip_all => 'Set $ENV{DOCKER} to run this test.' unless $ENV{DOCKER};
 
 my $t = Test::Mojo->new('JAGC');
 

@@ -183,6 +183,8 @@ sub call {
 
     $log->debug(sprintf 'Finish test %s with status %s and error %s', $test->{_id}, $rs, $result->{stderr});
     my $err = substr $result->{stderr}, 0, 1024;
+
+    $result->{stdout}|= '';
     (my $stdout = $result->{stdout}) =~ s/^\n*|\n*$//g;
 
     if ($rs eq 'ok') {
