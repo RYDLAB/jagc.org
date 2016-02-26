@@ -1,8 +1,8 @@
-#!/usr/bin/perl -wl
+#!/usr/bin/perl -l
 
-use POSIX;
+use warnings;
+
 use IPC::Run qw/run timeout/;
-use POSIX::1003::Limit ':rlimit';
 use JSON::PP 'encode_json';
 
 my $interpret = shift // '/usr/bin/perl';
@@ -17,17 +17,9 @@ binmode STDERR, ':utf8';
 
 chdir $dir;
 
-unless (setrlimit('RLIMIT_NPROC', 20, 25)) {
-  print STDERR "Can't change limit on running process";
-  exit INTERNAL_FAIL;
-}
-
-setrlimit('RLIMIT_NOFILE', 20, 25);
-setrlimit('RLIMIT_FSIZE', 131072, 262144);
-
 open my $in, '<', $input or do {
-  print STDERR "Can't open input file: $!";
-  exit INTERNAL_FAIL;
+  print encode_json {status => 'fail', stderr => "Can't open input file: $!"};
+  exit;
 };
 
 my @cmd;

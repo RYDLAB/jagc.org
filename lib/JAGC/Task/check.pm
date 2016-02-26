@@ -1,20 +1,18 @@
 package JAGC::Task::check;
 use Mojo::Base -base;
 
-use Mango::BSON ':bson';
-use Mojo::JSON 'decode_json';
-use File::Temp 'tempdir';
 use File::Copy 'cp';
-use Mojo::IOLoop::Delay;
+use File::Path 'remove_tree';
+use File::Temp 'tempdir';
+use Mango::BSON ':bson';
 
-has [qw/ app container tmp_dir /];
+has [qw/app container tmp_dir/];
 
 sub prepare_container {
   my ($self, $job, $data, $sid, $bin) = @_;
+
   my $api_server = $self->app->config->{worker}{api_server};
   my $log        = $self->app->log;
-
-  return 1 if $self->app->mode eq 'test';
 
   # just checking if the container exists
   my $tx = $self->app->ua->get("$api_server/containers/solution_$sid/changes");
@@ -26,7 +24,6 @@ sub prepare_container {
     $log->error("Can't create temp dir! $@") and return undef if $@;
     $self->tmp_dir($tmp_dir);
 
-
     unless (cp($self->app->home->rel_file('script/starter'), $tmp_dir)) {
       $log->error("Can't copy starter! $!");
       return undef;
@@ -37,18 +34,19 @@ sub prepare_container {
       return undef;
     }
 
-    my $q = $self->app->config->{worker}{create_container_query};
-    $q->{Binds} = ["$tmp_dir:/opt/share"];
-    push @{$q->{Cmd}}, $bin;
+    my $opts = $self->app->config->{worker}{docker_opts};
+    $opts->{User}  = (1024 + int rand 1024 * 10) . '';
+    $opts->{Binds} = ["$tmp_dir:/opt/share"];
+    push @{$opts->{Cmd}}, $bin;
 
-    $tx = $self->app->ua->post("$api_server/containers/create?name=solution_$sid" => json => $q);
+    $tx = $self->app->ua->post("$api_server/containers/create?name=solution_$sid" => json => $opts);
   }
 
-  $log->error(q(Can't create container!)) and return undef unless $tx->success;
+  $log->error("Can't create container!") and return undef unless $tx->success;
   $self->container($tx->res->json->{Id});
 
   open my $code, '>', $self->tmp_dir . '/code' or do {
-    my $error = q{Can't create code inside shared volume};
+    my $error = "Can't create code inside shared volume";
     $self->app->db->c('solution')
       ->update({_id => $sid}, {'$set' => {s => 'fail', terr => undef, err => $error}});
     $job->fail($error);
@@ -61,17 +59,12 @@ sub prepare_container {
 
 sub destroy_container {
   my $self = shift;
-  return if $self->app->mode eq 'test';
+
   my $log = $self->app->log;
   my $cid = $self->container;
 
-  $log->debug('Finish check solution');
-
-  unlink map { "$self->{tmp_dir}/$_" } (qw/ input code starter /);
-
-  my $tmp_dir = $self->{tmp_dir};
-
-  $log->warn("Can't remove directory $tmp_dir: $!") unless rmdir($tmp_dir);
+  remove_tree $self->{tmp_dir}, {error => \my $err};
+  $log->warn("Can't remove directory $self->{tmp_dir}: " . $self->app->dumper($err)) if @$err;
 
   my $api_server = $self->app->config->{worker}{api_server};
 
@@ -83,16 +76,14 @@ sub destroy_container {
 }
 
 sub run_test {
-
   my ($self, $test) = @_;
+
   my $api_server = $self->app->config->{worker}{api_server};
   my $log        = $self->app->log;
   my $cid        = $self->container;
 
-  return {status => 'ok', stderr => '', stdout => "$test->{out}"} if $self->app->mode eq 'test';
-
   open my $input, '>', "$self->{tmp_dir}/input" or do {
-    $self->app->log->warn("Can't create input test file: $!");
+    $log->warn("Can't create input test file: $!");
     return;
   };
 
@@ -102,56 +93,27 @@ sub run_test {
 
   $log->debug(sprintf 'Run test %s', $test->{_id});
 
-  my $delay = Mojo::IOLoop::Delay->new;
+  my $result;
 
-  my $message = '';
-  my $end     = $delay->begin;
   $self->app->ua->websocket(
     "$api_server/containers/$cid/attach/ws?stream=1&stdout=1" => sub {
       my ($ua, $tx) = @_;
 
-      $log->warn('WebSocket handshake failed!') and return unless $tx->is_websocket;
-
       my $start_tx = $ua->post("$api_server/containers/$cid/start");
-
-      $log->error(q(Can't start container! Status code: ) . $start_tx->res->body) and return
+      $log->error("Can't start container! Status code: " . $start_tx->res->code) and Mojo::IOLoop->stop
         unless $start_tx->success;
 
-      $tx->on(
-        finish => sub {
-          my ($tx, $code, $reason) = @_;
-          $self->app->ua->post("$api_server/containers/$cid/stop?t=1");
-          $end->();
-        }
-      );
-
-      $tx->on(
-        message => sub {
-          my ($tx, $msg) = @_;
-          $message = $msg;
-          $tx->finish;
-        }
-      );
+      $tx->on(finish => sub { $ua->post("$api_server/containers/$cid/stop?t=1"); Mojo::IOLoop->stop; });
+      $tx->on(json => sub { my ($tx, $json) = @_; $result = $json; });
     }
   );
+  Mojo::IOLoop->start;
 
-  $delay->wait();
-
-  my $res_json = eval { decode_json $message };
-
-  if ($@) {
-    $log->error("Attempt to parse json respons has failed: $@");
-    return undef;
-  }
-
-  $log->debug(sprintf 'Run test %s', $test->{_id});
-
-  return $res_json;
+  return $result;
 }
 
 sub call {
   my ($self, $job, $sid) = @_;
-
 
   $job->on(failed => sub { $self->destroy_container });
 
@@ -177,15 +139,12 @@ sub call {
 
   for my $test (@{$task->{tests}}) {
     my $result = $self->run_test($test);
+    $log->debug(sprintf 'Finish test %s with result %s', $test->{_id}, $job->app->dumper($result));
 
-    $status = 0 && last unless $result;
+    do { $status = 0; last } unless $result;
     my $rs = $result->{status};
-
-    $log->debug(sprintf 'Finish test %s with status %s and error %s', $test->{_id}, $rs, $result->{stderr});
     my $err = substr $result->{stderr}, 0, 1024;
-
-    $result->{stdout}|= '';
-    (my $stdout = $result->{stdout}) =~ s/^\n*|\n*$//g;
+    (my $stdout = ($result->{stdout} // '')) =~ s/^\n*|\n*$//g;
 
     if ($rs eq 'ok') {
       next if $test->{out} eq $stdout;

@@ -5,6 +5,8 @@ use Test::Mojo;
 
 BEGIN { $ENV{MOJO_MODE} = 'test' }
 
+plan skip_all => 'Set $ENV{DOCKER} to run this test.' unless $ENV{DOCKER};
+
 my $t = Test::Mojo->new('JAGC')->tap(
   sub {
     $_->ua->max_connections(0);
@@ -12,23 +14,21 @@ my $t = Test::Mojo->new('JAGC')->tap(
   }
 );
 
-plan skip_all => 'Set $ENV{DOCKER} to run this test.' unless $ENV{DOCKER};
+my @langs = qw/python3 python2 php ruby2.0 perl bash ruby haskell nodejs erlang/;
 
-my @langs = qw/ python3 python2 php ruby2.0  perl bash ruby haskell nodejs erlang /;
-
-my $coll = $t->app->db->c('language');
-$coll->insert({name => 'perl', path => '/usr/bin/perl'});
-$coll->insert({name => 'python3', path => '/usr/bin/python3.5'});
-$coll->insert({name => 'python2', path => '/usr/bin/python2.7'});
-$coll->insert({name => 'bash', path => '/bin/bash'});
-$coll->insert({name => 'ruby2.0', path => '/usr/bin/ruby2.2'});
-$coll->insert({name => 'erlang', path => '/usr/bin/escript'});
-$coll->insert({name => 'haskell', path => '/usr/bin/runhaskell'});
-$coll->insert({name => 'php', path => '/usr/bin/php'});
-$coll->insert({name => 'nodejs', path => '/usr/bin/nodejs'});
-$coll->insert({name => 'ruby', path => '/usr/bin/ruby'});
-
-$coll->insert({name => 'test', path => '/usr/bin/test'});
+for ($t->app->db->c('language')) {
+  $_->insert({name => 'perl',    path => '/usr/bin/perl'});
+  $_->insert({name => 'python3', path => '/usr/bin/python3.5'});
+  $_->insert({name => 'python2', path => '/usr/bin/python2.7'});
+  $_->insert({name => 'bash',    path => '/bin/bash'});
+  $_->insert({name => 'ruby2.0', path => '/usr/bin/ruby2.2'});
+  $_->insert({name => 'erlang',  path => '/usr/bin/escript'});
+  $_->insert({name => 'haskell', path => '/usr/bin/runhaskell'});
+  $_->insert({name => 'php',     path => '/usr/bin/php'});
+  $_->insert({name => 'nodejs',  path => '/usr/bin/nodejs'});
+  $_->insert({name => 'ruby',    path => '/usr/bin/ruby'});
+  $_->insert({name => 'test',    path => '/usr/bin/test'});
+}
 
 my $user_email = 'u3@jagc.org';
 my $user_login = 'u3';
@@ -74,7 +74,7 @@ $t->get_ok('/user/u3/events')
   ->text_is('div.panel-group div.row:nth-child(1) div:nth-child(4) a' => 'Success');
 
 # Recheck solution
-push @tests, (test_6_in  => "25\n6", test_6_out => 31);
+push @tests, (test_6_in => "25\n6", test_6_out => 31);
 
 $t->post_ok("$turl/edit" => form => {name => 't2', description => 't2', @tests})->status_is(302);
 $t->get_ok('/user/u3/events')->status_is(200)
@@ -85,11 +85,8 @@ $t->get_ok('/user/u3/events')->status_is(200)
 $t->app->minion->perform_jobs;
 
 for my $i (1 .. @langs) {
-  $t->get_ok('/user/u3/events')
-    ->text_is("div.panel:nth-child($i) div.col-sm-2:nth-child(4) a" => 'Success')
+  $t->get_ok('/user/u3/events')->text_is("div.panel:nth-child($i) div.col-sm-2:nth-child(4) a" => 'Success');
 }
-
-
 
 done_testing();
 
