@@ -12,7 +12,6 @@ RUN apt-get update\
 && apt-get -y install curl\
 && curl -L http://cpanmin.us | perl - App::cpanminus\
 && cpanm IPC::Run\ 
-&& cpanm POSIX::1003::Limit\
 && cpanm JSON::PP\
 \
 && apt-get -y install haskell-platform\
