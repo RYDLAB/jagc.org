@@ -5,97 +5,73 @@ use File::Copy 'cp';
 use File::Path 'remove_tree';
 use File::Temp 'tempdir';
 use Mango::BSON ':bson';
-
-has [qw/app container tmp_dir/];
+use Mojo::Util 'spurt';
 
 sub prepare_container {
-  my ($self, $job, $data, $sid, $bin) = @_;
+  my ($self, $app, $data, $sid, $bin) = @_;
 
-  my $api_server = $self->app->config->{worker}{api_server};
-  my $log        = $self->app->log;
+  my $config = $app->config->{worker};
+  my $log    = $app->log;
 
   # just checking if the container exists
-  my $tx = $self->app->ua->get("$api_server/containers/solution_$sid/changes");
+  my $tx = $app->ua->get("$config->{api_server}/containers/solution_$sid/changes");
+  return undef if $tx->success;
 
-  unless ($tx->success) {
+  my $tmp_dir = $self->{tmp_dir} = eval { tempdir DIR => $config->{shared_volume_dir} };
+  $log->error("Can't create temp dir: $@") and return undef if $@;
 
-    my $tmp_dir = eval { tempdir(DIR => $self->app->config->{worker}{shared_volume_dir}) };
+  eval { spurt $data, "$tmp_dir/code" };
+  $log->error($@) and return undef if $@;
 
-    $log->error("Can't create temp dir! $@") and return undef if $@;
-    $self->tmp_dir($tmp_dir);
+  $log->error("Can't copy starter: $!") and return undef
+    unless cp $app->home->rel_file('script/starter'), $tmp_dir;
 
-    unless (cp($self->app->home->rel_file('script/starter'), $tmp_dir)) {
-      $log->error("Can't copy starter! $!");
-      return undef;
-    }
+  $log->error("Can't set permissions for starter! $!") and return undef
+    if 2 > chmod 0755, $tmp_dir, "$tmp_dir/starter";
 
-    if (chmod(0755, $tmp_dir, "$tmp_dir/starter") < 2) {
-      $log->error("Can't set permissions for starter! $!");
-      return undef;
-    }
+  srand;
+  my $opts = $config->{docker_opts};
+  $opts->{User}  = (1024 + int rand 1024 * 10) . '';
+  $opts->{Binds} = ["$tmp_dir:/opt/share"];
+  push @{$opts->{Cmd}}, $bin;
 
-    my $opts = $self->app->config->{worker}{docker_opts};
-    $opts->{User}  = (1024 + int rand 1024 * 10) . '';
-    $opts->{Binds} = ["$tmp_dir:/opt/share"];
-    push @{$opts->{Cmd}}, $bin;
+  $tx = $app->ua->post("$config->{api_server}/containers/create?name=solution_$sid" => json => $opts);
+  $log->error("Can't create container") and return undef unless $tx->success;
 
-    $tx = $self->app->ua->post("$api_server/containers/create?name=solution_$sid" => json => $opts);
-  }
-
-  $log->error("Can't create container!") and return undef unless $tx->success;
-  $self->container($tx->res->json->{Id});
-
-  open my $code, '>', $self->tmp_dir . '/code' or do {
-    my $error = "Can't create code inside shared volume";
-    $self->app->db->c('solution')
-      ->update({_id => $sid}, {'$set' => {s => 'fail', terr => undef, err => $error}});
-    $job->fail($error);
-    return;
-  };
-  print $code $data;
-  close $code;
+  $self->{container_id} = $tx->res->json->{Id};
   return 1;
 }
 
 sub destroy_container {
-  my $self = shift;
-
-  my $log = $self->app->log;
-  my $cid = $self->container;
+  my ($self, $app) = @_;
 
   remove_tree $self->{tmp_dir}, {error => \my $err};
-  $log->warn("Can't remove directory $self->{tmp_dir}: " . $self->app->dumper($err)) if @$err;
+  $app->log->warn("Can't remove directory $self->{tmp_dir}: " . $app->dumper($err)) if @$err;
 
-  my $api_server = $self->app->config->{worker}{api_server};
+  my $api_server = $app->config->{worker}{api_server};
 
-  if ($cid) {
-    my $tx = $self->app->ua->delete("$api_server/containers/$cid?v=1");
-    return $log->error("Can't delete container '$cid'!") unless $tx->success;
-    $log->debug('Container was successfully destroyed!');
+  if (my $cid = $self->{container_id}) {
+    my $tx = $app->ua->delete("$api_server/containers/$cid?v=1");
+    return $app->log->error("Can't delete container '$cid'") unless $tx->success;
+    $app->log->debug('Container was successfully destroyed!');
   }
 }
 
 sub run_test {
-  my ($self, $test) = @_;
+  my ($self, $app, $test) = @_;
 
-  my $api_server = $self->app->config->{worker}{api_server};
-  my $log        = $self->app->log;
-  my $cid        = $self->container;
+  my $api_server = $app->config->{worker}{api_server};
+  my $log        = $app->log;
+  my $cid        = $self->{container_id};
 
-  open my $input, '>', "$self->{tmp_dir}/input" or do {
-    $log->warn("Can't create input test file: $!");
-    return;
-  };
-
-  binmode $input;
-  print $input $test->{in};
-  close $input;
+  eval { spurt $test->{in}, "$self->{tmp_dir}/input" };
+  $log->warn($@) and return undef if $@;
 
   $log->debug(sprintf 'Run test %s', $test->{_id});
 
   my $result;
 
-  $self->app->ua->websocket(
+  $app->ua->websocket(
     "$api_server/containers/$cid/attach/ws?stream=1&stdout=1" => sub {
       my ($ua, $tx) = @_;
 
@@ -115,31 +91,27 @@ sub run_test {
 sub call {
   my ($self, $job, $sid) = @_;
 
-  $job->on(failed => sub { $self->destroy_container });
-
-  my $log    = $job->app->log;
-  my $config = $job->app->config->{worker};
-  my $db     = $job->app->db;
-
-  $self->app($job->app);
+  my $app = $job->app;
+  my $log = $app->log;
+  my $db  = $app->db;
 
   my $solution =
     $db->c('solution')->find_and_modify({query => {_id => $sid}, update => {'$set' => {s => 'testing'}}});
   my $language = $db->c('language')->find_one({name => $solution->{lng}});
-  return $job->fail("Invalid language: $solution->{lng}") unless $language;
-
   my $task = $db->c('task')->find_one($solution->{task}{tid});
 
-  unless ($self->prepare_container($job, $solution->{code}, $sid, $language->{path})) {
-    $job->fail(q(Can't prepare container!));
-    return;
+  unless ($self->prepare_container($app, $solution->{code}, $sid, $language->{path})) {
+    $app->db->c('solution')
+      ->update({_id => $sid}, {'$set' => {s => 'fail', terr => undef, err => "Can't prepare container"}});
+    $self->destroy_container($app);
+    return $job->fail("Can't prepare container");
   }
 
   my ($status, $s) = 1;
 
   for my $test (@{$task->{tests}}) {
-    my $result = $self->run_test($test);
-    $log->debug(sprintf 'Finish test %s with result %s', $test->{_id}, $job->app->dumper($result));
+    my $result = $self->run_test($app, $test);
+    $log->debug(sprintf 'Finish test %s with result %s', $test->{_id}, $app->dumper($result));
 
     do { $status = 0; last } unless $result;
     my $rs = $result->{status};
@@ -175,7 +147,7 @@ sub call {
       ->find_and_modify(
       {query => {_id => $task->{_id}}, update => {'$inc' => {'stat.all' => 1, 'stat.ok' => 1}}});
 
-    $job->app->minion->enqueue(notice_new_solution => [$sid]);
+    $app->minion->enqueue(notice_new_solution => [$sid]);
 
     my $winner = $solution->{user};
     $winner->{size} = $solution->{size};
@@ -195,8 +167,7 @@ sub call {
     );
   }
 
-  $self->destroy_container;
-  $job->finish;
+  $self->destroy_container($app);
 }
 
 1;
