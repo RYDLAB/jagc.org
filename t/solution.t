@@ -14,20 +14,23 @@ my $t = Test::Mojo->new('JAGC')->tap(
   }
 );
 
-my @langs = qw/python3 python2 php ruby2.0 perl bash ruby haskell nodejs erlang/;
+my @langs = qw/python3 python2 php ruby2.0 perl bash ruby haskell nodejs erlang golfscript pyth/;
 
 for ($t->app->db->c('language')) {
-  $_->insert({name => 'perl',    path => '/usr/bin/perl'});
-  $_->insert({name => 'python3', path => '/usr/bin/python3.5'});
-  $_->insert({name => 'python2', path => '/usr/bin/python2.7'});
-  $_->insert({name => 'bash',    path => '/bin/bash'});
-  $_->insert({name => 'ruby2.0', path => '/usr/bin/ruby2.2'});
-  $_->insert({name => 'erlang',  path => '/usr/bin/escript'});
-  $_->insert({name => 'haskell', path => '/usr/bin/runhaskell'});
-  $_->insert({name => 'php',     path => '/usr/bin/php'});
-  $_->insert({name => 'nodejs',  path => '/usr/bin/nodejs'});
-  $_->insert({name => 'ruby',    path => '/usr/bin/ruby'});
-  $_->insert({name => 'test',    path => '/usr/bin/test'});
+  $_->insert({name => 'perl',       path => '/usr/bin/perl'});
+  $_->insert({name => 'python3',    path => '/usr/bin/python3.5'});
+  $_->insert({name => 'python2',    path => '/usr/bin/python2.7'});
+  $_->insert({name => 'bash',       path => '/bin/bash'});
+  $_->insert({name => 'ruby2.0',    path => '/usr/bin/ruby2.2'});
+  $_->insert({name => 'erlang',     path => '/usr/bin/escript'});
+  $_->insert({name => 'haskell',    path => '/usr/bin/runhaskell'});
+  $_->insert({name => 'php',        path => '/usr/bin/php'});
+  $_->insert({name => 'nodejs',     path => '/usr/bin/nodejs'});
+  $_->insert({name => 'ruby',       path => '/usr/bin/ruby'});
+  $_->insert({name => 'golfscript', path => '/usr/bin/golfscript.rb'});
+  $_->insert({name => 'befunge',    path => '/usr/bin/bef', args => '-q'});
+  $_->insert({name => 'pyth',       path => '/usr/bin/pyth.py'});
+  $_->insert({name => 'test',       path => '/usr/bin/test'});
 }
 
 my $user_email = 'u3@jagc.org';
@@ -145,3 +148,9 @@ print input()+input()
 a = int (input(''))
 b = int (input(''))
 print(a+b, end="")
+@@ golfscript.html.ep
+~+
+@@ befunge.html.ep
+&&+.@
+@@ pyth.html.ep
++Qsw

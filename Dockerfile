@@ -22,6 +22,7 @@ RUN apt-get update\
 \
 && apt-get -y install python2.7\
 && apt-get -y install python3.5\
+&& ln -s /usr/bin/python3.5 /usr/bin/python3\
 \
 && apt-get -y install ruby1.9.1\
 \
@@ -29,9 +30,31 @@ RUN apt-get update\
 \
 && apt-get -y install nodejs\
 \
-#&& apt-get purge -y gcc\
-#&& apt-get purge -y make\
+&& curl -o /usr/bin/golfscript.rb www.golfscript.com/golfscript/golfscript.rb\
+&& chmod 751 /usr/bin/golfscript.rb\
+\
+&& apt-get install -y unzip\
+\
+&& curl -LOk https://github.com/catseye/Befunge-93/archive/master.zip\
+&& unzip master.zip\
+&& make -C Befunge-93-master\
+&& cp ./Befunge-93-master/bin/bef /usr/bin/\
+&& rm -rf ./Befunge-93-master/\
+&& rm master.zip\
+\
+&& curl -LOk https://github.com/isaacg1/pyth/archive/master.zip\
+&& unzip master.zip\
+&& cp pyth-master/*.py /usr/bin/\
+&& rm -rf pyth-master/\
+&& rm master.zip\
+#&& curl -LOk https://gist.githubusercontent.com/anonymous/6392418/raw/3b16018cb47f2f9ad1fa085c155cc5c0dc448b2d/fish.py\
+#&& PY='#!\/usr\/bin\/python3.5'\
+#&& sed "1s/.*/$PY/" fish.py > /usr/bin/fish.py\
+#&& chmod 751 /usr/bin/fish.py\
+#&& rm fish.py\
+#\
 && apt-get purge -y curl\
+&& apt-get purge -y unzip\
 && chmod 755 /opt/share -R
 
 USER nobody

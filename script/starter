@@ -6,11 +6,11 @@ use IPC::Run qw/run timeout/;
 use JSON::PP 'encode_json';
 
 my $interpret = shift // '/usr/bin/perl';
-my $dir       = shift // '/opt/share/';
-my $timeout   = shift // 10;
-my $code      = shift // '/opt/share/code';
-my $input     = shift // './input';
-my $arguments = shift // '';
+my @args      = @ARGV;
+my $dir       = '/opt/share/';
+my $timeout   = 10;
+my $code      = './code';
+my $input     = './input';
 
 binmode STDOUT, ':utf8';
 binmode STDERR, ':utf8';
@@ -23,10 +23,10 @@ open my $in, '<', $input or do {
 };
 
 my @cmd;
-if (length $arguments > 0) {
-  @cmd = ($interpret, $arguments, $code);
+if (@args) {
+  @cmd = ($interpret, @args, $code);
 } else {
-  @cmd = ($interpret, $code);
+  @cmd = ($interpret, @args ? (@args, $code) : $code);
 }
 
 my ($out, $err) = (undef, undef);

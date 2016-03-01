@@ -8,7 +8,10 @@ use Mango::BSON ':bson';
 use Mojo::Util 'spurt';
 
 sub prepare_container {
-  my ($self, $app, $data, $sid, $bin) = @_;
+  my ($self, $app, $data, $sid, $lng) = @_;
+
+  my @bin = ($lng->{path});
+  push @bin, $lng->{args} if $lng->{args};
 
   my $config = $app->config->{worker};
   my $log    = $app->log;
@@ -33,7 +36,7 @@ sub prepare_container {
   my $opts = $config->{docker_opts};
   $opts->{User}  = (1024 + int rand 1024 * 10) . '';
   $opts->{Binds} = ["$tmp_dir:/opt/share"];
-  push @{$opts->{Cmd}}, $bin;
+  push @{$opts->{Cmd}}, @bin;
 
   $tx = $app->ua->post("$config->{api_server}/containers/create?name=solution_$sid" => json => $opts);
   $log->error("Can't create container") and return undef unless $tx->success;
@@ -75,8 +78,10 @@ sub run_test {
     "$api_server/containers/$cid/attach/ws?stream=1&stdout=1" => sub {
       my ($ua, $tx) = @_;
 
+
       my $start_tx = $ua->post("$api_server/containers/$cid/start");
-      $log->error("Can't start container! Status code: " . $start_tx->res->code) and Mojo::IOLoop->stop
+
+      $log->error("Can't start container! Status: " . $start_tx->res->body) and Mojo::IOLoop->stop
         unless $start_tx->success;
 
       $tx->on(finish => sub { $ua->post("$api_server/containers/$cid/stop?t=1"); Mojo::IOLoop->stop; });
@@ -100,8 +105,8 @@ sub call {
   my $language = $db->c('language')->find_one({name => $solution->{lng}});
   my $task = $db->c('task')->find_one($solution->{task}{tid});
 
-  unless ($self->prepare_container($app, $solution->{code}, $sid, $language->{path})) {
-    $app->db->c('solution')
+  unless ($self->prepare_container($app, $solution->{code}, $sid, $language)) {
+    $db->c('solution')
       ->update({_id => $sid}, {'$set' => {s => 'fail', terr => undef, err => "Can't prepare container"}});
     $self->destroy_container($app);
     return $job->fail("Can't prepare container");
