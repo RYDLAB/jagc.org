@@ -47,12 +47,24 @@ RUN apt-get update\
 && cp pyth-master/*.py /usr/bin/\
 && rm -rf pyth-master/\
 && rm master.zip\
+\
+&& curl -L http://downloads.sourceforge.net/project/cjam/cjam-0.6.5/cjam-0.6.5.jar -o /usr/bin/cjam-0.6.5.jar\
+&& chmod +x /usr/bin/cjam-0.6.5.jar\
+\
+#&& curl 'ftp://ftp.gnu.org/gnu/apl/apl_1.5-1_amd64.deb' -o apl_1.5-1_amd64.deb\
+#&& dpkg -i apl_1.5-1_amd64.deb\
+#&& rm apl_1.5-1_amd64.deb\
+#\
 #&& curl -LOk https://gist.githubusercontent.com/anonymous/6392418/raw/3b16018cb47f2f9ad1fa085c155cc5c0dc448b2d/fish.py\
 #&& PY='#!\/usr\/bin\/python3.5'\
 #&& sed "1s/.*/$PY/" fish.py > /usr/bin/fish.py\
 #&& chmod 751 /usr/bin/fish.py\
 #&& rm fish.py\
 #\
+#&& curl 'https://gist.githubusercontent.com/anonymous/6392418/raw/3b16018cb47f2f9ad1fa085c155cc5c0dc448b2d/fish.py' -o /usr/bin/fish.py\
+#&& chmod 751 /usr/bin/fish.py\
+&& apt-get install -y julia\
+\
 && apt-get purge -y curl\
 && apt-get purge -y unzip\
 && chmod 755 /opt/share -R

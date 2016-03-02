@@ -7,3 +7,5 @@ db.language.update({ name: 'python3'}, {$set: {name: 'python3', path: '/usr/bin/
 db.language.update({ name: 'golfscript'}, {$set: {name: 'golfscript', path: '/usr/bin/golfscript.rb'}}, {upsert:true});
 db.language.update({ name: 'befunge'}, {$set: {name: 'befunge', path: '/usr/bin/bef', args: '-q'}}, {upsert:true});
 db.language.update({ name: 'pyth'}, {$set: {name: 'pyth', path: '/usr/bin/pyth.py'}}, {upsert:true});
+db.language.update({ name: 'cjam'}, {$set: {name: 'cjam', path: '/usr/bin/cjam-0.6.5.jar'}}, {upsert:true});
+db.language.update({ name: 'julia'}, {$set: {name: 'julia', path: '/usr/bin/julia'}}, {upsert:true});

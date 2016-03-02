@@ -127,6 +127,13 @@ i.pyth {
   background-image:   url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AMBCzIePqYqZAAAAEhJREFUOMtjYBjygBFK/8chTjT4j4NNEDBRagELuTZjM4CRgO3/salhIqAB2WBGNDX/SQkDXLGH04D/lMQCIynpgIUS24cJAAA4dw4SqwQcSAAAAABJRU5ErkJggg==);
 }
 
+i.julia {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  background-image:    url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AMCCwQf0ggkaQAAAJNJREFUOMtj/P//PwM2ELXYD0NsWewmDDFGbAZELfbDZiojNkOYiNTMwMDAgFWciYFCMMQMwBYLTFgUMeLQjFUcHo1HA7wwJK03bIOzZ+di2p462Q9iwNEAL5zxbr1hG8Ps3E045RmP+Hv+x+NtxmuyGXjlh3s6QI4FbCB1sh8Dk/WGbYw4NDNCFTHi0MzIwMDAAACPXTWka7vICwAAAABJRU5ErkJggg==);
+}
+
 table tr > th.text-to-left, 
 table tr > td.text-to-left{
   text-align: left;
