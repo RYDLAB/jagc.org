@@ -14,7 +14,7 @@ my $t = Test::Mojo->new('JAGC')->tap(
   }
 );
 
-my @langs = qw/python3 python2 php ruby2.0 perl bash ruby haskell nodejs erlang golfscript pyth cjam julia/;
+my @langs = qw/python3 python2 php ruby2.0 perl bash ruby haskell nodejs erlang golfscript pyth cjam julia lua/;
 
 for ($t->app->db->c('language')) {
   $_->insert({name => 'perl',       path => '/usr/bin/perl'});
@@ -33,6 +33,7 @@ for ($t->app->db->c('language')) {
   $_->insert({name => 'pyth',       path => '/usr/bin/pyth.py'});
   $_->insert({name => 'cjam',       path => '/usr/bin/cjam-0.6.5.jar'});
   $_->insert({name => 'julia',      path => '/usr/bin/julia'});
+  $_->insert({name => 'lua',        path => '/usr/bin/lua5.3'});
   $_->insert({name => 'test',       path => '/usr/bin/test'});
 }
 
@@ -166,3 +167,6 @@ function AB()
   println(input)
 end
 AB()
+@@ lua.html.ep
+a,b = io.read("*number", "*number")
+print(a+b)

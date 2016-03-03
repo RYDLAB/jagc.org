@@ -9,3 +9,4 @@ db.language.update({ name: 'befunge'}, {$set: {name: 'befunge', path: '/usr/bin/
 db.language.update({ name: 'pyth'}, {$set: {name: 'pyth', path: '/usr/bin/pyth.py'}}, {upsert:true});
 db.language.update({ name: 'cjam'}, {$set: {name: 'cjam', path: '/usr/bin/cjam-0.6.5.jar'}}, {upsert:true});
 db.language.update({ name: 'julia'}, {$set: {name: 'julia', path: '/usr/bin/julia'}}, {upsert:true});
+db.language.update({ name: 'lua'}, {$set: {name: 'lua', path: '/usr/bin/lua5.3'}}, {upsert:true});
