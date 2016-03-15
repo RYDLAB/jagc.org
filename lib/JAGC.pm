@@ -11,9 +11,12 @@ use JAGC::Task::email;
 use JAGC::Task::notice_new_task;
 use JAGC::Task::notice_new_comment;
 use JAGC::Task::notice_new_solution;
+use JAGC::Helpers::SendNotify;
 
 sub startup {
   my $app = shift;
+
+  JAGC::Helpers::SendNotify::set_app($app);
 
   my $mode = $app->mode;
   $app->plugin('Config', file => "app.$mode.conf");
@@ -59,6 +62,7 @@ sub startup {
   # Admin
   my $admin = $r->under('/admin')->to('main#admin');
   $admin->get('index')->to('admin#index');
+
   $admin->post('/login/as')->to('login#as')->name('login_as');
 
   # Oauth

@@ -14,7 +14,8 @@ my $t = Test::Mojo->new('JAGC')->tap(
   }
 );
 
-my @langs = qw/python3 python2 php ruby2.0 perl bash ruby haskell nodejs erlang golfscript pyth cjam julia lua/;
+my @langs =
+  qw/python3 python2 php ruby2.0 perl bash ruby haskell nodejs erlang golfscript pyth cjam julia lua/;
 
 for ($t->app->db->c('language')) {
   $_->insert({name => 'perl',       path => '/usr/bin/perl'});
@@ -29,7 +30,6 @@ for ($t->app->db->c('language')) {
   $_->insert({name => 'ruby',       path => '/usr/bin/ruby'});
   $_->insert({name => 'golfscript', path => '/usr/bin/golfscript.rb'});
   $_->insert({name => 'befunge',    path => '/usr/bin/bef', args => '-q'});
-  $_->insert({name => 'pyth',       path => '/usr/bin/pyth.py'});
   $_->insert({name => 'pyth',       path => '/usr/bin/pyth.py'});
   $_->insert({name => 'cjam',       path => '/usr/bin/cjam-0.6.5.jar'});
   $_->insert({name => 'julia',      path => '/usr/bin/julia'});

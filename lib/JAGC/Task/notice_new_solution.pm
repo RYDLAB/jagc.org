@@ -1,8 +1,8 @@
 package JAGC::Task::notice_new_solution;
 use Mojo::Base -base;
-
 use Mango::BSON ':bson';
 use Mojo::URL;
+use JAGC::Helpers::SendNotify qw( send_notify );
 
 sub call {
   my ($self, $job, $sid) = @_;
@@ -31,26 +31,7 @@ sub call {
       tlink  => $c->url_for('task_view', id => $solution->{task}{tid})->to_abs
     );
 
-    my $tx = $job->app->ua->post(
-      'https://mandrillapp.com/api/1.0/messages/send.json' => json => {
-        key     => $config->{mail}{key},
-        message => {
-          html       => $data,
-          subject    => "[JAGC] New solution in task $solution->{task}{name}",
-          from_email => $job->app->config->{mail}{from},
-          from_name  => 'JAGC',
-          to         => [{email => $user->{email}, type => 'to'}]
-        }
-      }
-    );
-
-    if (my $err = $tx->error) {
-      my $error =
-        $err->{code}
-        ? "[mandrill] $err->{code} response: $err->{message}"
-        : "[mandrill] Connection error: $err->{message}";
-      $job->app->log->error($error);
-    }
+    send_notify($user->{email}, $data, "[JAGC] New solution in task $solution->{task}{name}");
   }
 
   $job->finish;
