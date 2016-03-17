@@ -11,7 +11,6 @@ use JAGC::Task::email;
 use JAGC::Task::notice_new_task;
 use JAGC::Task::notice_new_comment;
 use JAGC::Task::notice_new_solution;
-use JAGC::Plugin::SendNotify;
 
 sub startup {
   my $app = shift;
