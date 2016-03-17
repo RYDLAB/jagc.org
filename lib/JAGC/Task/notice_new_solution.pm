@@ -2,7 +2,6 @@ package JAGC::Task::notice_new_solution;
 use Mojo::Base -base;
 use Mango::BSON ':bson';
 use Mojo::URL;
-use JAGC::Helpers::SendNotify qw( send_notify );
 
 sub call {
   my ($self, $job, $sid) = @_;
@@ -31,7 +30,7 @@ sub call {
       tlink  => $c->url_for('task_view', id => $solution->{task}{tid})->to_abs
     );
 
-    send_notify($user->{email}, $data, "[JAGC] New solution in task $solution->{task}{name}");
+    $job->app->send_notify($user->{email}, $data, "[JAGC] New solution in task $solution->{task}{name}");
   }
 
   $job->finish;

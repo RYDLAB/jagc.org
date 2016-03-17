@@ -9,4 +9,4 @@ requires 'Minion::Backend::Mango'     => '>= 0.99';
 requires 'Mojolicious'                => '>= 6.43';
 requires 'Text::Markdown'             => '>= 1.000031';
 requires 'XML::RSS'                   => '>= 1.58';
-requires 'Email::Sender'              => '>= 1.300021';
+requires 'Email::Stuffer'             => '0.012';

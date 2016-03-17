@@ -1,6 +1,5 @@
 package JAGC::Task::notice_new_task;
 use Mojo::Base -base;
-use JAGC::Helpers::SendNotify qw( send_notify );
 
 use Mango::BSON ':bson';
 use Mojo::URL;
@@ -27,7 +26,7 @@ sub call {
       profile => $c->url_for('user_settings', login => $user->{login})->to_abs
     );
 
-    send_notify($user->{email}, $data, "[JAGC] New task: $task->{name}");
+    $job->app->send_notify($user->{email}, $data, "[JAGC] New task: $task->{name}");
   }
 
   $job->finish;

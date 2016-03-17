@@ -2,7 +2,6 @@ package JAGC::Task::notice_new_comment;
 use Mojo::Base -base;
 use Mango::BSON ':bson';
 use Mojo::URL;
-use JAGC::Helpers::SendNotify qw( send_notify );
 
 sub call {
   my ($self, $job, $cid, $tname) = @_;
@@ -33,7 +32,7 @@ sub call {
       tlink => $c->url_for('task_view', id => $comment->{tid})->to_abs
     );
 
-    send_notify($user->{email}, $data, "[JAGC] New comment in task $tname");
+    $job->app->send_notify($user->{email}, $data, "[JAGC] New comment in task $tname");
 
   }
 

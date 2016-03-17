@@ -1,7 +1,6 @@
 package JAGC::Task::email;
 
 use Mojo::Base -base;
-use JAGC::Helpers::SendNotify qw( send_notify );
 
 sub call {
   my ($self, $job, $login, $addr, $link) = @_;
@@ -15,7 +14,7 @@ sub call {
     link   => $link,
   );
 
-  $job->fail unless send_notify($addr, $data, 'Welcome to JAGC');
+  $job->fail unless $job->app->send_notify($addr, $data, 'Welcome to JAGC');
 
 }
 

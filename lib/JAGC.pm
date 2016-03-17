@@ -11,14 +11,13 @@ use JAGC::Task::email;
 use JAGC::Task::notice_new_task;
 use JAGC::Task::notice_new_comment;
 use JAGC::Task::notice_new_solution;
-use JAGC::Helpers::SendNotify;
+use JAGC::Plugin::SendNotify;
 
 sub startup {
   my $app = shift;
 
-  JAGC::Helpers::SendNotify::set_app($app);
-
   my $mode = $app->mode;
+  $app->plugin('JAGC::Plugin::SendNotify');
   $app->plugin('Config', file => "app.$mode.conf");
 
   $app->secrets([$app->config->{secret}]);
