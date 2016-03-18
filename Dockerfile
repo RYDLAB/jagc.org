@@ -56,8 +56,12 @@ RUN apt-get update\
 && apt-get install -y lua5.3\
 && apt-get purge -y curl\
 && apt-get purge -y unzip\
-&& chmod 755 /opt/share -R
+&& chmod 755 /opt/share -R\
+&& locale-gen en_US.UTF-8
 
 USER nobody
 WORKDIR /dev/shm
 ENV TMPDIR="/dev/shm"
+ENV LANG en_US.UTF-8  
+ENV LANGUAGE en_US:en  
+ENV LC_ALL en_US.UTF-8     

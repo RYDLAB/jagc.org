@@ -5,7 +5,7 @@ use File::Copy 'cp';
 use File::Path 'remove_tree';
 use File::Temp 'tempdir';
 use Mango::BSON ':bson';
-use Mojo::Util 'spurt';
+use Mojo::Util qw ( spurt encode);
 
 sub prepare_container {
   my ($self, $app, $data, $sid, $lng) = @_;
@@ -23,8 +23,8 @@ sub prepare_container {
   my $tmp_dir = $self->{tmp_dir} = eval { tempdir DIR => $config->{shared_volume_dir} };
   $log->error("Can't create temp dir: $@") and return undef if $@;
 
-  eval { spurt $data, "$tmp_dir/code" };
-  $log->error($@) and return undef if $@;
+  eval { spurt encode ('UTF-8', $data), "$tmp_dir/code" };
+  $log->error("$@") and return undef if $@;
 
   $log->error("Can't copy starter: $!") and return undef
     unless cp $app->home->rel_file('script/starter'), $tmp_dir;
@@ -39,7 +39,7 @@ sub prepare_container {
   push @{$opts->{Cmd}}, @bin;
 
   $tx = $app->ua->post("$config->{api_server}/containers/create?name=solution_$sid" => json => $opts);
-  $log->error("Can't create container") and return undef unless $tx->success;
+  $log->error("Can't create container ". $tx->res->code ." ".$tx->res->body) and return undef unless $tx->success;
 
   $self->{container_id} = $tx->res->json->{Id};
   return 1;
@@ -54,7 +54,7 @@ sub destroy_container {
   my $api_server = $app->config->{worker}{api_server};
 
   if (my $cid = $self->{container_id}) {
-    my $tx = $app->ua->delete("$api_server/containers/$cid?v=1");
+    my $tx = $app->ua->delete("$api_server/containers/$cid?v=1&force=1");
     return $app->log->error("Can't delete container '$cid'") unless $tx->success;
     $app->log->debug('Container was successfully destroyed!');
   }
