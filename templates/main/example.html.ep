@@ -62,3 +62,32 @@ $n2 = trim(fgets(STDIN));
 print $n1 + $n2;
 ?&gt;
 </pre>
+<h3>Golfscript</h3>
+<pre>
+~+
+</pre>
+<h3>Befunge</h3>
+<pre>
+&&+.@
+</pre>
+<h3>Pyth</h3>
+<pre>
++Qsw
+</pre>
+<h3>Cjam</h3>
+<pre>
+riri+
+</pre>
+<h3>Julia</h3>
+<pre>
+function AB()
+  input = int(readline(STDIN)) + int(readline(STDIN))
+  println(input)
+end
+AB()
+</pre>
+<h3>Lua</h3>
+<pre>
+a,b = io.read("*number", "*number")
+print(a+b)
+</pre>

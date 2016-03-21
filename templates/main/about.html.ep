@@ -81,21 +81,27 @@ print 'test'</pre>
       <ul>
         <li><a href="http://www.perl.org/">perl</a>, <a href="http://mojolicio.us/">Mojolicious</a></li>
         <li><a href="http://www.mongodb.org/">mongodb</a></li>
-        <li><a href="http://linuxcontainers.org/">LXC</a> (Ubuntu 14.04) for running users code</li>
+        <li><a href="https://www.docker.com/">Docker</a> (Ubuntu 15.10) for running users code</li>
       </ul>
 
     <h2>Languages</h2>
     <p>
       <ul>
         <li>perl</li>
-        <li>python3</li>
-        <li>python2</li>
-        <li>erlang</li>
-        <li>ruby1.9</li>
-        <li>ruby1.8</li>
-        <li>haskell</li>
         <li>bash</li>
+        <li>erlang</li>
+        <li>haskell</li>
+        <li>julia</li>
+        <li>lua</li>
+        <li>nodejs</li>
         <li>php</li>
+        <li>python2</li>
+        <li>python3</li>
+        <li>ruby2.0</li>
+        <li>golfscript</li>
+        <li>befunge</li>
+        <li>pyth</li>
+        <li>cjam</li>
       </ul>
     </p>
   </div>

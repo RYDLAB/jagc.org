@@ -15,7 +15,7 @@ my $t = Test::Mojo->new('JAGC')->tap(
 );
 
 my @langs =
-  qw/python3 python2 php ruby2.0 perl bash ruby haskell nodejs erlang golfscript pyth cjam julia lua/;
+  qw/python3 python2 php ruby2.0 perl bash haskell nodejs erlang golfscript pyth cjam julia lua/;
 
 for ($t->app->db->c('language')) {
   $_->insert({name => 'perl',       path => '/usr/bin/perl'});
@@ -27,7 +27,6 @@ for ($t->app->db->c('language')) {
   $_->insert({name => 'haskell',    path => '/usr/bin/runhaskell'});
   $_->insert({name => 'php',        path => '/usr/bin/php'});
   $_->insert({name => 'nodejs',     path => '/usr/bin/nodejs'});
-  $_->insert({name => 'ruby',       path => '/usr/bin/ruby'});
   $_->insert({name => 'golfscript', path => '/usr/bin/golfscript.rb'});
   $_->insert({name => 'befunge',    path => '/usr/bin/bef', args => '-q'});
   $_->insert({name => 'pyth',       path => '/usr/bin/pyth.py'});
@@ -105,9 +104,6 @@ puts gets.to_i+gets.to_i
 $_+=<>
 @@ bash.html.ep
 read a;read b;let a=a+b;echo $a
-@@ ruby.html.ep
-a = Integer(gets)+Integer(gets)
-puts a
 @@ haskell.html.ep
 import System.IO
 main :: IO ()
@@ -161,7 +157,6 @@ print(a+b, end="")
 @@ cjam.html.ep
 riri+
 @@ julia.html.ep
-#A+B
 function AB()
   input = int(readline(STDIN)) + int(readline(STDIN))
   println(input)
