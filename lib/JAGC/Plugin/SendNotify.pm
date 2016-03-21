@@ -1,4 +1,5 @@
 package JAGC::Plugin::SendNotify;
+
 use Mojo::Base 'Mojolicious::Plugin';
 use Email::Sender::Transport::SMTP;
 use Email::Stuffer;

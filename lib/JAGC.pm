@@ -17,6 +17,7 @@ sub startup {
 
   my $mode = $app->mode;
   $app->plugin('JAGC::Plugin::SendNotify');
+  $app->plugin('JAGC::Plugin::Helpers');
   $app->plugin('Config', file => "app.$mode.conf");
 
   $app->secrets([$app->config->{secret}]);
