@@ -35,4 +35,4 @@ close $in;
 
 my $status = $@ ? 'fail' : $res ? 'ok' : 'error';
 my $result = {status => $status, stderr => $status eq 'fail' ? $@ : $err, stdout => $out};
-print encode_json $result;
+print JSON::PP->new->encode($result);
