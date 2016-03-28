@@ -84,7 +84,14 @@ sub run_test {
       $log->error("Can't start container! Status: " . $start_tx->res->body) and Mojo::IOLoop->stop
         unless $start_tx->success;
 
-      $tx->on(finish => sub { $ua->post("$api_server/containers/$cid/stop?t=1"); Mojo::IOLoop->stop; });
+      $tx->on(finish => sub {
+        unless( defined $result ) {
+          my $err = defined $tx->error ? "ua: $tx->error->{message}" : 'unknown error';
+          $result = {status => 'error', stderr => $err, stdout => ''};
+        }
+
+        $ua->post("$api_server/containers/$cid/stop?t=1"); Mojo::IOLoop->stop; 
+      });
       $tx->on(json => sub { my ($tx, $json) = @_; $result = $json; });
     }
   );
