@@ -28,9 +28,9 @@ for ($t->app->db->c('language')) {
   $_->insert({name => 'php',        path => '/usr/bin/php'});
   $_->insert({name => 'nodejs',     path => '/usr/bin/nodejs'});
   $_->insert({name => 'golfscript', path => '/usr/bin/golfscript.rb'});
-  $_->insert({name => 'befunge',    path => '/usr/bin/bef', args => '-q'});
+  $_->insert({name => 'befunge',    path => '/usr/bin/bef', args => ['-q']});
   $_->insert({name => 'pyth',       path => '/usr/bin/pyth.py'});
-  $_->insert({name => 'cjam',       path => '/usr/bin/cjam-0.6.5.jar'});
+  $_->insert({name => 'cjam',       path => '/usr/bin/java', args => ['-jar', '/usr/bin/cjam-0.6.5.jar']});
   $_->insert({name => 'julia',      path => '/usr/bin/julia'});
   $_->insert({name => 'lua',        path => '/usr/bin/lua5.3'});
   $_->insert({name => 'test',       path => '/usr/bin/test'});

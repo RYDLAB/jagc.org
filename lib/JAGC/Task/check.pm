@@ -11,7 +11,7 @@ sub prepare_container {
   my ($self, $app, $data, $sid, $lng) = @_;
 
   my @bin = ($lng->{path});
-  push @bin, $lng->{args} if $lng->{args};
+  push @bin, @{$lng->{args}} if $lng->{args};
 
   my $config = $app->config->{worker};
   my $log    = $app->log;
