@@ -69,7 +69,7 @@
               <div class="form-group">
                 <label for="url" class="col-sm-3 control-label">URL</label>
                 <div class="col-sm-9">
-                  <input type="text" class="form-control" id="url" placeholder="<%= app->config->{site_url} . '/user/' . $user->{login} %>">
+                  <input type="text" class="form-control" id="url" placeholder="<%= url_for(user_info => {login => $login})->to_abs  %>">
                 </div>
               </div>
             </fieldset>

@@ -32,8 +32,9 @@ sub add {
   $v->required('description')->size(1, 500, 'Length of description must be no more than 500 characters');
   $v->required($_)->size(1, 100000, 'Length of test must be no more than 100000 characters') for @test_fields;
 
-  if ($v->has_error || @test_fields < 5) {
-    $c->stash(alert_error => 'You need create at least 5 tests') if @test_fields < 5;
+  my $tnum = grep { /^test_\d+_in$/ } @{$params->names};
+  if ($v->has_error || $tnum < 5) {
+    $c->stash(alert_error => 'You need create at least 5 tests') if $tnum < 5;
     return $c->add_view;
   }
 
@@ -254,8 +255,9 @@ sub edit {
       $v->required($_)->size(1, 100000, 'Length of test must be no more than 100000 characters')
         for @test_fields;
 
-      if ($v->has_error || @test_fields < 5) {
-        $c->stash(alert_error => 'You need add at least 5 tests') if @test_fields < 5;
+      my $tnum = grep { /^test_\d+_in$/ } @{$params->names};
+      if ($v->has_error || $tnum < 5) {
+        $c->stash(alert_error => 'You need add at least 5 tests') if $tnum < 5;
         return $c->edit_view;
       }
 
