@@ -19,6 +19,7 @@ sub startup {
   $app->plugin('JAGC::Plugin::SendNotify');
   $app->plugin('JAGC::Plugin::Helpers');
   $app->plugin('Config', file => "app.$mode.conf");
+  $app->plugin('Model');
 
   $app->secrets([$app->config->{secret}]);
   $app->sessions->cookie_name('jagc_session');
@@ -46,8 +47,7 @@ sub startup {
 
   $r->get('/')->to('main#index')->name('index');
   $br->get('/logout')->to('main#logout')->name('logout');
-
-  $r->get('/tasks/:page' => [page => $num])->to('main#tasks', page => 1)->name('tasks');
+$r->get('/tasks/:page' => [page => $num])->to('main#tasks', page => 1)->name('tasks');
 
   # Login
   $br->get('/login/twitter')->to('login#twitter')->name('login_twitter');
@@ -71,6 +71,12 @@ sub startup {
   $br->get('/oauth/linkedin')->to('oauth#linkedin')->name('oauth_linkedin');
   $br->get('/oauth/fb')->to('oauth#fb')->name('oauth_fb');
   $br->get('/oauth/test')->to('oauth#test')->name('oauth_test') if $mode eq 'test';
+
+  # Contest
+  $br->get('/contest/add')->to('contest#add_view')->name('contest_add_view');
+  $br->post('/contest/add')->to('contest#upsert')->name('contest_add');
+  $br->get('/contest/:con/edit' => [con => $oid])->to('contest#edit_view')->name('contest_edit_view');
+  $br->post('/contest/:con/edit' => [con => $oid])->to('contest#upsert')->name('contest_edit');
 
   $br->post('/task/add')->to('task#add')->name('task_add');
   $br->get('/task/add')->to('task#add_view')->name('task_add_view');
@@ -175,6 +181,40 @@ sub startup {
       return $value =~ m/.+\@.+\..+/ ? undef : 1;
     }
   );
+
+  $app->validator->add_check(
+    check_dates => sub {
+    my $v = shift;
+
+    my $start = $app->date_to_bson($v->param('start_date'));
+    my $end = $app->date_to_bson($v->param('end_date'));
+
+    unless( $start ) {
+      $v->error(start_date => ['cechk_dates', q(Bad start date!)]);
+      return undef;
+    }
+
+    unless( $end ) {
+      $v->error(end_date => ['check_dates', q(Bad end date!)]);
+      return undef;
+    }
+
+    if ( $end < $start ) {
+      $v->error(end_date => ['check_dates', q(Can't be smaller than start date!)]);
+      return undef;
+    }
+      return undef;
+    }
+  );
+
+#  $app->validator->add_check(
+#    enough_tests => sub {
+#    my $v = shift;
+#    my @tests = grep { /^test_\d+_out/ } keys %{$v->input};
+#    $v->error(enough_tests => 'You need add at least 5 tests') if @tests < 5;
+#
+#    return undef;
+#  });
 }
 
 1;

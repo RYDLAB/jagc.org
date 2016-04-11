@@ -1,0 +1,71 @@
+% layout 'default';
+% title 'Add contest';
+
+<script type="text/javascript">
+  var today = new Date();
+  today.setHours(0);
+  today.setMinutes(0);
+  today.setSeconds(0);
+
+  $(document).ready( function () {
+   $('#start_date').datetimepicker({
+      minDate : today,
+      useCurrent: true,
+      format : 'DD/MM/YYYY HH:mm',
+    });
+    $('#end_date').datetimepicker ({
+      useCurrent: false, //Important! See issue #1075
+      format : 'DD/MM/YYYY HH:mm'
+    });
+
+    $("#start_date").on("dp.change", function (e) {
+        $('#end_date').data("DateTimePicker").minDate(e.date);
+    });
+    $("#end_date").on("dp.change", function (e) {
+        $('#start_date').data("DateTimePicker").maxDate(e.date);
+    });
+
+  });
+</script>
+
+<h2>Add new contest</h2>
+<form action="<%= url_for('contest_add') %>" method="POST">
+  <fieldset>
+    <div class="row">
+      <div class="col-sm-6">
+        %= include 'field', type => 'text', label => 'Contest name', name => 'name', value => '', opt => {class => 'input-lg'}
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-sm-6">
+        %= include 'field', type => 'textarea', label => 'Contest description', name => 'description', value => '', opt => {class => 'input-lg'}
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-sm-3">
+        %= include 'field', type => 'datetime', label => 'Start date (in UTC+0)', name => 'start_date', value => '', opt => {class => 'input-lg'}
+      </div>
+      <div class="col-sm-3">
+        %= include 'field', type => 'datetime', label => 'End date', name => 'end_date', value => '', opt => {class => 'input-lg'}
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-sm-3">
+        % if ( validation->has_error('langs') ) {
+          <h3 class='text-danger'>Available languages:</h3>
+          <span class="help-inline text-danger">Please select at least one language!</span>
+        % }
+        % else {
+          <h3>Available languages:</h3>
+        % }
+        % my $langs = stash('langs');
+        % foreach my $lang ( sort keys %$langs ) {
+        %= include 'field', type => 'checkbox', name => "langs", label => $lang, opt => { icon => $lang, checked => $langs->{$lang} }
+        %}
+      </div>
+      <div class="col-sm-3">
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primary">Submit</button>
+  </fieldset>
+</form>

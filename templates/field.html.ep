@@ -8,6 +8,16 @@
         <span class="help-block"><%= $help %></span>
       % }
     </div>
+  % } elsif ($type eq 'datetime'){
+        <div class="form-group">
+          <label class="control-label" for="<%= $name %>"><%= $label %></label>
+          <div class='input-group date' id='<%= $name %>'>
+           <input class="form-control <%= $opt->{class} %>" type='datetime' name="<%= $name %>" value="<%= $value %>">
+            <span class="input-group-addon">
+                <span class="glyphicon glyphicon-calendar"></span>
+            </span>
+          </div>
+        </div>
   % } elsif ($type eq 'text-append') {
     <div class="form-group">
       <label class="control-label" for="<%= $name %>"><%= $label %></label>
@@ -62,10 +72,12 @@
   % } elsif ($type eq 'checkbox') {
     <div class="checkbox">
       <label>
-        <input class="<%= $opt->{class} %>" type="checkbox" name="<%= $name %>" value="checked" <%= $value %> >
+        <input class="<%= $opt->{class} %>" type="checkbox" name="<%= $name %>" value="<%= $label %>" <%= 'checked' if $opt->{checked} %> >
+        % if ( $opt->{icon} ) {
+        <i class="<%= $opt->{icon} %>"></i>
+        % }
         <%= $label %>
       </label>
-      </div>
     </div>
   % } elsif ($type eq 'radio') {
     <div class="radio">
@@ -88,6 +100,20 @@
         <span class="help-block"><%= $help %></span>
       % }
     </div>
+  % } elsif ($type eq 'datetime'){
+      <div class="form-group has-error">
+        <label class="control-label" for="<%= $name %>"><%= $label %></label>
+        <div class='input-group date' id='<%= $name %>'>
+         <input class="form-control <%= $opt->{class} %>" type='datetime' name="<%= $name %>" value="<%= $value %>">
+          <span class="input-group-addon">
+              <span class="glyphicon glyphicon-calendar"></span>
+          </span>
+        </div>
+        <span class="help-inline text-danger"><%= $error %></span>
+        % if (my $help = $opt->{help}) {
+          <span class="help-block"><%= $help %></span>
+        % }
+      </div>
   % } elsif ($type eq 'text-append') {
     <div class="form-group has-error">
       <label class="control-label" for="<%= $name %>"><%= $label %></label>
@@ -126,6 +152,16 @@
       <label class="control-label" for="<%= $name %>"><%= $label %></label>
       <input class="form-control <%= $opt->{class} %>" type="file" name="<%= $name %>">
       <span class="help-inline text-danger"><%= $error %></span>
+    </div>
+  % } elsif ($type eq 'checkbox') {
+    <div class="checkbox has-error">
+      <label>
+        <input class="<%= $opt->{class} %>" type="checkbox" name="<%= $name %>" value="<%= $label %>" >
+        % if ( $opt->{icon} ) {
+        <i class="<%= $opt->{icon} %>"></i>
+        % }
+        <%= $label %>
+      </label>
     </div>
   % }
 % end
