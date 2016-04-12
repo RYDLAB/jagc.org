@@ -5,12 +5,12 @@
   var today = new Date();
   today.setHours(0);
   today.setMinutes(0);
-  today.setSeconds(0);
+  today.setSeconds(-1);
 
   $(document).ready( function () {
    $('#start_date').datetimepicker({
       minDate : today,
-      useCurrent: true,
+      useCurrent: false,
       format : 'DD/MM/YYYY HH:mm',
     });
     $('#end_date').datetimepicker ({

@@ -25,7 +25,7 @@
   });
 </script>
 
-<h2>Add new contest</h2>
+<h2>Edit contest</h2>
 <form action="<%= url_for('contest_edit') %>" method="POST">
   <fieldset>
     <div class="row">
