@@ -207,14 +207,14 @@ $r->get('/tasks/:page' => [page => $num])->to('main#tasks', page => 1)->name('ta
     }
   );
 
-#  $app->validator->add_check(
-#    enough_tests => sub {
-#    my $v = shift;
-#    my @tests = grep { /^test_\d+_out/ } keys %{$v->input};
-#    $v->error(enough_tests => 'You need add at least 5 tests') if @tests < 5;
-#
-#    return undef;
-#  });
+  $app->validator->add_check(
+    enough_tests => sub {
+    my $v = shift;
+    my @tests = grep { /^test_\d+_out/ } keys %{$v->input};
+    $v->error(enough_tests => 'You need add at least 5 tests') if @tests < 5;
+
+    return undef;
+  });
 }
 
 1;

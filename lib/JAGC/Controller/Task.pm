@@ -8,66 +8,27 @@ use Text::Markdown 'markdown';
 
 sub add {
   my $c = shift;
-  $c->render_later;
-  my $db = $c->db;
 
-  return $c->reply->not_found unless my $uid = $c->session('uid');
-  $uid = bson_oid($uid);
+  return $c->reply->not_found unless $c->session('uid');
 
-  my $params      = $c->req->body_params;
-  my $hparams     = $params->to_hash;
-  my @test_fields = grep { /^test_/ } @{$params->names};
+  my %q = (validation => $c->validation, params => $c->req->params, session => $c->session);
+  $q{con} = $c->param('con') if $c->param('con');
 
-  for (@test_fields) {
-    $hparams->{$_} =~ s/\r\n/\n/g;
-    $hparams->{$_} =~ s/^\n*|\n*$//g;
+  my %res = $c->model('task')->add(%q);
+
+  my $v = $res{validation};
+
+  if ($v->has_error) {
+    $c->stash(alert_error => 'You need create at least 5 tests') if $v->has_error('enough_tests');
+    return $c->render( action => 'add' );
   }
 
-  my $to_validate = {name => trim($hparams->{name}), description => trim($hparams->{description})};
-  $to_validate->{$_} = $hparams->{$_} for @test_fields;
+  return $c->reply->exception("Error while insert task: $res{err}") if $res{err};
 
-  my $v = $c->validation;
-  $v->input($to_validate);
-  $v->required('name')->size(1, 50, 'Length of task name must be no more than 50 characters');
-  $v->required('description')->size(1, 500, 'Length of description must be no more than 500 characters');
-  $v->required($_)->size(1, 100000, 'Length of test must be no more than 100000 characters') for @test_fields;
+  return $c->redirect_to('contest_task_view', id => $res{tid}) if $c->param('con');
 
-  my $tnum = grep { /^test_\d+_in$/ } @{$params->names};
-  if ($v->has_error || $tnum < 5) {
-    $c->stash(alert_error => 'You need create at least 5 tests') if $tnum < 5;
-    return $c->add_view;
-  }
-
-  my @tests;
-  for my $tin (grep { /^test_\d+_in$/ } @{$params->names}) {
-    (my $tout = $tin) =~ s/in/out/;
-    my $test_in  = $v->param($tin);
-    my $test_out = $v->param($tout);
-    my $test     = bson_doc(
-      _id => bson_oid,
-      in  => bson_bin(encode 'UTF-8', $test_in),
-      out => bson_bin(encode 'UTF-8', $test_out),
-      ts  => bson_time
-    );
-    push @tests, $test;
-  }
-
-  $db->c('task')->insert(
-    bson_doc(
-      name  => $v->param('name'),
-      desc  => $v->param('description'),
-      owner => bson_doc(uid => $uid, login => $c->session('login'), pic => $c->session('pic')),
-      stat  => bson_doc(all => 0, ok => 0),
-      ts    => bson_time,
-      tests => \@tests
-      ) => sub {
-      my ($collection, $err, $oid) = @_;
-      return $c->reply->exception("Error while insert task: $err") if $err;
-
-      $c->app->minion->enqueue(notice_new_task => [$oid]);
-      return $c->redirect_to('task_view', id => $oid);
-    }
-  );
+  $c->app->minion->enqueue(notice_new_task => [$res{tid}]);
+  $c->redirect_to('task_view', id => $res{tid});
 }
 
 sub add_view {
