@@ -93,12 +93,7 @@ sub edit_view {
 
   my %res = (contest => $contest, langs => \%langs);
 
-  return %res if !exists $contest->{tasks} || !@{$contest->{tasks}};
-
-  my $qery = {_id => {'$in' => $contest->{tasks}}};
-  my $projection = {_id => bson_true, name => bson_true};
-
-  my $tasks = $db->c('contest.task')->find($qery, $projection)->all;
+  my $tasks = $db->c('task')->find({con => $con})->all;
 
   $res{tasks} = $tasks if (defined $tasks);
 

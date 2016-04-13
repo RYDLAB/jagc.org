@@ -65,7 +65,7 @@
          % if (stash('tasks')) {
          % my $tasks = stash('tasks');
          % foreach my $task ( @$tasks ) {
-             <a href="<%= url_for( 'contest_task_edit_view', tid => $task->{_id} )%>"><%= $task->{name} %></a><br>
+             <a href="<%= url_for( 'task_edit_view', tid => $task->{_id} )%>"><%= $task->{name} %></a><br>
          % }
          % }
          <button id="add_task" type="button" class="btn btn-block btn-default">Add new task</button>

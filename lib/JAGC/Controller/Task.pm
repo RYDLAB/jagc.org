@@ -90,6 +90,7 @@ sub view {
   my $c = shift;
 
   my %res = $c->model('task')->view(tid => $c->param('id'), s => $c->param('s'), session => $c->session,);
+  return $c->reply->not_found unless %res;
 
   $c->stash(%res);
 }

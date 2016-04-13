@@ -71,7 +71,7 @@
       </div>
     </div>
     <div class="panel-body">
-      <pre><%= $solution->{code} %></pre>
+      <pre><%= $solution->{code} || '...' %></pre>
     </div>
   </div>
 </div>
