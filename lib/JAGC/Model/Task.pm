@@ -65,15 +65,64 @@ sub add {
   );
 
   $q->{con} = bson_oid($args{con}) if $args{con};
-  my $oid = $db->c('task')->insert($q);
+  my $oid = eval { $db->c('task')->insert($q) };
 
-  unless ($oid) {
-    $res{err} = "Error while insert task: $!";
+  if ($@) {
+    $res{err} = "Error while insert task: $@";
     return %res;
   }
 
   $res{tid} = bson_oid $oid;
   return %res;
+}
+
+sub view {
+  my ($self, %args) = @_;
+  my $db = $self->app->db;
+  my $s  = $args{session};
+
+  my $id   = bson_oid $args{tid};
+  my $task = $db->c('task')->find_one($id);
+  return (err => "Error while find_one task with $id: $!") unless $task;
+  my $lang = $db->c('language')->find({})->fields({name => 1, _id => 0})->all;
+
+  my %res = (task => $task, languages => [map { $_->{name} } @$lang]);
+
+  my $col = $db->c('solution');
+  my $solutions;
+  if ($args{s}) {
+    $solutions = $col->find(bson_doc('task.tid' => $id, s => 'finished'))->fields({task => 0})
+      ->sort(bson_doc(size => 1, ts => 1))->limit(20)->all;
+  } else {
+    $solutions = $col->find(bson_doc('task.tid' => $id, s => {'$in' => [qw/incorrect timeout error/]}))
+      ->fields({task => 0})->sort(bson_doc(ts => 1))->limit(20)->all;
+  }
+
+  my $comments_count =
+    $db->c('comment')->find(bson_doc(type => 'task', tid => $id, del => bson_false))->count;
+
+  my $solution_comments = $db->c('comment')->aggregate([
+      {'$match' => bson_doc(tid => $id, type => 'solution', del => bson_false)},
+      {'$group' => bson_doc(_id => '$sid', count => {'$sum' => 1})}
+    ]
+  )->all;
+
+  my %solution_comments;
+  map { $solution_comments{$_->{_id}} = $_->{count} } @$solution_comments;
+
+  my $notice;
+
+  if (my $uid = $s->{uid}) {
+    $notice = $db->c('notification')->find_one(bson_doc(uid => bson_oid($uid), tid => $id), {for => 1});
+  }
+
+  return (
+    %res,
+    solutions         => $solutions,
+    comments_count    => $comments_count,
+    solution_comments => \%solution_comments,
+    notice            => $notice,
+  );
 }
 
 1;

@@ -77,6 +77,8 @@ $r->get('/tasks/:page' => [page => $num])->to('main#tasks', page => 1)->name('ta
   $br->post('/contest/add')->to('contest#upsert')->name('contest_add');
   $br->get('/contest/:con/edit' => [con => $oid])->to('contest#edit_view')->name('contest_edit_view');
   $br->post('/contest/:con/edit' => [con => $oid])->to('contest#upsert')->name('contest_edit');
+  $br->get('/contest/:con/task/add' => [con => $oid])->to('task#add_view')->name('contest_task_add_view');
+  $br->post('/contest/:con/task/add' => [con => $oid])->to('task#add')->name('contest_task_add');
 
   $br->post('/task/add')->to('task#add')->name('task_add');
   $br->get('/task/add')->to('task#add_view')->name('task_add_view');

@@ -11,30 +11,14 @@ my $t = Test::Mojo->new('JAGC')->tap(
   sub {
     $_->ua->max_connections(0);
     $_->app->db->command({dropDatabase => 1});
+    $_->app->commands->run('db', 'init');
   }
 );
 
 my @langs =
   qw/python3 python2 php ruby2.0 perl bash haskell nodejs erlang golfscript pyth cjam julia lua/;
 
-for ($t->app->db->c('language')) {
-  $_->insert({name => 'perl',       path => '/usr/bin/perl'});
-  $_->insert({name => 'python3',    path => '/usr/bin/python3.5'});
-  $_->insert({name => 'python2',    path => '/usr/bin/python2.7'});
-  $_->insert({name => 'bash',       path => '/bin/bash'});
-  $_->insert({name => 'ruby2.0',    path => '/usr/bin/ruby2.2'});
-  $_->insert({name => 'erlang',     path => '/usr/bin/escript'});
-  $_->insert({name => 'haskell',    path => '/usr/bin/runhaskell'});
-  $_->insert({name => 'php',        path => '/usr/bin/php'});
-  $_->insert({name => 'nodejs',     path => '/usr/bin/nodejs'});
-  $_->insert({name => 'golfscript', path => '/usr/bin/golfscript.rb'});
-  $_->insert({name => 'befunge',    path => '/usr/bin/bef', args => ['-q']});
-  $_->insert({name => 'pyth',       path => '/usr/bin/pyth.py'});
-  $_->insert({name => 'cjam',       path => '/usr/bin/java', args => ['-jar', '/usr/bin/cjam-0.6.5.jar']});
-  $_->insert({name => 'julia',      path => '/usr/bin/julia'});
-  $_->insert({name => 'lua',        path => '/usr/bin/lua5.3'});
-  $_->insert({name => 'test',       path => '/usr/bin/test'});
-}
+$t->app->db->c('language')->insert({name => 'test',       path => '/usr/bin/test'});
 
 my $user_email = 'u3@jagc.org';
 my $user_login = 'u3';

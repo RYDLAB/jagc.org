@@ -76,7 +76,7 @@
 </script>
 
 % if (session 'uid') {
-  <form action="<%= url_for('task_add') %>" method="POST">
+  <form action="<%= url_for( stash('con') ? 'contest_task_add' : 'task_add') %>" method="POST">
     <fieldset>
       <div class="row">
         <div class="col-sm-6">

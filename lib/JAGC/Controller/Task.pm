@@ -20,7 +20,7 @@ sub add {
 
   if ($v->has_error) {
     $c->stash(alert_error => 'You need create at least 5 tests') if $v->has_error('enough_tests');
-    return $c->render( action => 'add' );
+    return $c->render(action => 'add');
   }
 
   return $c->reply->exception("Error while insert task: $res{err}") if $res{err};
@@ -89,63 +89,9 @@ sub solution_comments {
 sub view {
   my $c = shift;
 
-  my $id = bson_oid $c->stash('id');
-  my $db = $c->db;
-  $c->delay(
-    sub {
-      my $d = shift;
+  my %res = $c->model('task')->view(tid => $c->param('id'), s => $c->param('s'), session => $c->session,);
 
-      $db->c('task')->find_one($id => $d->begin);
-      $db->c('language')->find({})->fields({name => 1, _id => 0})->all($d->begin);
-    },
-    sub {
-      my ($d, $terr, $task, $lerr, $languages) = @_;
-      return $c->reply->exception("Error while find_one task with $id: $terr") if $terr;
-      return $c->reply->not_found unless $task;
-      return $c->reply->exception("Error while find languages: $lerr") if $lerr;
-
-      $c->stash(task => $task, languages => [map { $_->{name} } @$languages]);
-
-      my $collection = $db->c('solution');
-      my $cursor;
-      if ($c->stash('s') == 1) {
-        $cursor = $collection->find(bson_doc('task.tid' => $id, s => 'finished'))->fields({task => 0})
-          ->sort(bson_doc(size => 1, ts => 1))->limit(20);
-      } elsif ($c->stash('s') == 0) {
-        $cursor =
-          $collection->find(bson_doc('task.tid' => $id, s => {'$in' => [qw/incorrect timeout error/]}))
-          ->fields({task => 0})->sort(bson_doc(ts => 1))->limit(20);
-      }
-      $cursor->all($d->begin);
-      $db->c('comment')->find(bson_doc(type => 'task', tid => $id, del => bson_false))->count($d->begin);
-      $db->c('comment')->aggregate([
-          {'$match' => bson_doc(tid => $id, type => 'solution', del => bson_false)},
-          {'$group' => bson_doc(_id => '$sid', count => {'$sum' => 1})}
-        ]
-      )->all($d->begin);
-      if (my $uid = $c->session('uid')) {
-        $db->c('notification')->find_one(bson_doc(uid => bson_oid($uid), tid => $id), {for => 1}, $d->begin);
-      }
-    },
-    sub {
-      my ($d, $err, $solutions, $cerr, $comments_count, $ccerr, $solution_comments, $nerr, $notice) = @_;
-      return $c->reply->exception("Error while find solution: $err")                if $err;
-      return $c->reply->exception("Error while count comments for $id: $cerr")      if $cerr;
-      return $c->reply->exception("Error while find comments for solution: $ccerr") if $ccerr;
-      return $c->reply->exception("Error while find notification for task: $nerr")  if $nerr;
-
-      my %solution_comments;
-      map { $solution_comments{$_->{_id}} = $_->{count} } @$solution_comments;
-
-      $c->stash(
-        solutions         => $solutions,
-        comments_count    => $comments_count,
-        solution_comments => \%solution_comments,
-        notice            => $notice
-      );
-      $c->render(action => 'view');
-    }
-  );
+  $c->stash(%res);
 }
 
 sub edit_view {
