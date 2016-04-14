@@ -11,8 +11,8 @@ sub index {
     sub {
       my $d = shift;
 
-      $db->c('task')->find->limit(20)->sort({ts => -1})->fields({desc => 0, tests => 0})->all($d->begin);
-      $db->c('task')->find->limit(20)->sort({'stat.all' => -1})->fields({desc => 0, tests => 0})
+      $db->c('task')->find({con => {'$exists' => 0}})->limit(20)->sort({ts => -1})->fields({desc => 0, tests => 0})->all($d->begin);
+      $db->c('task')->find({con => {'$exists' => 0}})->limit(20)->sort({'stat.all' => -1})->fields({desc => 0, tests => 0})
         ->all($d->begin);
       $db->c('stat')->find->fields({score => 1, pic => 1, login => 1})
         ->sort(bson_doc(score => -1, t_all => -1, t_ok => -1))->limit(-10)->all($d->begin);

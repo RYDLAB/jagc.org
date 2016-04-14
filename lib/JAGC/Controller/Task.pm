@@ -89,10 +89,11 @@ sub solution_comments {
 sub view {
   my $c = shift;
 
-  my %res = $c->model('task')->view(tid => $c->param('id'), s => $c->param('s'), session => $c->session,);
+  my %res = $c->model('task')->view(tid => $c->param('id'), s => $c->stash('s'), session => $c->session,);
   return $c->reply->not_found unless %res;
 
   $c->stash(%res);
+  $c->render( 'task/view' );
 }
 
 sub edit_view {
@@ -412,81 +413,20 @@ sub solution_comment_add {
 sub solution_add {
   my $c = shift;
 
-  return $c->reply->not_found unless my $uid = $c->session('uid');
-  $uid = bson_oid $uid;
+  return $c->reply->not_found unless $c->session('uid');
 
-  my $login = $c->session('login');
-  my $pic   = $c->session('pic');
-  my $tid   = bson_oid $c->stash('id');
+  my %res = $c->model('solution')->add( validation => $c->validation, params => $c->req->params, session => $c->session, tid => $c->param('id') );
+  return $c->reply->not_found unless %res;
+  return $c->reply->exception( $res{err} ) if $res{err};
 
-  my $max_code_len = 1000000;
+  if ($res{validation}->has_error) {
+    $c->stash(s => 1);
+    return $c->view;
+  }
 
-  my $db = $c->db;
-  $c->delay(
-    sub {
-      my $d = shift;
-      $db->c('task')->find_one($tid => $d->begin);
-      $db->c('language')->find({})->all($d->begin);
-    },
-    sub {
-      my ($d, $terr, $task, $lerr, $languages) = @_;
-      return $c->reply->exception("Error while find_one task with $tid: $terr") if $terr;
-      return $c->reply->exception("Error while find languages: $lerr")          if $lerr;
-      return $c->reply->not_found unless $task;
-
-      my $langs = [map { $_->{name} } @$languages];
-      $d->data(languages => $langs);
-      $d->data(tname     => $task->{name});
-
-      my $code = $c->param('code');
-      $code =~ s/\r\n?/\n/g;
-
-      my $v = $c->validation;
-      $v->input({language => trim($c->param('language')), code => $code});
-      $v->required('language')->in(\@$langs, 'Language not exist');
-      $v->required('code')
-        ->code_size(1, $max_code_len,
-        'The length of the source code must be less than ' . ($max_code_len + 1));
-      if ($v->has_error) {
-        $c->stash(s => 1);
-        return $c->view();
-      }
-
-      my ($used_lang) = grep { $_->{name} eq $v->param('language') } @$languages;
-
-      $code = $v->param('code');
-      my $code_length = length $code;
-
-      if ($code =~ m/^#!/) {
-        $code =~ s/^#![^\s]+[\t ]*//;
-        $code_length = length($code) - 1;
-        $code_length++ unless $code =~ m/\n/;
-        $v->output->{code} =~ s/^#![^\s]+/#!$used_lang->{path}/;
-      }
-
-      $d->data(code => $v->param('code'));
-      $c->session(lang => $v->param('language'));
-
-      $db->c('solution')->insert(
-        bson_doc(
-          task => {tid => $tid, name  => $task->{name}},
-          user => {uid => $uid, login => $login, pic => $pic},
-          code => $v->param('code'),
-          lng  => $v->param('language'),
-          size => $code_length,
-          s    => 'inactive',
-          ts   => bson_time
-        ) => $d->begin
-      );
-    },
-    sub {
-      my ($d, $serr, $sid) = @_;
-      return $c->reply->exception("Error while insert solution: $serr") if $serr;
-
-      $c->minion->enqueue(check => [$sid] => {priority => 1});
-      return $c->redirect_to('event_user_info', login => $login);
-    }
-  );
+  # remember last language
+  $c->session( lang => $c->param('language'));
+  return $c->redirect_to('event_user_info', login => $c->session->{login});
 }
 
 1;

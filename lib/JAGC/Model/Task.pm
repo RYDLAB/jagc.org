@@ -4,7 +4,7 @@ use Mojo::Base 'MojoX::Model';
 use Mojo::Util qw/encode trim/;
 use Mango::BSON ':bson';
 
-use constant {SHOW_ALL => 0, HIDE_TASK => 1, HIDE_SOLUTIONS => 2,};
+use constant {SHOW_ALL => 0, HIDE_TASK => 1, HIDE_SOLUTIONS => 2};
 
 sub _validate {
   my ($p, $v) = @_[-2, -1];
@@ -90,24 +90,27 @@ sub view {
   my $task = $db->c('task')->find_one($id);
   return wantarray ? () : undef unless $task;
 
-  my $is_owner = exists $s->{uid} && ($task->{owner}->{uid}->to_string eq $s->{uid});
-
-  my $sol_proj = {task => 0};
-
-  if ($task->{con} && !$is_owner) {
-    my $perm = $self->_view_permissions($task->{con});
+  my $perm = SHOW_ALL;
+  if ($task->{con}) {
+    $perm = $self->_view_permissions($task->{con}, $s->{uid});
     return wantarray ? () : undef if $perm == HIDE_TASK;
-    $sol_proj->{code} = 0 if $perm == HIDE_SOLUTIONS;
   }
 
   my $col = $db->c('solution');
   my $solutions;
+
   if ($args{s}) {
-    $solutions = $col->find(bson_doc('task.tid' => $id, s => 'finished'))->fields($sol_proj)
+    $solutions = $col->find(bson_doc('task.tid' => $id, s => 'finished'))->fields({task => 0})
       ->sort(bson_doc(size => 1, ts => 1))->limit(20)->all;
   } else {
     $solutions = $col->find(bson_doc('task.tid' => $id, s => {'$in' => [qw/incorrect timeout error/]}))
-      ->fields($sol_proj)->sort(bson_doc(ts => 1))->limit(20)->all;
+      ->fields({task => 0})->sort(bson_doc(ts => 1))->limit(20)->all;
+  }
+
+  if ($perm == HIDE_SOLUTIONS) {
+    foreach my $sol (@$solutions) {
+      delete $sol->{code} if $sol->{user}{uid}->to_string ne $s->{uid};
+    }
   }
 
   my $lang = $db->c('language')->find({})->fields({name => 1, _id => 0})->all;
@@ -142,12 +145,18 @@ sub view {
 }
 
 sub _view_permissions {
-  my ($self, $oid) = @_;
+  my ($self, $oid, $uid) = @_;
   my $contest = $self->app->db->c('contest')->find_one(bson_oid $oid);
 
-  my $t = bson_time;
+  my $t         = bson_time;
+  my $owner_uid = $contest->{owner}{uid}->to_string;
 
-  return HIDE_TASK      if $t < $contest->{start_date};
+  $uid = $uid->to_string if ref $uid;
+
+  if (!defined $uid || $uid ne $owner_uid) {
+    return HIDE_TASK if $t < $contest->{start_date};
+  }
+
   return HIDE_SOLUTIONS if $t < $contest->{end_date};
   return SHOW_ALL;
 }

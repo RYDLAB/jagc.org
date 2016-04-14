@@ -1,5 +1,5 @@
 % layout 'default';
-% title 'Add contest';
+% title 'Edit contest';
 
 <script type="text/javascript">
   $(document).ready( function () {
