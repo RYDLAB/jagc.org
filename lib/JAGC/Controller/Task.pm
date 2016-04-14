@@ -511,7 +511,7 @@ sub solution_add {
   my $pic   = $c->session('pic');
   my $tid   = bson_oid $c->stash('id');
 
-  my $max_code_len = 1000000;
+  my $max_code_len = 10_000;
 
   my $db = $c->db;
   $c->delay(
