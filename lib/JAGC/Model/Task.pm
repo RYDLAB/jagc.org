@@ -94,9 +94,19 @@ sub view {
   return wantarray ? () : undef unless $task;
 
   my $perm = SHOW_ALL;
+  my $langs;
+
+
   if ($task->{con}) {
     $perm = $self->view_permissions($task->{con}, $s->{uid});
     return wantarray ? () : undef if $perm == HIDE_TASK;
+  
+    $langs = $self->app->model('contest')->contest_languages($task->{con});
+    return wantarray ? () : undef unless $langs;
+  }
+  else {
+    $langs = $db->c('language')->find({})->fields({name => 1, _id => 0})->all;
+    $langs = [map { $_->{name} } @$langs];
   }
 
   my $col = $db->c('solution');
@@ -116,9 +126,7 @@ sub view {
     }
   }
 
-  my $lang = $db->c('language')->find({})->fields({name => 1, _id => 0})->all;
-
-  my %res = (task => $task, languages => [map { $_->{name} } @$lang]);
+  my %res = (task => $task, languages => $langs);
 
   my $comments_count =
     $db->c('comment')->find(bson_doc(type => 'task', tid => $id, del => bson_false))->count;

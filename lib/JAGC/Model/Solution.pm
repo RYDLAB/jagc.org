@@ -29,9 +29,20 @@ sub add {
 
   my $v = $args{validation};
   $v->input({language => trim($p->param('language')), code => $code});
-  $v->required('language')->in(\@$langs, 'Language not exist');
+  $v->required('language')->in($langs, 'Language not exist');
   $v->required('code')
     ->code_size(1, MAX_CODE_LEN, 'The length of the source code must be less than ' . (MAX_CODE_LEN + 1));
+
+  my $task_doc = {tid => $tid, name => $task->{name}};
+
+  if ($task->{con}) {
+    $task_doc->{con} = $task->{con};
+
+    my $langs = $self->app->model('contest')->contest_languages($task->{con});
+    $v->required('language')
+      ->in($langs, 'Language "' . $v->param('language') . '" not available for this contest!');
+  }
+
 
   return (s => 1, validation => $v) if ($v->has_error);
 
@@ -46,9 +57,6 @@ sub add {
     $code_length++ unless $code =~ m/\n/;
     $v->output->{code} =~ s/^#![^\s]+/#!$used_lang->{path}/;
   }
-
-  my $task_doc = {tid => $tid, name => $task->{name}};
-  $task_doc->{con} = $task->{con} if $task->{con};
 
   my $sid = eval {
     $db->c('solution')->insert(

@@ -114,4 +114,18 @@ sub _validate {
   return $v;
 }
 
+sub contest_languages {
+  my ($self, $oid) = @_;
+  my $db = $self->app->db;
+  
+  my $contest = $db->c('contest')->find_one(bson_oid $oid);
+
+  unless ($contest) { 
+    $self->app->log->error("Contest $oid not found!");
+    return wantarray ? () : undef;
+  }
+  
+  return $contest->{langs};
+}
+
 1;
