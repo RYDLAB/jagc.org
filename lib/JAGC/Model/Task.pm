@@ -4,6 +4,9 @@ use Mojo::Base 'MojoX::Model';
 use Mojo::Util qw/encode trim/;
 use Mango::BSON ':bson';
 
+use Exporter qw(import);
+our @EXPORT_OK = qw( SHOW_ALL HIDE_TASK HIDE_SOLUTIONS );
+
 use constant {SHOW_ALL => 0, HIDE_TASK => 1, HIDE_SOLUTIONS => 2};
 
 sub _validate {
@@ -92,7 +95,7 @@ sub view {
 
   my $perm = SHOW_ALL;
   if ($task->{con}) {
-    $perm = $self->_view_permissions($task->{con}, $s->{uid});
+    $perm = $self->view_permissions($task->{con}, $s->{uid});
     return wantarray ? () : undef if $perm == HIDE_TASK;
   }
 
@@ -144,7 +147,7 @@ sub view {
   );
 }
 
-sub _view_permissions {
+sub view_permissions {
   my ($self, $oid, $uid) = @_;
   my $contest = $self->app->db->c('contest')->find_one(bson_oid $oid);
 
@@ -153,8 +156,8 @@ sub _view_permissions {
 
   $uid = $uid->to_string if ref $uid;
 
-  if (!defined $uid || $uid ne $owner_uid) {
-    return HIDE_TASK if $t < $contest->{start_date};
+  if( $t < $contest->{start_date} ) {
+    return HIDE_TASK if !defined $uid || $uid ne $owner_uid;
   }
 
   return HIDE_SOLUTIONS if $t < $contest->{end_date};

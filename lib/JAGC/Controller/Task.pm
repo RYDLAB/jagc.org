@@ -39,51 +39,29 @@ sub add_view {
 sub comments {
   my $c = shift;
 
-  my $id = bson_oid $c->stash('id');
-  my $db = $c->db;
-  $c->delay(
-    sub {
-      my $d = shift;
-
-      $db->c('task')->find_one($id => $d->begin);
-      $db->c('comment')->find(bson_doc(type => 'task', tid => $id, del => bson_false))
-        ->sort(bson_doc(ts => 1))->all($d->begin);
-    },
-    sub {
-      my ($d, $terr, $task, $cerr, $comments) = @_;
-      return $c->reply->exception("Error while find_one task with $id: $terr") if $terr;
-      return $c->reply->not_found unless $task;
-      return $c->reply->exception("Error while find comments: $cerr") if $cerr;
-
-      $c->stash(task => $task, comments => $comments);
-      $c->render(action => 'comments');
-    }
+  my %res = $c->model('comment')->task_comments(
+    tid => $c->stash('id'),
+    uid => $c->session('uid')
   );
+  
+  return $c->reply->not_found unless %res;
+
+  $c->stash( %res );
+  $c->render(action => 'comments');
 }
 
 sub solution_comments {
   my $c = shift;
 
-  my $id = bson_oid $c->stash('id');
-  my $db = $c->db;
-  $c->delay(
-    sub {
-      my $d = shift;
-
-      $db->c('solution')->find_one($id => $d->begin);
-      $db->c('comment')->find(bson_doc(type => 'solution', sid => $id, del => bson_false))
-        ->sort(bson_doc(ts => 1))->all($d->begin);
-    },
-    sub {
-      my ($d, $serr, $solution, $cerr, $comments) = @_;
-      return $c->reply->exception("Error while find_one solution with $id: $serr") if $serr;
-      return $c->reply->not_found unless $solution;
-      return $c->reply->exception("Error while find comments: $cerr") if $cerr;
-
-      $c->stash(solution => $solution, comments => $comments);
-      $c->render(action => 'solution_comments');
-    }
+  my %res = $c->model('comment')->solution_comments(
+    sid => $c->stash('id'),
+    uid => $c->session('uid')
   );
+  
+  return $c->reply->not_found unless %res;
+
+  $c->stash( %res );
+  $c->render(action => 'solution_comments');
 }
 
 sub view {
@@ -93,7 +71,7 @@ sub view {
   return $c->reply->not_found unless %res;
 
   $c->stash(%res);
-  $c->render( 'task/view' );
+  $c->render('task/view');
 }
 
 sub edit_view {
@@ -415,9 +393,14 @@ sub solution_add {
 
   return $c->reply->not_found unless $c->session('uid');
 
-  my %res = $c->model('solution')->add( validation => $c->validation, params => $c->req->params, session => $c->session, tid => $c->param('id') );
+  my %res = $c->model('solution')->add(
+    validation => $c->validation,
+    params     => $c->req->params,
+    session    => $c->session,
+    tid        => $c->param('id')
+  );
   return $c->reply->not_found unless %res;
-  return $c->reply->exception( $res{err} ) if $res{err};
+  return $c->reply->exception($res{err}) if $res{err};
 
   if ($res{validation}->has_error) {
     $c->stash(s => 1);
@@ -425,7 +408,7 @@ sub solution_add {
   }
 
   # remember last language
-  $c->session( lang => $c->param('language'));
+  $c->session(lang => $c->param('language'));
   return $c->redirect_to('event_user_info', login => $c->session->{login});
 }
 
