@@ -65,10 +65,12 @@
         </a>
       </p>
       <p>
+      % unless ($task->{con}) {
         <a class="btn btn-primary" href="<%= url_for('user_notification', tid => $task->{_id}, type => 'solution') %>">
           <%= $is_notice_solution ? 'Unsubscribe from new solutions' : 'Subscribe to new solutions' %>
         </a>
       </p>
+      %}
     % }
     </div>
   </div>

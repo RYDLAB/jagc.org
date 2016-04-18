@@ -24,8 +24,7 @@ sub add {
   }
 
   return $c->reply->exception("Error while insert task: $res{err}") if $res{err};
-
-  return $c->redirect_to('contest_task_view', id => $res{tid}) if $c->param('con');
+  return $c->redirect_to('contest_edit_view', id => $c->param('con')) if $c->param('con');
 
   $c->app->minion->enqueue(notice_new_task => [$res{tid}]);
   $c->redirect_to('task_view', id => $res{tid});
