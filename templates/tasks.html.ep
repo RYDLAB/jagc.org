@@ -1,8 +1,11 @@
+% my $contest = url_for =~ /contest/;
 <table class="table table-hover table-striped">
 <thead>
   <tr>
     <th>Task name</th>
+% unless ( $contest ) {
     <th>Author</th>
+% }
     <th><span class="glyphicon glyphicon-unchecked"></span></th>
     <th><span class="glyphicon glyphicon-check"></span></th>
     <th><span class="glyphicon glyphicon-thumbs-up"></span></th>
@@ -13,6 +16,7 @@
 % for my $task (@$tasks) {
   <tr>
     <td><a href="<%= url_for('task_view', id => $task->{_id}) %>"><%= $task->{name} %></a></td>
+% unless ( $contest ) {
     <td>
       <div>
         <a href="<%= url_for('user_info', login => $task->{owner}{login}) %>">
@@ -21,6 +25,7 @@
         </a>
       </div>
     </td>
+% }
     <td><%= $task->{stat}{all} %></td>
     <td><%= $task->{stat}{ok} %></td>
     % if (my $winner = $task->{winner}) {
