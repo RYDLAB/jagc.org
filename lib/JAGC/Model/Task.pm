@@ -100,11 +100,10 @@ sub view {
   if ($task->{con}) {
     $perm = $self->view_permissions($task->{con}, $s->{uid});
     return wantarray ? () : undef if $perm == HIDE_TASK;
-  
+
     $langs = $self->app->model('contest')->contest_languages($task->{con});
     return wantarray ? () : undef unless $langs;
-  }
-  else {
+  } else {
     $langs = $db->c('language')->find({})->fields({name => 1, _id => 0})->all;
     $langs = [map { $_->{name} } @$langs];
   }
@@ -164,7 +163,7 @@ sub view_permissions {
 
   $uid = $uid->to_string if ref $uid;
 
-  if( $t < $contest->{start_date} ) {
+  if ($t < $contest->{start_date}) {
     return HIDE_TASK if !defined $uid || $uid ne $owner_uid;
   }
 

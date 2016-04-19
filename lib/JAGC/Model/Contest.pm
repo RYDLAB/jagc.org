@@ -97,6 +97,13 @@ sub edit_view {
 
   $res{tasks} = $tasks if (defined $tasks);
 
+  my $stats;
+
+  eval { $stats = $db->c('stat')->find({con => $con})->fields({score => 1, pic => 1, login => 1})
+    ->sort(bson_doc(score => -1, t_all => -1, t_ok => -1))->limit(-10)->all };
+
+  $res{stats} = $stats;
+
   return %res;
 }
 

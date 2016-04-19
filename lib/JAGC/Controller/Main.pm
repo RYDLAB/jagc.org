@@ -15,7 +15,7 @@ sub index {
         ->fields({desc => 0, tests => 0})->all($d->begin);
       $db->c('task')->find({con => {'$exists' => 0}})->limit(20)->sort({'stat.all' => -1})
         ->fields({desc => 0, tests => 0})->all($d->begin);
-      $db->c('stat')->find->fields({score => 1, pic => 1, login => 1})
+      $db->c('stat')->find({con => {'$exists' => 0}})->fields({score => 1, pic => 1, login => 1})
         ->sort(bson_doc(score => -1, t_all => -1, t_ok => -1))->limit(-10)->all($d->begin);
       $db->c('solution')->aggregate([
           {'$match' => {s   => 'finished'}},

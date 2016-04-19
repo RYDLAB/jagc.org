@@ -144,7 +144,7 @@ sub notification {
 
   my $action = $type eq 'comment' ? 'comments' : 'solutions';
 
-  my %res = $c->model('notification')->$action( uid => $uid, tid => $tid );
+  my %res = $c->model('notification')->$action(uid => $uid, tid => $tid);
 
   return $c->reply->exception($res{err}) if exists $res{err};
   $c->redirect_to('task_view', id => $res{tid});
@@ -283,30 +283,12 @@ sub confirmation {
 sub all {
   my $c = shift;
 
-  my $page  = int $c->stash('page');
-  my $limit = 50;
-  my $skip  = ($page - 1) * $limit;
+  my %res = $c->model('user')->all(page => $c->param('page'), con => $c->param('con'));
 
-  my $db = $c->db;
-  $c->delay(
-    sub { $db->c('stat')->find({})->count(shift->begin) },
-    sub {
-      my ($d, $err, $count) = @_;
-      return $c->reply->exception("Error while find users: $err") if $err;
-      return $c->reply->not_found if $count <= $skip;
+  return $c->reply->not_found unless %res;
+  return $c->reply->exception($res{err}) if $res{err};
 
-      $d->pass($count);
-      $db->c('stat')->find({})->sort(bson_doc(score => -1, t_all => -1, t_ok => -1))->limit($limit)
-        ->skip($skip)->fields({tasks => 0})->all($d->begin);
-    },
-    sub {
-      my ($d, $count, $err, $users) = @_;
-      return $c->reply->exception("Error while find users: $err") if $err;
-
-      $c->stash(users => $users, skip => $skip, next_btn => ($count - $skip > $limit) ? 1 : 0);
-      $c->render;
-    }
-  );
+  $c->stash(%res);
 }
 
 sub change_name {
@@ -368,13 +350,14 @@ sub change_name {
         ({'owner.login' => $rlogin}, {'$set' => {'owner.login' => $nlogin}}, {multi => 1}) => $d->begin);
     },
     sub {
-      my ($d, $serr, $snum, $soerr, $sonum, $toerr, $tonum, $twerr, $twnum, $cerr, $cnum, $coerr, $conum) = @_;
+      my ($d, $serr, $snum, $soerr, $sonum, $toerr, $tonum, $twerr, $twnum, $cerr, $cnum, $coerr, $conum) =
+        @_;
       return $c->reply->exception("Error while update user login: $serr")                    if $serr;
       return $c->reply->exception("Error while update solution when update user: $soerr")    if $soerr;
       return $c->reply->exception("Error while update task owner when update user: $toerr")  if $toerr;
       return $c->reply->exception("Error while update task winner when update user: $twerr") if $twerr;
       return $c->reply->exception("Error while update comment when update user: $cerr")      if $cerr;
-      return $c->reply->exception("Error while update contest when update user: $coerr")      if $coerr;
+      return $c->reply->exception("Error while update contest when update user: $coerr")     if $coerr;
 
       return $c->redirect_to('user_settings', login => $nlogin);
     }

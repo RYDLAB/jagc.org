@@ -73,6 +73,9 @@
            % }
         </div>
       </div>
+      <div class="col-sm-3">
+        %= include 'stats', url => url_for('contest_user_all')
+      </div>
       <div class="row">
         <div class="col-sm-6">
            <a class="btn btn-primary navbar-btn navbar-left" href="<%= url_for( 'contest_task_add_view', con => $con ) %>">Add task to contest</a>
