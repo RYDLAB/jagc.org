@@ -5,7 +5,6 @@ use Mango::BSON ':bson';
 
 sub _tasks_query {
   return [
-#      {'$match' => {s => 'finished'}},
       {'$sort' => bson_doc(size => 1, ts => 1)},
       {
         '$group' => {

@@ -95,14 +95,12 @@ sub edit_view {
 
   my $tasks = $db->c('task')->find({con => $con})->all;
 
-  $res{tasks} = $tasks if (defined $tasks);
+  $res{tasks} = $tasks if (@$tasks);
 
-  my $stats;
+  my $stats = $db->c('stat')->find({con => $con})->fields({score => 1, pic => 1, login => 1})
+    ->sort(bson_doc(score => -1, t_all => -1, t_ok => -1))->limit(-10)->all;
 
-  eval { $stats = $db->c('stat')->find({con => $con})->fields({score => 1, pic => 1, login => 1})
-    ->sort(bson_doc(score => -1, t_all => -1, t_ok => -1))->limit(-10)->all };
-
-  $res{stats} = $stats;
+  $res{stats} = $stats if @$stats;
 
   return %res;
 }

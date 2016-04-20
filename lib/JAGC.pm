@@ -81,6 +81,7 @@ sub startup {
   $br->post('/contest/:con/task/add' => [con => $oid])->to('task#add')->name('contest_task_add');
   $br->get('/contest/task/:id' => [id => $oid])->to('task#edit_view')->name('contest_task_edit_view');
   $br->get('/contest/:con/users/:page' => [con => $oid, page => $num])->to('user#all', page => 1)->name('contest_user_all');
+  $br->get('/contests/:page' => [page => $num])->to('main#contests', page => 1)->name('contests');
 
   $br->post('/task/add')->to('task#add')->name('task_add');
   $br->get('/task/add')->to('task#add_view')->name('task_add_view');
