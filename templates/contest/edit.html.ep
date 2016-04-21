@@ -26,71 +26,63 @@
 <form action="<%= url_for('contest_edit') %>" method="POST">
   <fieldset>
     <div class="row">
-      <div class="col-sm-7">
+      <div class="col-sm-6">
+        %= include 'field', type => 'text', label => 'Contest name', name => 'name', value => $contest->{name}, opt => {class => 'input-lg'}
+        %= include 'field', type => 'textarea', label => 'Contest description', name => 'description', value => $contest->{desc}, opt => {class => 'input-lg'}
         <div class="row">
-          <div class="col-sm-11">
-            %= include 'field', type => 'text', label => 'Contest name', name => 'name', value => $contest->{name}, opt => {class => 'input-lg'}
+          <div class="col-sm-6">
+          %= include 'field', type => 'datetime', label => 'Start date (in UTC+0)', name => 'start_date', value => $contest->{start_date}, opt => {class => 'input-lg'}
+          </div>
+          <div class="col-sm-6">
+          %= include 'field', type => 'datetime', label => 'End date', name => 'end_date', value => $contest->{end_date}, opt => {class => 'input-lg'}
           </div>
         </div>
         <div class="row">
-          <div class="col-sm-11">
-            %= include 'field', type => 'textarea', label => 'Contest description', name => 'description', value => $contest->{desc}, opt => {class => 'input-lg'}
+          <div class="col-sm-12">
+            <button type="submit" class="btn btn-primary">Submit</button>
           </div>
         </div>
         <div class="row">
-          <div class="col-sm-5">
-            %= include 'field', type => 'datetime', label => 'Start date (in UTC+0)', name => 'start_date', value => $contest->{start_date}, opt => {class => 'input-lg'}
-          </div>
-          <div class="col-sm-5">
-            %= include 'field', type => 'datetime', label => 'End date', name => 'end_date', value => $contest->{end_date}, opt => {class => 'input-lg'}
+          <div class="col-sm-12">
+            <a class="btn btn-primary navbar-btn navbar-left" href="<%= url_for( 'contest_task_add_view', con => $con ) %>">Add task to contest</a>
           </div>
         </div>
       </div>
-        % if ( validation->has_error('langs') ) {
-          <h3 class='text-danger'>Available languages:</h3>
-          <span class="help-inline text-danger">Please select at least one language!</span>
-        % }
-        % else {
-          <h4>Available languages:</h4>
-        % }
-      <div class="col-sm-2">
-        % my $langs = stash('langs');
-        % my $lang_ctr = 0;
-        % foreach my $lang ( sort keys %$langs ) {
-            % if ( $lang_ctr++ > 9 ) {
-                </div><div class="col-sm-2">
-                % $lang_ctr = 0;
+      <div class="col-sm-6">
+        <div class="row">
+          <div class="col-sm-6">
+            % if ( validation->has_error('langs') ) {
+            <h4 class='text-danger'>Available languages:</h4>
+            <span class="help-inline text-danger">Please select at least one language!</span>
             % }
-        %= include 'field', type => 'checkbox', label => $lang, name => "langs", opt => { icon => $lang, checked => $langs->{$lang} }
-        %}
-      </div>
-      <div calss="row">
-        <div class="col-sm-7">
-          % if (stash('tasks')) {
-          <h3>Contest tasks:</h3>
-        </div>
-      </div>
-      <div calss="row">
-        <div class="col-sm-7">
-          % my $tasks = stash('tasks');
-          %=  include 'tasks', tasks => $tasks;
+            % else {
+            <h4>Available languages:</h4>
+            % }
+            <div class="col-sm-6">
+              % my $langs = stash('langs');
+              % my $lang_ctr = 0;
+              % foreach my $lang ( sort keys %$langs ) {
+              % if ( $lang_ctr++ > 9 ) {
+              </div><div class="col-sm-6">
+              % $lang_ctr = 0;
+              % }
+              %= include 'field', type => 'checkbox', label => $lang, name => "langs", opt => { icon => $lang, checked => $langs->{$lang} }
+              %}
+            </div>
+          </div>
+          <div class="col-sm-3">
+          % if ( stash('stats') ) {
+          %= include 'stats', url => url_for('contest_user_all')
           % }
+          </div>
         </div>
       </div>
-      <div class="col-sm-3">
-        % if ( stash('stats') ) {
-        %= include 'stats', url => url_for('contest_user_all')
+      <div class="col-sm-8">
+        % if (stash('tasks')) {
+        <h3>Contest tasks:</h3>
+        % my $tasks = stash('tasks');
+        %=  include 'tasks', tasks => $tasks;
         % }
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-sm-6">
-         <a class="btn btn-primary navbar-btn navbar-left" href="<%= url_for( 'contest_task_add_view', con => $con ) %>">Add task to contest</a>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-sm-6">
-        <button type="submit" class="btn btn-primary">Submit</button>
       </div>
     </div>
   </fieldset>
