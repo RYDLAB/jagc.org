@@ -1,0 +1,15 @@
+%layout 'default';
+%title 'Contests';
+
+<div class="row"> < div class = "col-sm-9" > <ul class="nav nav-tabs"> < li class =
+  "active" > <a href="#recent" data-toggle="tab"> Current </a> < /li>
+      <li><a href="#popular"  data-toggle="tab">Archive</a > </li> < /ul>
+
+    <div class="tab-content">
+      <div class="tab-pane" id="popular">
+        %= include 'contests_archive', contests => $pcontests;
+      </div > <div class="tab-pane active" id="recent"> %= include 'contests', contests => $contests;
+</div> < /div>
+  </div > <div class="col-sm-3"> < a class = "btn btn-primary" href =
+  "<%= url_for('tasks') %>" > All tasks </a> < /div>
+</div >

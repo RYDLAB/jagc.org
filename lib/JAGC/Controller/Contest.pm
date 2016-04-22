@@ -72,4 +72,15 @@ sub edit_view {
   $c->render(action => 'edit');
 }
 
+sub contests {
+  my $c = shift->render_later;
+
+  $c->model('contest')->digest( sub {
+    my %res = @_;
+
+    return $c->reply->exception( $res{err} ) if $res{err};
+    $c->render( 'contest/index' => @_ );
+  });
+}
+
 1;

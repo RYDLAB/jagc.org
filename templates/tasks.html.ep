@@ -6,9 +6,9 @@
 % unless ( $contest ) {
     <th>Author</th>
 % }
-    <th><span class="glyphicon glyphicon-unchecked"></span></th>
-    <th><span class="glyphicon glyphicon-check"></span></th>
-    <th><span class="glyphicon glyphicon-thumbs-up"></span></th>
+    <th data-toggle="tooltip" title="solutions"><span class="glyphicon glyphicon-unchecked"></span></th>
+    <th data-toggle="tooltip" title="correct solutions"><span class="glyphicon glyphicon-check"></span></th>
+    <th data-toggle="tooltip" title="shortest solution"><span class="glyphicon glyphicon-thumbs-up"></span></th>
     <th>Winner</th>
     <th>Updated</th>
   </tr>
