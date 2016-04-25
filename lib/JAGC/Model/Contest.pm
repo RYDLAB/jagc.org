@@ -3,7 +3,10 @@ package JAGC::Model::Contest;
 use Mojo::Base 'MojoX::Model';
 use Mango::BSON ':bson';
 
-use constant SORT_INDEX => 1;
+use constant {
+  MATCH_INDEX => 0,
+  SORT_INDEX => 1
+};
 
 
 sub upsert {    # create new contest or update existing one
@@ -136,80 +139,108 @@ sub contest_languages {
   return $contest->{langs};
 }
 
-sub digest {    # get recent and popular contests
+sub digest {
   my ($self, $cb) = @_;
 
-  my $db = $self->app->db;
+  my $tnow = bson_time;
 
+  my $db = $self->app->db;
   Mojo::IOLoop->delay(
     sub {
       my $d = shift;
+  
       my $q = [
-        {'$match' => {'task.con' => {'$exists' => 1}}}, undef,    # place for sort operator
+        undef, undef, # place for match and sort operators
         {'$limit' => 20},
-        {
-          '$group' => {
-            _id => '$task.con',
-            ok  => {'$sum' => {'$cond' => [{'$eq' => ['$s', "finished"]}, 1, 0]}},
-            all => {'$sum' => 1},
-          }
-        },
-        {'$lookup' => {from => 'contest', localField => '_id', foreignField => '_id', as => 'contest'}},
-        {'$unwind' => '$contest'},
         {'$lookup' => {from => 'task',    localField => '_id', foreignField => 'con', as => 'tasks'}},
         {
           '$project' => {
-            ok         => 1,
-            all        => 1,
-            name       => '$contest.name',
-            start_date => '$contest.start_date',
-            end_date   => '$contest.end_date',
+            name => 1,
+            start_date => 1,
+            end_date => 1,
             tasks      => {'$size' => '$tasks'},
-            owner      => '$contest.owner',
+            owner => 1,
           }
         }
       ];
 
-      @$q[SORT_INDEX] = {'$sort' => {ts => 1}};
-      $db->c('solution')->aggregate($q)->all($d->begin);
+      @$q[MATCH_INDEX] = { '$match' => { end_date => { '$lte' => $tnow }}};
+      @$q[SORT_INDEX] = { '$sort' => {end_date => -1 }};
+      $db->c('contest')->aggregate($q)->all($d->begin);
 
-      @$q[SORT_INDEX] = {'$sort' => {all => 1}};
-      $db->c('solution')->aggregate($q)->all($d->begin);
+      @$q[MATCH_INDEX] = { '$match' => { '$and' => [
+        { start_date => { '$lte' => $tnow }},
+        { end_date => { '$gte' => $tnow }}]}};
+
+      @$q[SORT_INDEX] = { '$sort' => {start_date => -1 }};
+      $db->c('contest')->aggregate($q)->all($d->begin);
+
+      @$q[MATCH_INDEX] = { '$match' => { start_date => { '$lte' => $tnow }}};
+      $db->c('contest')->aggregate($q)->all($d->begin);
     },
     sub {
-      my ($d, $rerr, $recent, $perr, $popular) = @_;
-      if (my $e = $rerr || $perr) {
+      my ($d, $aerr, $archive, $cerr, $current, $ferr, $future) = @_;
+
+       if (my $e = $aerr || $cerr || $ferr) {
+         return $cb->(err => "Error while db query: $e");
+       }
+
+      my @contests =  map { $_->{_id} } ( @$archive, @$current, @$future );
+
+      # count solutions for contest
+      $db->c('solution')->aggregate([
+        { '$match' => { 'task.con' => {
+          '$in' => [ @contests ]
+        }}},
+        { '$group' =>
+          {
+            _id => '$task.con',
+            ok  => {'$sum' => {'$cond' => [{'$eq' => ['$s', "finished"]}, 1, 0]}},
+            all => {'$sum' => 1},
+          }
+        }
+      ])->all($d->begin);
+
+      $d->data( archive => $archive, current => $current, future  => $future);
+
+      $db->c('stat')->aggregate([
+        {'$match' => {con => {'$in' => [ @contests ]}}},
+        {'$sort' => {score => -1, t_ok => -1}},
+        { '$group' => {
+              _id => {con => '$con', t_all => '$t_all', score => '$score'},
+              usr => {'$addToSet' => {login => '$login', pic => '$pic'}}
+        }},
+        {'$project' => {_id => '$_id.con', usr => 1,}}
+      ])->all($d->begin);
+
+    },
+    sub {
+      my ($d, $serr, $solutions, $werr, $winners) = @_;
+
+      if (my $e = $serr || $werr) {
         return $cb->(err => "Error while db query: $e");
       }
 
-      my %con_ids = ();
-      foreach ((@$popular, @$recent)) { $con_ids{$_->{_id}} = bson_oid $_->{_id} }
+      my %solutions;
+      foreach my $s ( @$solutions ) {
+        $solutions{$s->{_id}} = { ok => $s->{ok}, all => $s->{all} };
+      }
 
-      $db->c('stat')->aggregate([
-          {'$match' => {con => {'$in' => [values %con_ids]}}},
-          {'$sort' => {score => -1, t_ok => -1}},
-          {
-            '$group' => {
-              _id => {con => '$con', t_all => '$t_all', score => '$score'},
-              usr => {'$addToSet' => {login => '$login', pic => '$pic'}}
-            }
-          },
-          {'$project' => {_id => '$_id.con', usr => 1,}}
-        ]
-      )->all($d->begin);
+      my %winners;
 
-      $d->data(contests => $recent, pcontests => $popular);
-    },
-    sub {
-      my ($d, $werr, $winners) = @_;
+      foreach my $w ( @$winners ) {
+        $winners{$w->{_id}} = $w->{usr};
+      }
 
-      return $cb->(err => "Error while db query: $werr") if $werr;
+use Data::Dumper;
+warn Dumper \%winners;
 
-      my %winners = ();
-
-      foreach my $w (@$winners) { $winners{$w->{_id}} = $w }
-
-      $cb->(contests => $d->data('contests'), pcontests => $d->data('pcontests'), winners => \%winners);
+      $cb->(
+        contests_archive => $d->data('archive'),
+        contests_current => $d->data('current'),
+        solutions => \%solutions,
+        winners => \%winners,
+      );
     }
   );
 }

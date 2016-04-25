@@ -10,7 +10,7 @@
     <th>Ended</th>
   </tr>
 </thead>
-% for my $contest (@$contests) {
+% for my $contest (@$contests_archive) {
   <tr>
     <td><a href="<%= url_for('task_view', id => $contest->{_id}) %>"><%= $contest->{name} %></a></td>
     <td>
@@ -21,11 +21,10 @@
         </a>
       </div>
     </td>
-    <td><%= $contest->{all} %></td>
-    <td><%= $contest->{ok} %></td>
+    <td><%= $solutions->{$contest->{_id}}{all} %></td>
+    <td><%= $solutions->{$contest->{_id}}{ok} %></td>
     <td><%= $contest->{tasks} %></td>
-    % if (my $winner = $winners->{$contest->{_id}}) {
-      % my $usr = $winner->{usr};
+    % if (my $usr = $winners->{$contest->{_id}}) {
       <td>  
           <div>
             % if ( @$usr > 1 ) {
