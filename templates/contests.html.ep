@@ -12,7 +12,7 @@
 </thead>
 % for my $contest (@$contests) {
   <tr>
-    <td><a href="<%= url_for('task_view', id => $contest->{_id}) %>"><%= $contest->{name} %></a></td>
+    <td><a href="<%= url_for('contest_view', con => $contest->{_id}) %>"><%= $contest->{name} %></a></td>
     <td>
       <div>
         <a href="<%= url_for('user_info', login => $contest->{owner}{login}) %>">
@@ -21,8 +21,8 @@
         </a>
       </div>
     </td>
-    <td><%= $solutions->{$contest->{_id}}{all} %></td>
-    <td><%= $solutions->{$contest->{_id}}{ok} %></td>
+    <td><%= $solutions->{$contest->{_id}}{all} || '0' %></td>
+    <td><%= $solutions->{$contest->{_id}}{ok} || '0' %></td>
     <td><%= $contest->{tasks} %></td>
     <td><%= bson_to_text_date $contest->{start_date} %></td>
     <td><%= bson_to_text_date $contest->{end_date} %></td>

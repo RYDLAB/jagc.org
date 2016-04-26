@@ -75,12 +75,46 @@ sub edit_view {
 sub contests {
   my $c = shift->render_later;
 
-  $c->model('contest')->digest( sub {
-    my %res = @_;
+  $c->model('contest')->digest(
+    sub {
+      my %res = @_;
 
-    return $c->reply->exception( $res{err} ) if $res{err};
-    $c->render( 'contest/index' => @_ );
-  });
+      return $c->reply->exception($res{err}) if $res{err};
+      $c->render('contest/index' => @_);
+    }
+  );
+}
+
+sub view {
+  my $c = shift->render_later;
+
+  $c->model('contest')->view(
+    $c->param('con'),
+    sub {
+      my %res = @_;
+
+      return $c->reply->not_found unless $res{contest};
+      return $c->reply->exception($res{err}) if $res{err};
+      $c->render('/contest/view' => @_);
+    }
+  );
+
+}
+
+sub user_info {
+  my $c = shift->render_later;
+
+  $c->model('contest')->user_info(
+    $c->param('con'),
+    $c->param('login'),
+    sub {
+      my %res = @_;
+
+      return $c->reply->not_found unless $res{user_stat};
+      return $c->reply->exception($res{err}) if $res{err};
+      $c->render('/user/contest_info' => @_);
+    }
+  );
 }
 
 1;

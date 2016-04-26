@@ -3,10 +3,7 @@ package JAGC::Model::Contest;
 use Mojo::Base 'MojoX::Model';
 use Mango::BSON ':bson';
 
-use constant {
-  MATCH_INDEX => 0,
-  SORT_INDEX => 1
-};
+use constant {MATCH_INDEX => 0, SORT_INDEX => 1};
 
 
 sub upsert {    # create new contest or update existing one
@@ -96,17 +93,11 @@ sub edit_view {
 
   $contest->{start_date} = $self->app->bson_to_date($contest->{start_date});
   $contest->{end_date}   = $self->app->bson_to_date($contest->{end_date});
-
   my %res = (contest => $contest, langs => \%langs);
 
   my $tasks = $db->c('task')->find({con => $con})->all;
 
   $res{tasks} = $tasks if (@$tasks);
-
-  my $stats = $db->c('stat')->find({con => $con})->fields({score => 1, pic => 1, login => 1})
-    ->sort(bson_doc(score => -1, t_all => -1, t_ok => -1))->limit(-10)->all;
-
-  $res{stats} = $stats if @$stats;
 
   return %res;
 }
@@ -148,70 +139,66 @@ sub digest {
   Mojo::IOLoop->delay(
     sub {
       my $d = shift;
-  
+
       my $q = [
-        undef, undef, # place for match and sort operators
-        {'$limit' => 20},
-        {'$lookup' => {from => 'task',    localField => '_id', foreignField => 'con', as => 'tasks'}},
+        undef, undef,    # place for match and sort operators
+        {'$limit'  => 20},
+        {'$lookup' => {from => 'task', localField => '_id', foreignField => 'con', as => 'tasks'}},
         {
-          '$project' => {
-            name => 1,
-            start_date => 1,
-            end_date => 1,
-            tasks      => {'$size' => '$tasks'},
-            owner => 1,
-          }
+          '$project' =>
+            {name => 1, start_date => 1, end_date => 1, tasks => {'$size' => '$tasks'}, owner => 1,}
         }
       ];
 
-      @$q[MATCH_INDEX] = { '$match' => { end_date => { '$lte' => $tnow }}};
-      @$q[SORT_INDEX] = { '$sort' => {end_date => -1 }};
+      @$q[MATCH_INDEX] = {'$match' => {end_date => {'$lte' => $tnow}}};
+      @$q[SORT_INDEX] = {'$sort' => {end_date => -1}};
       $db->c('contest')->aggregate($q)->all($d->begin);
 
-      @$q[MATCH_INDEX] = { '$match' => { '$and' => [
-        { start_date => { '$lte' => $tnow }},
-        { end_date => { '$gte' => $tnow }}]}};
+      @$q[MATCH_INDEX] =
+        {'$match' => {'$and' => [{start_date => {'$lte' => $tnow}}, {end_date => {'$gte' => $tnow}}]}};
 
-      @$q[SORT_INDEX] = { '$sort' => {start_date => -1 }};
+      @$q[SORT_INDEX] = {'$sort' => {start_date => -1}};
       $db->c('contest')->aggregate($q)->all($d->begin);
 
-      @$q[MATCH_INDEX] = { '$match' => { start_date => { '$lte' => $tnow }}};
+      @$q[MATCH_INDEX] = {'$match' => {start_date => {'$lte' => $tnow}}};
       $db->c('contest')->aggregate($q)->all($d->begin);
     },
     sub {
       my ($d, $aerr, $archive, $cerr, $current, $ferr, $future) = @_;
 
-       if (my $e = $aerr || $cerr || $ferr) {
-         return $cb->(err => "Error while db query: $e");
-       }
+      if (my $e = $aerr || $cerr || $ferr) {
+        return $cb->(err => "Error while db query: $e");
+      }
 
-      my @contests =  map { $_->{_id} } ( @$archive, @$current, @$future );
+      my @contests = map { $_->{_id} } (@$archive, @$current, @$future);
 
       # count solutions for contest
       $db->c('solution')->aggregate([
-        { '$match' => { 'task.con' => {
-          '$in' => [ @contests ]
-        }}},
-        { '$group' =>
+          {'$match' => {'task.con' => {'$in' => [@contests]}}},
           {
-            _id => '$task.con',
-            ok  => {'$sum' => {'$cond' => [{'$eq' => ['$s', "finished"]}, 1, 0]}},
-            all => {'$sum' => 1},
+            '$group' => {
+              _id => '$task.con',
+              ok  => {'$sum' => {'$cond' => [{'$eq' => ['$s', "finished"]}, 1, 0]}},
+              all => {'$sum' => 1},
+            }
           }
-        }
-      ])->all($d->begin);
+        ]
+      )->all($d->begin);
 
-      $d->data( archive => $archive, current => $current, future  => $future);
+      $d->data(archive => $archive, current => $current, future => $future);
 
       $db->c('stat')->aggregate([
-        {'$match' => {con => {'$in' => [ @contests ]}}},
-        {'$sort' => {score => -1, t_ok => -1}},
-        { '$group' => {
+          {'$match' => {con => {'$in' => [@contests]}}},
+          {'$sort' => {score => -1, t_ok => -1}},
+          {
+            '$group' => {
               _id => {con => '$con', t_all => '$t_all', score => '$score'},
               usr => {'$addToSet' => {login => '$login', pic => '$pic'}}
-        }},
-        {'$project' => {_id => '$_id.con', usr => 1,}}
-      ])->all($d->begin);
+            }
+          },
+          {'$project' => {_id => '$_id.con', usr => 1,}}
+        ]
+      )->all($d->begin);
 
     },
     sub {
@@ -222,25 +209,74 @@ sub digest {
       }
 
       my %solutions;
-      foreach my $s ( @$solutions ) {
-        $solutions{$s->{_id}} = { ok => $s->{ok}, all => $s->{all} };
+      foreach my $s (@$solutions) {
+        $solutions{$s->{_id}} = {ok => $s->{ok}, all => $s->{all}};
       }
 
       my %winners;
 
-      foreach my $w ( @$winners ) {
+      foreach my $w (@$winners) {
         $winners{$w->{_id}} = $w->{usr};
       }
-
-use Data::Dumper;
-warn Dumper \%winners;
 
       $cb->(
         contests_archive => $d->data('archive'),
         contests_current => $d->data('current'),
-        solutions => \%solutions,
-        winners => \%winners,
+        solutions        => \%solutions,
+        winners          => \%winners,
       );
+    }
+  );
+}
+
+sub view {
+  my ($self, $id, $cb) = @_;
+
+  $id = bson_oid $id;
+  my $db = $self->app->db;
+
+  Mojo::IOLoop->delay(
+    sub {
+      my $d = shift;
+      $db->c('contest')->find_one($id => $d->begin);
+      $db->c('task')->find({con => $id})->all($d->begin);
+      $db->c('stat')->aggregate([
+          {'$match' => {con => $id}},
+          {'$limit' => 20},
+          {
+            '$group' => {
+              _id => {score => '$score', t_ok => '$t_ok'},
+              users => {'$addToSet' => {login => '$login', 'pic' => '$pic'}}
+            }
+          },
+          {'$sort'    => {'_id.score' => -1,           '_id.t_ok' => -1}},
+          {'$project' => {score       => '$_id.score', users      => '$users'}}
+        ]
+      )->all($d->begin);
+    },
+    sub {
+      my ($d, $cerr, $contest, $terr, $tasks, $serr, $stats) = @_;
+
+      if (my $e = $cerr || $terr || $serr) {
+        return $cb->(err => "Error while db query: $e");
+      }
+
+      $cb->(contest => $contest, tasks => $tasks, stats => $stats);
+    }
+  );
+}
+
+sub user_info {
+  my ($self, $id, $login, $cb) = @_;
+  my $db = $self->app->db;
+
+  Mojo::IOLoop->delay(
+    sub { $db->c('stat')->find_one({con => bson_oid($id), login => $login} => shift->begin) },
+    sub {
+      my ($d, $serr, $stats) = @_;
+
+      return $cb->(err => $serr) if $serr;
+      $cb->(user_stat => $stats);
     }
   );
 }

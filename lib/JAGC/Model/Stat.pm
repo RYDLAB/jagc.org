@@ -160,10 +160,10 @@ sub calculate {
   foreach my $cn ( @$contests ) {
     my $id = $cn->{_id};
 
-    if( $cn->{end_date} < $tnow ) {
-      $self->_copy_old_stats($id);
-      next;
-    }
+#    if( $cn->{end_date} < $tnow ) {
+#      $self->_copy_old_stats($id);
+#      next;
+#    }
     
     $tasks = $self->_contest_tasks($id);
     my $users = _build_userlist($tasks);

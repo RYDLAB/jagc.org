@@ -7,12 +7,12 @@
     <th data-toggle="tooltip" title="correct solutions"><span class="glyphicon glyphicon-check"></span></th>
     <th data-toggle="tooltip" title="tasks"><span class="glyphicon glyphicon-tasks"></span></th>
     <th>Winner</th>
-    <th>Ended</th>
+    <th>Finish</th>
   </tr>
 </thead>
 % for my $contest (@$contests_archive) {
   <tr>
-    <td><a href="<%= url_for('task_view', id => $contest->{_id}) %>"><%= $contest->{name} %></a></td>
+    <td><a href="<%= url_for('contest_view', con => $contest->{_id}) %>"><%= $contest->{name} %></a></td>
     <td>
       <div>
         <a href="<%= url_for('user_info', login => $contest->{owner}{login}) %>">
@@ -21,8 +21,8 @@
         </a>
       </div>
     </td>
-    <td><%= $solutions->{$contest->{_id}}{all} %></td>
-    <td><%= $solutions->{$contest->{_id}}{ok} %></td>
+    <td><%= $solutions->{$contest->{_id}}{all} || '0' %></td>
+    <td><%= $solutions->{$contest->{_id}}{ok} || '0' %></td>
     <td><%= $contest->{tasks} %></td>
     % if (my $usr = $winners->{$contest->{_id}}) {
       <td>  

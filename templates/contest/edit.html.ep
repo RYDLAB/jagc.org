@@ -70,11 +70,6 @@
               %}
             </div>
           </div>
-          <div class="col-sm-3">
-          % if ( stash('stats') ) {
-          %= include 'stats', url => url_for('contest_user_all')
-          % }
-          </div>
         </div>
       </div>
       <div class="col-sm-8">

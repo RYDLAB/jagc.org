@@ -1,0 +1,44 @@
+% layout 'default';
+% title $contest->{name};
+
+<div class="row"> 
+  <div class="col-sm-9">
+    <blockquote>
+      <h3>
+        <%= $contest->{name} %>
+      </h3>
+      <p class="content-description"><pre class="text_description"><%= $contest->{desc} %></pre></p>
+      % my $dates = sprintf( "%s - %s", map { bson_to_text_date $_ } @$contest{'start_date', 'end_date'} );
+      <h3>Duration:</h3>
+      <p class="content-description"><pre class="text_description"><%= $dates %></pre></p>
+      <h3>Available languages:</h3>
+      % foreach my $lang ( sort @{$contest->{langs}} ) {
+        <i class=<%= $lang %>></i><span> <%= $lang %></span>
+      %}
+      <footer>
+        <a href="<%= url_for('user_info', login => $contest->{owner}{login}) %>">
+          <%= $contest->{owner}{login} %>
+          <img src="<%= $contest->{owner}{pic} %>" class="img-rounded user">
+        </a>
+      </footer>
+    </blockquote>
+  </div>
+  <div class="col-sm-3">
+  % if ( stash('stats') ) {
+  %= include 'contest_stats', url => url_for('contest_user_all')
+  % }
+  </div>
+  % if ($contest->{owner}{uid} eq (session('uid') // '')) {
+    <p>
+      <a class="btn btn-primary" href="<%= url_for('contest_edit_view', con => $contest->{_id}) %>">Edit task</a>
+    </p>
+  % }
+</div>
+<div class="row"> 
+  <div class="col-sm-8">
+  % if ($tasks) {
+  <h3>Contest tasks:</h3>
+  %=  include 'tasks', tasks => $tasks;
+  % }
+  </div>
+</div>
