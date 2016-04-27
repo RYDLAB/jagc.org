@@ -18,7 +18,6 @@
 
       % if (@{$user_stat->{tasks}}) {
         <table class="table table-striped">
-          <caption><h4>Participation problems</h4></caption>
           <thead>
             <tr>
               <th class="text-to-left">Task name</th>

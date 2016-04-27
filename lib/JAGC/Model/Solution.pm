@@ -63,7 +63,7 @@ sub add {
       bson_doc(
         task => $task_doc,
         user => $user,
-        code => $code,
+        code => $v->output->{code},
         lng  => $v->param('language'),
         size => $code_length,
         s    => 'inactive',
