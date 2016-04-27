@@ -14,8 +14,9 @@ my $t = Test::Mojo->new('JAGC')->tap(
 
 $t->get_ok('/')->status_is(200)->text_is('html head title' => 'JAGC')
   ->text_is('div.navbar-collapse ul.navbar-nav li:nth-child(1) > a' => 'Tasks')
-  ->text_is('div.navbar-collapse ul.navbar-nav li:nth-child(2) > a' => 'Events')
-  ->text_is('div.navbar-collapse ul.navbar-nav li:nth-child(3) > a' => 'About')
+  ->text_is('div.navbar-collapse ul.navbar-nav li:nth-child(2) > a' => 'Contests')
+  ->text_is('div.navbar-collapse ul.navbar-nav li:nth-child(3) > a' => 'Events')
+  ->text_is('div.navbar-collapse ul.navbar-nav li:nth-child(4) > a' => 'About')
   ->text_is('ul.dropdown-menu li:nth-child(3) > a'                  => 'GitHub')
   ->text_is('ul.dropdown-menu li:nth-child(4) > a'                  => 'Twitter')
   ->text_is('ul.dropdown-menu li:nth-child(5) > a'                  => 'VK')

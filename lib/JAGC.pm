@@ -81,9 +81,10 @@ sub startup {
   $br->post('/contest/:con/task/add' => [con => $oid])->to('task#add')->name('contest_task_add');
   $br->get('/contest/task/:id' => [id => $oid])->to('task#edit_view')->name('contest_task_edit_view');
   $br->get('/contest/:con/users/:page' => [con => $oid, page => $num])->to('user#all', page => 1)->name('contest_user_all');
-  $br->get('/contests/:page' => [page => $num])->to('contest#contests', page => 1)->name('contests');
+  $br->get('/contests')->to('contest#contests')->name('contests');
   $br->get('/contest/:con' => [con => $oid] )->to('contest#view')->name('contest_view');
-  $br->get('/user/contest/:con/:login' => [con => $oid])->to('contest#user_info')->name('contest_user_info');
+  $br->get('/contest/:con/:login' => [con => $oid])->to('contest#user_info')->name('contest_user_info');
+  $br->get('/contest/:con/:login/events/:page' => [con => $oid, page => $num])->to('contest#events', page => 1)->name('contest_user_evt');
 
   $br->post('/task/add')->to('task#add')->name('task_add');
   $br->get('/task/add')->to('task#add_view')->name('task_add_view');

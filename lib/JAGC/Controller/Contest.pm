@@ -98,7 +98,6 @@ sub view {
       $c->render('/contest/view' => @_);
     }
   );
-
 }
 
 sub user_info {
@@ -113,6 +112,24 @@ sub user_info {
       return $c->reply->not_found unless $res{user_stat};
       return $c->reply->exception($res{err}) if $res{err};
       $c->render('/user/contest_info' => @_);
+    }
+  );
+}
+
+sub events {
+  my $c = shift->render_later;
+
+  $c->model('event')->info(
+    session => $c->session,
+    page => $c->param('page'),
+    con => $c->param('con'),
+    login => $c->param('login'),
+    cb => sub {
+      my %res = @_;
+      return $c->reply->not_found unless %res;
+      return $c->reply->exception($res{err}) if $res{err};
+
+      $c->render('/contest/event' => @_);
     }
   );
 }

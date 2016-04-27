@@ -41,7 +41,6 @@ sub register {
     my $s = $t->strftime($format);
     $s =~ s/^ *(\d+) (\d+)/$1 $mon/;
     
-    #return localtime( $bson->to_epoch - $offset )->strftime($format);
     return $s;
   });
 }

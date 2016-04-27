@@ -1,0 +1,32 @@
+% layout 'default';
+% title stash('login') . ' Events';
+
+<div class="row">
+  <div class="col-sm-2">
+    <img class="social_img_normal" src="<%= $user->{pic} %>"><h3 class="snuggle"><b><%= $user->{login} %></b></h3>
+  </div>
+  <div class="col-sm-10">
+    <ul class="nav nav-pills nav-justified">
+      <li><a href="<%= url_for('contest_user_info', login => $user->{login}) %>">Score</a></li>
+      <li class="active"><a href="#">Events</a></li>
+    </ul>
+
+    <br>
+
+    % if (@$events) {
+      %= include 'events';
+
+      % my $url = 'event_user_info';
+      % my $url_prev = url_for($url, page => $page - 1);
+      % my $url_next = url_for($url, page => $page + 1);
+
+      <ul class="pager">
+          <li class="previous <%= 'disabled' if $page == 1 %>"><a href="<%= $url_prev if $page > 1 %>">&larr; Prev</a></li>
+          <li class="next <%= 'disabled' unless $need_next_btn %>"><a href="<%= $url_next if $need_next_btn %>">Next &rarr;</a></li>
+      </ul>
+    % } else {
+      <h2 class="text-center">The user have no solutions of tasks</h2>
+    % }
+
+  </div>
+</div>

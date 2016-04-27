@@ -86,7 +86,7 @@
       </div>
       <div id="collapse<%= $id %>" class="panel-collapse collapse">
         <div class="panel-body">
-          <pre><%= $event->{code} %></pre>
+          <pre><%= stash('hide_code') ? '...'  : $event->{code} %></pre>
         </div>
       </div>
     </div>
