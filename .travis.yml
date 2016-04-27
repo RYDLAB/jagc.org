@@ -15,4 +15,6 @@ before_script:
 script:
   - "prove -l"
 notifications:
-  email: andrey@rydlab.ru
+email:
+  - "andrey@rydlab.ru"
+  - "mw26@rydlab.ru"
