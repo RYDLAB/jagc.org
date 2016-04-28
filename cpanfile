@@ -1,5 +1,5 @@
 requires 'Mojolicious::Plugin::Model' => '>= 0.07';
-requires 'EV' => '4.22';
+requires 'EV'                         => '4.22';
 requires 'HTML::StripScripts::Parser' => '>= 1.03';
 requires 'IO::Socket::IP'             => '>= 0.37';
 requires 'IO::Socket::SSL'            => '>= 2.023';

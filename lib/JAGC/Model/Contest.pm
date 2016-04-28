@@ -116,7 +116,7 @@ sub _validate {
   return $v;
 }
 
-sub contest_languages {
+sub contest_stuff {
   my ($self, $oid) = @_;
   my $db = $self->app->db;
 
@@ -127,7 +127,11 @@ sub contest_languages {
     return wantarray ? () : undef;
   }
 
-  return $contest->{langs};
+  my $t = bson_time;
+
+  my $active = 1 if $t >= $contest->{start_date} && $t <= $contest->{end_date};
+
+  return ( $contest->{langs}, $active );
 }
 
 sub digest {

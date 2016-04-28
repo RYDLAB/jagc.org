@@ -63,7 +63,6 @@ sub startup {
   $admin->get('index')->to('admin#index');
 
   $admin->post('/login/as')->to('login#as')->name('login_as');
-  $br->get('/login/as')->to('login#as')->name('login_as');
 
   # Oauth
   $br->get('/oauth/github')->to('oauth#github');

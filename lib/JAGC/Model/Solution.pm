@@ -38,7 +38,9 @@ sub add {
   if ($task->{con}) {
     $task_doc->{con} = $task->{con};
 
-    my $langs = $self->app->model('contest')->contest_languages($task->{con});
+    my ( $langs, $active ) = $self->app->model('contest')->contest_stuff($task->{con});
+    return wantarray ? () : undef unless $active;
+
     $v->required('language')
       ->in($langs, 'Language "' . $v->param('language') . '" not available for this contest!');
   }

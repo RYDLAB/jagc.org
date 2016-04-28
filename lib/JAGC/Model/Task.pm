@@ -94,14 +94,14 @@ sub view {
   return wantarray ? () : undef unless $task;
 
   my $perm = SHOW_ALL;
-  my $langs;
+  my ($langs, $active) = (undef, 1);
 
 
   if ($task->{con}) {
     $perm = $self->view_permissions($task->{con}, $s->{uid});
     return wantarray ? () : undef if $perm == HIDE_TASK;
 
-    $langs = $self->app->model('contest')->contest_languages($task->{con});
+    ( $langs, $active ) = $self->app->model('contest')->contest_stuff($task->{con});
     return wantarray ? () : undef unless $langs;
   } else {
     $langs = $db->c('language')->find({})->fields({name => 1, _id => 0})->all;
@@ -151,6 +151,7 @@ sub view {
     comments_count    => $comments_count,
     solution_comments => \%solution_comments,
     notice            => $notice,
+    active            => $active
   );
 }
 
