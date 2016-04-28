@@ -408,7 +408,12 @@ sub solution_add {
 
   # remember last language
   $c->session(lang => $c->param('language'));
-  return $c->redirect_to('event_user_info', login => $c->session->{login});
+
+  my $login = $c->session->{login};
+
+  return $c->redirect_to('contest_user_evt', login => $login, con => $res{con}) if $res{con};
+
+  $c->redirect_to('event_user_info', login => $login);
 }
 
 1;

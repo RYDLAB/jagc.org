@@ -21,7 +21,6 @@ sub _tasks_query {
         }
       }
     ]
-
 }
 
 sub _build_userlist {
@@ -147,6 +146,7 @@ sub calculate {
   my $self = shift;
   my $log = $self->app->log;
   my $db = $self->app->db;
+  $db->c('stat_tmp')->create;
 
   my $users_cnt = $self->_users_content_query({'task.con' => { '$exists' => 0 }});
 

@@ -44,7 +44,7 @@
         </div>
         <div class="row">
           <div class="col-sm-12">
-            <a class="btn btn-primary navbar-btn navbar-left" href="<%= url_for( 'contest_task_add_view', con => $con ) %>">Add task to contest</a>
+            <a class="btn btn-primary navbar-btn navbar-left" href="<%= url_for( 'con_task_add_view', con => $con ) %>">Add task to contest</a>
           </div>
         </div>
       </div>
