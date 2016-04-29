@@ -24,7 +24,8 @@
     </blockquote>
   </div>
   <div class="col-sm-3">
-  % if ( stash('stats') ) {
+  % my $stats = stash('stats');
+  % if ( $stats && @$stats ) {
   %= include 'contest_stats', url => url_for('contest_user_all')
   % }
   </div>

@@ -281,14 +281,23 @@ sub confirmation {
 }
 
 sub all {
-  my $c = shift;
+  my $c = shift->render_later;
 
-  my %res = $c->model('user')->all(page => $c->param('page'), con => $c->param('con'));
+  my $con  = $c->param('con');
+  my $page = $c->param('page');
 
-  return $c->reply->not_found unless %res;
-  return $c->reply->exception($res{err}) if $res{err};
+  my $cb = sub {
+    my %res = @_;
 
-  $c->stash(%res);
+    return $c->reply->not_found unless %res;
+    return $c->reply->exception($res{err}) if $res{err};
+
+    $c->render(%res);
+  };
+
+  return $c->model('user')->contest_all($con, $page, $cb) if $con;
+
+  $c->model('user')->all($page, $cb);
 }
 
 sub change_name {

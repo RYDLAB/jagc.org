@@ -16,7 +16,7 @@
     % my $count = $skip + 1;
     % for my $user (@$users) {
       <tr>
-        <td><%= $count %></td>
+        <td><%= $user->{ctr} || $count %></td>
         <td><%= $user->{score} %></td>
         <td><%= $user->{t_all} %></td>
         <td><%= $user->{t_ok} %></td>
