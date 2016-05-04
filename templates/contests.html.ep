@@ -12,7 +12,10 @@
 </thead>
 % for my $contest (@$contests) {
   <tr>
-    <td><a href="<%= url_for('contest_view', con => $contest->{_id}) %>"><%= $contest->{name} %></a></td>
+    <td>
+      <%== '<span class="glyphicon glyphicon-triangle-right"></span>' if $contest->{start_date} < $today %>
+      <a href="<%= url_for('contest_view', con => $contest->{_id}) %>"><%= $contest->{name} %></a>
+    </td>
     <td>
       <div>
         <a href="<%= url_for('user_info', login => $contest->{owner}{login}) %>">

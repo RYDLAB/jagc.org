@@ -16,6 +16,8 @@ sub upsert {    # create new contest or update existing one
 
   my %res = (validation => $v);
 
+  $res{con} = $args{con} if $args{con};
+
   my $langs = $p->every_param('langs');
 
   # if only one language selected
@@ -159,22 +161,19 @@ sub digest {
       $db->c('contest')->aggregate($q)->all($d->begin);
 
       @$q[MATCH_INDEX] =
-        {'$match' => {'$and' => [{start_date => {'$lte' => $tnow}}, {end_date => {'$gte' => $tnow}}]}};
+        {'$match' => {end_date => {'$gte' => $tnow}}};
 
       @$q[SORT_INDEX] = {'$sort' => {start_date => -1}};
       $db->c('contest')->aggregate($q)->all($d->begin);
-
-      @$q[MATCH_INDEX] = {'$match' => {start_date => {'$lte' => $tnow}}};
-      $db->c('contest')->aggregate($q)->all($d->begin);
     },
     sub {
-      my ($d, $aerr, $archive, $cerr, $current, $ferr, $future) = @_;
+      my ($d, $aerr, $archive, $cerr, $current) = @_;
 
-      if (my $e = $aerr || $cerr || $ferr) {
+      if (my $e = $aerr || $cerr) {
         return $cb->(err => "Error while db query: $e");
       }
 
-      my @contests = map { $_->{_id} } (@$archive, @$current, @$future);
+      my @contests = map { $_->{_id} } (@$archive, @$current);
 
       # count solutions for contest
       $db->c('solution')->aggregate([
@@ -189,7 +188,7 @@ sub digest {
         ]
       )->all($d->begin);
 
-      $d->data(archive => $archive, current => $current, future => $future);
+      $d->data(archive => $archive, current => $current);
 
       $db->c('stat')->aggregate([
           {'$match' => {con => {'$in' => [@contests]}}},
@@ -228,6 +227,7 @@ sub digest {
         contests_current => $d->data('current'),
         solutions        => \%solutions,
         winners          => \%winners,
+        today            => bson_time
       );
     }
   );

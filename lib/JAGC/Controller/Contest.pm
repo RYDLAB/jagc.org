@@ -52,7 +52,7 @@ sub upsert {
     # save checkboxes state
     $c->stash(langs => {map { $_ => 1 } @$langs});
 
-    return $c->add_view;
+    return $c->param('con') ? $c->edit_view : $c->add_view;
   }
 
   return $c->redirect_to('contest_edit_view', con => $res{con});

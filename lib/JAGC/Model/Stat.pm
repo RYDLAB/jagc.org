@@ -104,10 +104,6 @@ sub _contest_tasks {
   my $tasks = $col->aggregate($q)->all;
 }
 
-sub _copy_old_stats {
-  ...
-}
-
 sub _users_content_query {
   my ($self, $match) = @_;
 
@@ -160,11 +156,6 @@ sub calculate {
   foreach my $cn ( @$contests ) {
     my $id = $cn->{_id};
 
-#    if( $cn->{end_date} < $tnow ) {
-#      $self->_copy_old_stats($id);
-#      next;
-#    }
-    
     $tasks = $self->_contest_tasks($id);
     my $users = _build_userlist($tasks);
     my $users_cnt = $self->_users_content_query({'task.con' => $cn->{_id}});

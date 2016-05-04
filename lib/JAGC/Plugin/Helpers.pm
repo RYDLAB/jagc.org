@@ -26,17 +26,14 @@ sub register {
   });
   $app->helper( 'bson_to_date' => sub {
     my ( $self, $bson ) = @_; 
-    my $offset = localtime->tzoffset->seconds;
-    return localtime( $bson->to_epoch - $offset )->strftime($format);
+    return gmtime( $bson->to_epoch )->strftime($format);
   });
 
   $app->helper( 'bson_to_text_date' => sub {
     my ( $self, $bson ) = @_; 
     my $format = "%e %m %H:%M %Y";
 
-    my $offset = localtime->tzoffset->seconds;
-
-    my $t = localtime( $bson->to_epoch - $offset );
+    my $t = gmtime( $bson->to_epoch );
     my $mon = (qw / Jan Feb Mar Apr May Jun Jul Aug Sept Oct Nov Dec /)[$t->mon -1];
     my $s = $t->strftime($format);
     $s =~ s/^ *(\d+) (\d+)/$1 $mon/;

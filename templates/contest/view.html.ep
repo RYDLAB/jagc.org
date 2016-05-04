@@ -31,7 +31,7 @@
   </div>
   % if ($contest->{owner}{uid} eq (session('uid') // '')) {
     <p>
-      <a class="btn btn-primary" href="<%= url_for('contest_edit_view', con => $contest->{_id}) %>">Edit task</a>
+      <a class="btn btn-primary" href="<%= url_for('contest_edit_view', con => $contest->{_id}) %>">Edit contest</a>
     </p>
   % }
 </div>
