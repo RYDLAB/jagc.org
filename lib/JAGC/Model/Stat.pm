@@ -177,8 +177,8 @@ sub calculate {
   my $users = _build_userlist($tasks);
   $self->_store_stats($users, $users_cnt);
 
-  my $contests = $db->c('contest')->find->all;
   my $tnow = bson_time;
+  my $contests = $db->c('contest')->find({end_date => {'$gte' => $tnow}})->all;
 
   foreach my $cn ( @$contests ) {
     my $id = $cn->{_id};
@@ -188,6 +188,16 @@ sub calculate {
     my $users_cnt = $self->_users_content_query({'task.con' => $cn->{_id}});
     $self->_store_stats($users, $users_cnt, $id);
   }
+
+  my $archive_stats = $db->c('stat')->find({ '$and' => [
+    {con => { '$exists' => 1 }}, {con => { '$nin' => [ map { $_->{_id} } @$contests ]}}
+  ]})->all;
+
+  my $bulk = $db->c('stat_tmp')->bulk;
+
+  foreach ( @$archive_stats ) { $bulk->insert($_) }
+
+  $bulk->execute;
 
   my $admin = $db->mango->db('admin');
   $admin->command(
