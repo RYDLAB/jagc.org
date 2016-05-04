@@ -2,6 +2,7 @@ package JAGC::Model::Stat;
 
 use Mojo::Base 'MojoX::Model';
 use Mango::BSON ':bson';
+use Mango::Bulk;
 
 sub _tasks_query {
   return [
@@ -51,6 +52,8 @@ sub _store_stats {
   my ($self, $users, $users_cnt, $con) = @_;
   my $db = $self->app->db;
 
+  my @users = ();
+
   for my $uid (sort keys %$users) {
     my $u = $users->{$uid};
     my @tasks;
@@ -58,6 +61,7 @@ sub _store_stats {
       my $t = $u->{tasks}{$tid};
       push @tasks, {tid => bson_oid($tid), pos => $t->{pos}, sid => $t->{sid}, name => $t->{name}};
     }
+
     my $q = bson_doc(
       uid    => bson_oid($uid),
       login  => $u->{login},
@@ -74,8 +78,31 @@ sub _store_stats {
     );
 
     $q->{con} = bson_oid $con if $con;
-    $db->c('stat_tmp')->insert($q);
+    push @users, $q;
   }
+
+  return unless @users;
+
+  my $bulk = $db->c('stat_tmp')->bulk;
+
+  @users = sort { $b->{score} <=> $a->{score} || $b->{t_ok} <=> $a->{t_ok} } @users;
+
+  my $rank = 1;
+  my ($score, $t_ok) = @{$users[0]}{'score', 't_ok'};
+
+  foreach my $r (@users) {
+
+    if( $r->{score} < $score || $r->{t_ok} < $t_ok ) {
+      ($score, $t_ok) = @{$r}{'score', 't_ok'};
+      $rank++;
+    }
+
+    $r->{rank} = $rank;
+
+    $bulk->insert($r)
+  }
+
+  $bulk->execute;
 }
 
 sub _standalone_tasks {
