@@ -38,7 +38,8 @@ sub info {
       if( $con ) {
         my $t = bson_time;
         
-        $res{hide_code} = 1 if( $args{session}->{login} ne $login && $t < $contest->{end_date});
+        my $l = $args{session}->{login} || '';
+        $res{hide_code} = 1 if( $l ne $login && $t < $contest->{end_date});
       }
 
       $db->c('solution')->find($event_opt)->count(shift->begin);

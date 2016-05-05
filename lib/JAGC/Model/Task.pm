@@ -121,6 +121,7 @@ sub view {
 
   if ($perm == HIDE_SOLUTIONS) {
     foreach my $sol (@$solutions) {
+      $s->{uid}||= '';
       delete $sol->{code} if $sol->{user}{uid}->to_string ne $s->{uid};
     }
   }

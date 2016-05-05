@@ -15,7 +15,6 @@ my $t = Test::Mojo->new('JAGC')->tap(
   }
 );
 
-
 my $user_email = 'u2@jagc.org';
 my $user_login = 'u2';
 
@@ -25,43 +24,52 @@ $t->get_ok($t->tx->res->headers->header('X-Confirm-Link'));
 
 $t->get_ok('/contest/add')->status_is(200)->element_exists('form[action="/contest/add"][method="POST"]');
 
-my $contest_name = "Example";
+my $contest_name        = "Example";
 my $contest_description = "Simple contest for test";
 
 my ($sd, $ed) = ('09/12/1970 00:00', '05/10/2100 00:00');
-
 
 my $i = 1;
 foreach my $d ($sd, $ed) {
   my $d_tmp = $t->app->date_to_bson($d);
   $d_tmp = $t->app->bson_to_date($d_tmp);
-  cmp_ok($d_tmp, 'eq', $d, 'date conversions '.$i++);
+  cmp_ok($d_tmp, 'eq', $d, 'date conversions ' . $i++);
 }
 
-$t->post_ok('/contest/add' => form => { description => $contest_description, name => $contest_name,
-  langs => ['perl', 'lua' ], start_date => $sd, end_date => $ed})->status_is(302);
+$t->post_ok(
+  '/contest/add' => form => {
+    description => $contest_description,
+    name        => $contest_name,
+    langs       => ['perl', 'lua'],
+    start_date  => $sd,
+    end_date    => $ed
+  }
+)->status_is(302);
 
 my $curl = $t->tx->res->headers->location;
 
-my ($text_sd, $text_ed) = map { $t->app->bson_to_text_date( $t->app->date_to_bson($_) )  } ($sd, $ed);
+my ($text_sd, $text_ed) = map { $t->app->bson_to_text_date($t->app->date_to_bson($_)) } ($sd, $ed);
 
 $t->get_ok('/contests')->text_is('html head title' => 'Contests')
   ->text_is('table > tr > td:first-child > a' => 'Example')
-  ->element_exists('table > tr > td:first-child > span[class^=glyphicon]') # play mark for ongoing contests
-  ->text_is('table > tr > td:nth-child(6)' => $text_sd)
-  ->text_is('table > tr > td:nth-child(7)' => $text_ed);
+  ->element_exists('table > tr > td:first-child > span[class^=glyphicon]')    # play mark for ongoing contests
+  ->text_is('table > tr > td:nth-child(6)' => $text_sd)->text_is('table > tr > td:nth-child(7)' => $text_ed);
 
 my $turl = $curl;
 $turl =~ s'edit'task/add';
 
 my @tests = ();
 
-for(1..5) { push @tests, "test_${_}_in" => '1', "test_${_}_out" => '1' }
+for (1 .. 5) { push @tests, "test_${_}_in" => '1', "test_${_}_out" => '1' }
 
-$t->post_ok($turl => form => {name => 't', description => 't', @tests })->status_is(302);
+$t->post_ok($turl => form => {name => 't', description => 't', @tests})->status_is(302);
 
 $t->get_ok($curl);
 $turl = $t->tx->res->dom->at('table > tr > td:first-child > a')->attr('href');
+$t->get_ok($turl)->element_exists('textarea[name=code]')
+  ->element_exists('select[name=language] > option', 'lua')
+  ->element_exists('select[name=language] > option', 'perl')
+  ->element_count_is('select[name=language] > option', 2);
 
 my $surl = "$turl/solution/add";
 
@@ -87,20 +95,47 @@ $t->app->minion->perform_jobs;
 $t->app->commands->run('stat');
 $curl =~ s'/edit'/users';
 
-$t->get_ok($curl)->text_is('table.table > tr:nth-child(2) > td:nth-child(2)', '10')
-  ->get_ok($curl)->text_is('table.table > tr:nth-child(3) > td:nth-child(2)', '9');
+$t->get_ok($curl)->text_is('table.table > tr:nth-child(2) > td:nth-child(2)', '10')->get_ok($curl)
+  ->text_is('table.table > tr:nth-child(3) > td:nth-child(2)', '9');
 
 # Archive contests tests
 
+$contest_name.= ' 2';
+$contest_description.= ' 2';
+
 $ed = '09/12/1970 00:01';
-$t->post_ok('/contest/add' => form => { description => "$contest_description 2", name => "$contest_name 2",
-  langs => ['perl', 'lua' ], start_date => $sd, end_date => $ed})->status_is(302);
+$t->post_ok(
+  '/contest/add' => form => {
+    description => $contest_description,
+    name        => $contest_name,
+    langs       => ['perl', 'lua'],
+    start_date  => $sd,
+    end_date    => $ed
+  }
+)->status_is(302);
 
 $curl = $t->tx->res->headers->location;
+
 $turl = $curl;
 $turl =~ s'edit'task/add';
 
-$t->post_ok($turl => form => {name => 't', description => 't', @tests })->status_is(302);
+# Edit contest
+
+$contest_description = 'THE. HUMAN. INTERFERES. WITH. PLAN.';
+$t->post_ok(
+  $curl => form => {
+    description => $contest_description,
+    name        => $contest_name,
+    langs       => ['perl', 'lua'],
+    start_date  => $sd,
+    end_date    => $ed
+  }
+)->status_is(302);
+
+$curl = $t->tx->res->headers->location;
+$t->get_ok($curl)->text_is('textarea[name=description]', $contest_description);
+
+$t->post_ok($turl => form => {name => 't', description => 't', @tests})->status_is(302);
 
 $t->get_ok($curl);
 $turl = $t->tx->res->dom->at('table > tr > td:first-child > a')->attr('href');
