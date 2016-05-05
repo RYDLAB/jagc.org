@@ -70,4 +70,29 @@ sub _notification {
   return ( tid => $tid );
 }
 
+sub contests {
+  my ( $self, $uid, $cb ) = @_;
+  my $db = $self->app->db;
+
+  Mojo::IOLoop->delay(
+    sub { $db->c('user')->find_one( $uid => shift->begin) },
+    sub {
+      my ( $d, $uerr, $usr ) = @_;
+
+      return $cb->( err => $uerr ) if $uerr;
+      return $cb->() unless $usr;
+
+      $db->c('user')->update({_id => $uid},
+        {'$set' => {'notice.contests' => $usr->{notice}{contests} ? bson_false : bson_true}} => $d->begin);
+      $d->data( login => $usr->{login} );
+    },
+    sub {
+      my ($d, $err, $doc) = @_;
+      return $cb->( err => $err ) if $err;
+
+      $cb->( login => $d->data('login'));
+    }
+  );
+}
+
 1;

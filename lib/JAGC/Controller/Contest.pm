@@ -55,8 +55,8 @@ sub upsert {
     return $c->param('con') ? $c->edit_view : $c->add_view;
   }
 
+  $c->app->minion->enqueue(notice_new_contest => [$res{con}]) unless ($c->param('con'));
   return $c->redirect_to('contest_edit_view', con => $res{con});
-
 }
 
 sub edit_view {

@@ -6,7 +6,7 @@ requires 'IO::Socket::SSL'            => '>= 2.023';
 requires 'IPC::Run'                   => '>= 0.94';
 requires 'Mango'                      => '>= 1.24';
 requires 'Minion'                     => '>= 4.04';
-requires 'Minion::Backend::Mango'     => '>= 0.99';
+requires 'Minion::Backend::Mango'     => '>= 1.00';
 requires 'Mojolicious'                => '>= 6.43';
 requires 'Text::Markdown'             => '>= 1.000031';
 requires 'XML::RSS'                   => '>= 1.58';

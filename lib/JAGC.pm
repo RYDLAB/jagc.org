@@ -11,6 +11,7 @@ use JAGC::Task::email;
 use JAGC::Task::notice_new_task;
 use JAGC::Task::notice_new_comment;
 use JAGC::Task::notice_new_solution;
+use JAGC::Task::notice_new_contest;
 
 sub startup {
   my $app = shift;
@@ -33,6 +34,7 @@ sub startup {
     $app->minion->add_task(notice_new_task     => sub { JAGC::Task::notice_new_task->new->call(@_) });
     $app->minion->add_task(notice_new_comment  => sub { JAGC::Task::notice_new_comment->new->call(@_) });
     $app->minion->add_task(notice_new_solution => sub { JAGC::Task::notice_new_solution->new->call(@_) });
+    $app->minion->add_task(notice_new_contest  => sub { JAGC::Task::notice_new_contest->new->call(@_) });
   }
 
   push @{$app->commands->namespaces}, 'JAGC::Command';
@@ -117,6 +119,7 @@ sub startup {
   $br->post('/user/register')->to('user#register')->name('user_register');
   $br->get('/users/:page' => [page => $num])->to('user#all', page => 1)->name('user_all');
   $br->post('/user/:login/change_name')->to('user#change_name')->name('user_change_name');
+  $br->get('/user/settings/notification/contests')->to('user#notification_contests')->name('user_notification_contests');
 
   $br->get('/user/:uid/confirmation/:email/code/:code' =>
       [uid => $oid, email => qr/.+@.+\.[^.]+/, code => qr/[0-9a-f]{32}/])->to('user#confirmation')

@@ -133,6 +133,21 @@ sub notification_new {
   );
 }
 
+sub notification_contests {
+  my $c = shift;
+
+  return $c->reply->not_found unless my $uid = $c->session('uid');
+  $uid = bson_oid $uid;
+
+  $c->model('notification')->contests($uid, sub {
+      my %res = @_;
+      return $c->reply->not_found unless %res;
+      return $c->reply->exception($res{err}) if $res{err};
+
+      $c->redirect_to('user_settings', login => $res{login});
+  });
+}
+
 sub notification {
   my $c = shift;
 

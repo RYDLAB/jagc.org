@@ -88,4 +88,8 @@
   <a class="btn btn-primary" href="<%= url_for('user_notification_new') %>">
     <%= $user->{notice}{new} ? 'unsubscribe' : 'subscribe' %>
   </a>
+  <h5>About new contests on JAGC</h5>
+  <a class="btn btn-primary" href="<%= url_for('user_notification_contests') %>">
+    <%= $user->{notice}{contests} ? 'unsubscribe' : 'subscribe' %>
+  </a>
 </div>
