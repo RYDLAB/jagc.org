@@ -32,7 +32,8 @@
       <td><%= ($winner->{size} || 0) == $max_int ? '' : $winner->{size} %></td>
       <td>  
           <div>
-            <a href="<%= url_for('user_info', login => $winner->{login}) %>">
+            % my @prof_url = stash('con') ? ('contest_user_info', con => stash('con')) : 'user_info';
+            <a href="<%= url_for( @prof_url, login => $winner->{login}) %>">
               <img class="img-rounded user" src="<%= $winner->{pic} %>">
               <%= $winner->{login} %>
             </a>

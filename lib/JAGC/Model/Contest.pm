@@ -133,7 +133,7 @@ sub contest_stuff {
 
   my $active = 1 if $t >= $contest->{start_date} && $t <= $contest->{end_date};
 
-  return ( $contest->{langs}, $active );
+  return ($contest->{langs}, $active);
 }
 
 sub digest {
@@ -160,8 +160,7 @@ sub digest {
       @$q[SORT_INDEX] = {'$sort' => {end_date => -1}};
       $db->c('contest')->aggregate($q)->all($d->begin);
 
-      @$q[MATCH_INDEX] =
-        {'$match' => {end_date => {'$gte' => $tnow}}};
+      @$q[MATCH_INDEX] = {'$match' => {end_date => {'$gte' => $tnow}}};
 
       @$q[SORT_INDEX] = {'$sort' => {start_date => -1}};
       $db->c('contest')->aggregate($q)->all($d->begin);
@@ -280,7 +279,17 @@ sub user_info {
       my ($d, $serr, $stats) = @_;
 
       return $cb->(err => $serr) if $serr;
+
+      return $db->c('user')->find_one({login => $login} => shift->begin) unless defined $stats;
       $cb->(user_stat => $stats);
+    },
+    sub {    # if score for a user was not calculated yet
+      my ($d, $uerr, $user) = @_;
+
+      return $cb->(err => $uerr) if $uerr;
+
+      @{$user}{'score', 'tasks'} = (0, []);
+      $cb->(user_stat => $user);
     }
   );
 }

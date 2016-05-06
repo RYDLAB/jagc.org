@@ -16,7 +16,7 @@
         <i class=<%= $lang %>></i><span> <%= $lang %></span>
       %}
       <footer>
-        <a href="<%= url_for('user_info', login => $contest->{owner}{login}) %>">
+        <a href="<%= url_for('contest_user_info', con => $contest->{_id}, login => $contest->{owner}{login}) %>">
           <%= $contest->{owner}{login} %>
           <img src="<%= $contest->{owner}{pic} %>" class="img-rounded user">
         </a>

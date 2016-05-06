@@ -80,7 +80,7 @@ sub startup {
   $br->get('/contest/:con/edit' => [con => $oid])->to('contest#edit_view')->name('contest_edit_view');
   $br->post('/contest/:con/edit' => [con => $oid])->to('contest#upsert')->name('contest_edit');
   $br->get('/contest/:con/task/add' => [con => $oid])->to('task#add_view')->name('con_task_add_view');
-  $br->post('/contest/:con/task/add' => [con => $oid])->to('task#add')->name('contest_task_add');
+  $br->post('/contest/:con/task/add' => [con => $oid])->to('task#add')->name('con_task_add');
   $br->get('/contest/task/:id' => [id => $oid])->to('task#edit_view')->name('contest_task_edit_view');
   $br->get('/contest/:con/users/:page' => [con => $oid, page => $num])->to('user#all', page => 1)->name('contest_user_all');
   $br->get('/contests')->to('contest#contests')->name('contests');
