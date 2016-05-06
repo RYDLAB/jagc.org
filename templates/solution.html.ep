@@ -1,3 +1,4 @@
+% use Mojo::Util 'decode';
 <div class="solution anchor" id="<%= $solution->{_id} %>">
   <div class="panel panel-default">
     <div class="panel-heading">

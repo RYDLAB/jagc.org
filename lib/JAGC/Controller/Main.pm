@@ -51,7 +51,7 @@ sub admin {
     return undef;
   }
 
-  return $c->session('login') eq 'avkhozov';
+  return $c->app->mode eq 'development';
 }
 
 sub verify {

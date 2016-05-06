@@ -223,9 +223,11 @@ sub view_solutions {
       my $cursor;
       if ($c->stash('s') == 1) {
         $cursor = $collection->find(bson_doc('task.tid' => $id, s => 'finished'));
+        $d->data( sort => {size => 1});
       } elsif ($c->stash('s') == 0) {
         $cursor =
           $collection->find(bson_doc('task.tid' => $id, s => {'$in' => [qw/incorrect timeout error/]}));
+        $d->data( sort => {ts => 1});
       }
       $d->data(cursor => $cursor);
       $cursor->count($d->begin);
@@ -236,7 +238,7 @@ sub view_solutions {
       return $c->reply->not_found if $count <= $skip;
 
       $c->stash(need_next_btn => ($count - $skip > $limit ? 1 : 0));
-      $d->data('cursor')->all($d->begin);
+      $d->data('cursor')->sort($d->data('sort'))->all($d->begin);
       $db->c('task')->find_one($id, {tests => 1} => $d->begin);
     },
     sub {
