@@ -26,8 +26,8 @@ sub _validate {
   $v->input($to_validate);
   $v->required('name')->size(1, 50, 'Length of task name must be no more than 50 characters');
   $v->required('description')->size(1, 500, 'Length of description must be no more than 500 characters');
-  $v->required($_)->size(1, 100000, 'Length of test must be no more than 100000 characters') for @test_fields;
   $v->enough_tests;
+  $v->required($_)->size(1, 100000, 'Length of test must be no more than 100000 characters') for @test_fields;
 
   return $v;
 }

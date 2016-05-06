@@ -5,6 +5,7 @@ use HTML::StripScripts::Parser;
 use Mojo::Util qw/encode decode trim/;
 use Mango::BSON ':bson';
 use Text::Markdown 'markdown';
+use JAGC::Model::Task 'SHOW_ALL';
 
 sub add {
   my $c = shift;
@@ -239,13 +240,26 @@ sub view_solutions {
 
       $c->stash(need_next_btn => ($count - $skip > $limit ? 1 : 0));
       $d->data('cursor')->sort($d->data('sort'))->all($d->begin);
-      $db->c('task')->find_one($id, {tests => 1} => $d->begin);
+      $db->c('task')->find_one($id, {con => 1, tests => 1} => $d->begin);
     },
     sub {
       my ($d, $serr, $solutions, $terr, $task) = @_;
       return $c->reply->exception("Error while find solution: $serr")     if $serr;
       return $c->reply->exception("Error while find_one task $id: $terr") if $terr;
       return $c->reply->not_found unless $task;
+
+      if($task->{con}) {
+        my $uid = $c->session->{uid} || '';
+        my $con = bson_oid $task->{con};
+
+        my $perm = $c->app->model('task')->view_permissions($con, $uid);
+
+        unless( $perm == SHOW_ALL ) {
+          foreach my $s (@$solutions) {
+            $s->{code} = '...' if $uid ne $s->{user}{uid}; 
+          }
+        }
+      }
 
       $c->stash(solutions => $solutions, task => $task);
       $c->render(action => 'solution');
