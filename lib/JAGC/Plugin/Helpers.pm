@@ -16,6 +16,7 @@ sub register {
     my $log = $self->app->log;
 
     my $time = eval { Time::Piece->strptime($str, $format) };
+    $time-= localtime->tzoffset;
 
     if( $@ ) {
       $log->error("Can't convert string '$str' to Time::Piece object:  $@");
@@ -26,14 +27,14 @@ sub register {
   });
   $app->helper( 'bson_to_date' => sub {
     my ( $self, $bson ) = @_; 
-    return gmtime( $bson->to_epoch )->strftime($format);
+    return localtime( $bson->to_epoch )->strftime($format);
   });
 
   $app->helper( 'bson_to_text_date' => sub {
     my ( $self, $bson ) = @_; 
     my $format = "%e %m %H:%M %Y";
 
-    my $t = gmtime( $bson->to_epoch );
+    my $t = localtime( $bson->to_epoch );
     my $mon = (qw / Jan Feb Mar Apr May Jun Jul Aug Sept Oct Nov Dec /)[$t->mon -1];
     my $s = $t->strftime($format);
     $s =~ s/^ *(\d+) (\d+)/$1 $mon/;

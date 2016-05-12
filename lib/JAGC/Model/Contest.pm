@@ -8,7 +8,8 @@ use constant {MATCH_INDEX => 0, SORT_INDEX => 1};
 
 sub upsert {    # create new contest or update existing one
   my ($self, %args) = @_;
-  my $db = $self->app->db;
+  my $app = $self->app;
+  my $db = $app->db;
 
   my $s = $args{session};
   my $p = $args{params};                               # Mojo::Parameters
@@ -25,12 +26,14 @@ sub upsert {    # create new contest or update existing one
 
   return %res if ($v->has_error);
 
-  my $start_date = $self->app->date_to_bson($v->param('start_date'));
-  my $end_date   = $self->app->date_to_bson($v->param('end_date'));
+  my $start_date = $app->date_to_bson($v->param('start_date'));
+  my $end_date   = $app->date_to_bson($v->param('end_date'));
 
-  if ($end_date < $start_date) {
+
+  if ($end_date <= $start_date || $end_date <= bson_time) {
     $res{err} = 'Bad end date!';
-    return %res;
+
+    return %res if $app->mode ne 'test' || $end_date <= $start_date;
   }
 
   my $oid;
