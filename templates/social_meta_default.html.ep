@@ -1,0 +1,4 @@
+% my $soc_desc = 'JAGC is a server for code golf, where users should write the shortest code using all standard features of scripting languages for solve tasks.';
+    <meta name="description" content="<%= $soc_desc %>" />
+    <meta name="twitter:description" content="<%= $soc_desc %>">
+    <meta property="og:description" content="<%= $soc_desc %>" />

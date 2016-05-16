@@ -7,7 +7,6 @@
       <li class="active"><a href="#recent" data-toggle="tab">Recent</a></li>
       <li><a href="#popular"  data-toggle="tab">Popular</a></li>
     </ul>
-
     <div class="tab-content">
       <div class="tab-pane" id="popular">
         %= include 'tasks', tasks => $ptasks;
