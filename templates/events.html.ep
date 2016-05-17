@@ -1,4 +1,10 @@
 % use Mojo::Util 'decode';
+% content_for social_meta => begin
+% my $soc_desc = 'List of events';
+    <meta name="description" content="<%= $soc_desc %>" />
+    <meta name="twitter:description" content="<%= $soc_desc %>">
+    <meta property="og:description" content="<%= $soc_desc %>" />
+%end
 
 <div class="panel-group">
   % my $id = 0;

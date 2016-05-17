@@ -29,6 +29,14 @@
   });
 </script>
 
+% content_for social_meta => begin
+% my $soc_desc = $task->{con} ? 'Contest task: ' : 'Task: ';
+% $soc_desc.= $task->{name};
+    <meta name="description" content="<%= $soc_desc %>" />
+    <meta name="twitter:description" content="<%= $soc_desc %>">
+    <meta property="og:description" content="<%= $soc_desc %>" />
+%end
+
 <div class="row"> 
   <div class="col-sm-9">
     <blockquote>

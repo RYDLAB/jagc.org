@@ -1,5 +1,11 @@
 %layout 'default';
 %title 'Contests';
+% content_for social_meta => begin
+% my $soc_desc = 'List of contests';
+    <meta name="description" content="<%= $soc_desc %>" />
+    <meta name="twitter:description" content="<%= $soc_desc %>">
+    <meta property="og:description" content="<%= $soc_desc %>" />
+%end
 
 <div class="row"><div class="col-sm-9">
   <ul class="nav nav-tabs">

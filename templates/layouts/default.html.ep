@@ -2,23 +2,25 @@
 <html lang="en" itemscope itemtype="http://schema.org/Article">
   <head>
 
-% my $soc_img = 'http://jagc.org/images/logo_soc.png';
+% my $soc_title = 'JAGC — Just Another Golf Coding';
+% my $soc_img   = 'http://t.odoo-online.ru/images/logo_soc.png';
+%# my $soc_img  = 'http://jagc.org/images/logo_soc.png';
 
 
     <!-- Twitter Card data -->
     <meta name="twitter:card" content="summary">
     <meta name="twitter:site" content="@JagcOrg">
-    <meta name="twitter:title" content="JAGC">
     <meta name="twitter:creator" content="@JagcOrg">
     <!-- Twitter Summary card images must be at least 120x120px -->
     <meta name="twitter:image" content="<%= $soc_img %>">
+    <meta name="twitter:title" content="<%= $soc_title %>">
 
     <!-- Open Graph data -->
-    <meta property="og:title" content="JAGC" />
     <meta property="og:type" content="article" />
     <meta property="og:url" content="<%= url_for %>" />
     <meta property="og:image" content="<%= $soc_img %>" />
     <meta property="og:site_name" content="JAGC" />
+    <meta property="og:title" content="<%= $soc_title %>" />
 
     % if (  length content ('social_meta') ) {
       <%== content 'social_meta' %>
