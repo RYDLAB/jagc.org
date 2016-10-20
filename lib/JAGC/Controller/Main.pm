@@ -11,10 +11,11 @@ sub index {
     sub {
       my $d = shift;
 
-      $db->c('task')->find->limit(20)->sort({ts => -1})->fields({desc => 0, tests => 0})->all($d->begin);
-      $db->c('task')->find->limit(20)->sort({'stat.all' => -1})->fields({desc => 0, tests => 0})
-        ->all($d->begin);
-      $db->c('stat')->find->fields({score => 1, pic => 1, login => 1})
+      $db->c('task')->find({con => {'$exists' => bson_false}})->limit(20)->sort({ts => -1})
+        ->fields({desc => 0, tests => 0})->all($d->begin);
+      $db->c('task')->find({con => {'$exists' => bson_false}})->limit(20)->sort({'stat.all' => -1})
+        ->fields({desc => 0, tests => 0})->all($d->begin);
+      $db->c('stat')->find({con => {'$exists' => bson_false}})->fields({score => 1, pic => 1, login => 1})
         ->sort(bson_doc(score => -1, t_all => -1, t_ok => -1))->limit(-10)->all($d->begin);
       $db->c('solution')->aggregate([
           {'$match' => {s   => 'finished'}},
@@ -50,7 +51,7 @@ sub admin {
     return undef;
   }
 
-  return $c->session('login') eq 'avkhozov';
+  return $c->app->mode eq 'development';
 }
 
 sub verify {
@@ -95,11 +96,11 @@ sub tasks {
     sub {
       my $d = shift;
 
-      $db->c('task')->find->count($d->begin);
+      $db->c('task')->find({con => {'$exists' => 0}})->count($d->begin);
       $db->c('solution')->aggregate([
-          {'$match' => {s   => 'finished'}},
-          {'$group' => {_id => '$lng', c => {'$sum' => 1}}},
-          {'$sort' => {c => -1, _id => 1}}
+          {'$match' => {s   => 'finished', 'task.con' => {'$exists' => 0}}},
+          {'$group' => {_id => '$lng',     c          => {'$sum'    => 1}}},
+          {'$sort'  => {c   => -1,         _id        => 1}}
         ]
       )->all($d->begin);
     },
@@ -114,8 +115,8 @@ sub tasks {
       $c->stash(need_next_btn => $need_next_btn, languages => $languages);
 
       my $skip = ($page - 1) * $limit;
-      $db->c('task')->find->sort({ts => -1})->skip($skip)->limit($limit)->fields({desc => 0, tests => 0})
-        ->all($d->begin);
+      $db->c('task')->find({con => {'$exists' => 0}})->sort({ts => -1})->skip($skip)->limit($limit)
+        ->fields({desc => 0, tests => 0})->all($d->begin);
     },
     sub {
       my ($d, $terr, $tasks) = @_;

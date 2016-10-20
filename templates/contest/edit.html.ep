@@ -1,0 +1,84 @@
+% layout 'default';
+% title 'Edit contest';
+
+<script type="text/javascript">
+  $(document).ready( function () {
+  $('#start_date').datetimepicker({
+    format : 'DD/MM/YYYY HH:mm',
+    useCurrent : false 
+  });
+  $('#end_date').datetimepicker ({
+    useCurrent: false, //Important! See issue #1075
+    format : 'DD/MM/YYYY HH:mm'
+  });
+
+  $("#start_date").on("dp.change", function (e) {
+      $('#end_date').data("DateTimePicker").minDate(e.date);
+  });
+  $("#end_date").on("dp.change", function (e) {
+      $('#start_date').data("DateTimePicker").maxDate(e.date);
+  });
+
+  });
+</script>
+
+<h2>Edit contest</h2>
+<form action="<%= url_for('contest_edit') %>" method="POST">
+  <fieldset>
+    <div class="row">
+      <div class="col-sm-6">
+        %= include 'field', type => 'text', label => 'Contest name', name => 'name', value => $contest->{name}, opt => {class => 'input-lg'}
+        %= include 'field', type => 'textarea', label => 'Contest description', name => 'description', value => $contest->{desc}, opt => {class => 'input-lg'}
+        <div class="row">
+          <div class="col-sm-6">
+          %= include 'field', type => 'datetime', label => 'Start date (in UTC+0)', name => 'start_date', value => $contest->{start_date}, opt => {class => 'input-lg'}
+          </div>
+          <div class="col-sm-6">
+          %= include 'field', type => 'datetime', label => 'End date', name => 'end_date', value => $contest->{end_date}, opt => {class => 'input-lg'}
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-sm-12">
+            <button type="submit" class="btn btn-primary">Submit</button>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-sm-12">
+            <a class="btn btn-primary navbar-btn navbar-left" href="<%= url_for( 'con_task_add_view', con => $con ) %>">Add task to contest</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-6">
+        <div class="row">
+          <div class="col-sm-6">
+            % if ( validation->has_error('langs') ) {
+            <h4 class='text-danger'>Available languages:</h4>
+            <span class="help-inline text-danger">Please select at least one language!</span>
+            % }
+            % else {
+            <h4>Available languages:</h4>
+            % }
+            <div class="col-sm-6">
+              % my $langs = stash('langs');
+              % my $lang_ctr = 0;
+              % foreach my $lang ( sort keys %$langs ) {
+              % if ( $lang_ctr++ > 9 ) {
+              </div><div class="col-sm-6">
+              % $lang_ctr = 0;
+              % }
+              %= include 'field', type => 'checkbox', label => $lang, name => "langs", opt => { icon => $lang, checked => $langs->{$lang} }
+              %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-8">
+        % if (stash('tasks')) {
+        <h3>Contest tasks:</h3>
+        % my $tasks = stash('tasks');
+        %=  include 'tasks', tasks => $tasks;
+        % }
+      </div>
+    </div>
+  </fieldset>
+</form>

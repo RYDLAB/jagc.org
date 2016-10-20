@@ -133,38 +133,36 @@ sub notification_new {
   );
 }
 
-sub notification {
+sub notification_contests {
   my $c = shift;
 
   return $c->reply->not_found unless my $uid = $c->session('uid');
   $uid = bson_oid $uid;
-  my $tid  = bson_oid $c->stash('tid');
+
+  $c->model('notification')->contests($uid, sub {
+      my %res = @_;
+      return $c->reply->not_found unless %res;
+      return $c->reply->exception($res{err}) if $res{err};
+
+      $c->redirect_to('user_settings', login => $res{login});
+  });
+}
+
+sub notification {
+  my $c = shift;
+
+  return $c->reply->not_found unless my $uid = $c->session('uid');
   my $type = $c->stash('type');
 
-  my $db = $c->db;
-  $c->delay(
-    sub {
-      $db->c('notification')->find_one(bson_doc(uid => $uid, tid => $tid) => shift->begin);
-    },
-    sub {
-      my ($d, $err, $notification) = @_;
-      return $c->reply->exception("Error while find notification $uid: $err") if $err;
+  $uid = $c->session('uid');
+  my $tid = $c->stash('tid');
 
-      my $action = '$addToSet';
-      if ($notification) {
-        $action = '$pull' if grep { $_ eq $type } @{$notification->{for}};
-      }
+  my $action = $type eq 'comment' ? 'comments' : 'solutions';
 
-      $db->c('notification')
-        ->update(bson_doc(uid => $uid, tid => $tid), {$action => {for => $type}}, {upsert => 1} => $d->begin);
-    },
-    sub {
-      my ($d, $err, $doc) = @_;
-      return $c->reply->exception("Error while upsert notification: $err") if $err;
+  my %res = $c->model('notification')->$action(uid => $uid, tid => $tid);
 
-      $c->redirect_to('task_view', id => $tid);
-    }
-  );
+  return $c->reply->exception($res{err}) if exists $res{err};
+  $c->redirect_to('task_view', id => $res{tid});
 }
 
 sub register_view {
@@ -298,32 +296,23 @@ sub confirmation {
 }
 
 sub all {
-  my $c = shift;
+  my $c = shift->render_later;
 
-  my $page  = int $c->stash('page');
-  my $limit = 50;
-  my $skip  = ($page - 1) * $limit;
+  my $con  = $c->param('con');
+  my $page = $c->param('page');
 
-  my $db = $c->db;
-  $c->delay(
-    sub { $db->c('stat')->find({})->count(shift->begin) },
-    sub {
-      my ($d, $err, $count) = @_;
-      return $c->reply->exception("Error while find users: $err") if $err;
-      return $c->reply->not_found if $count <= $skip;
+  my $cb = sub {
+    my %res = @_;
 
-      $d->pass($count);
-      $db->c('stat')->find({})->sort(bson_doc(score => -1, t_all => -1, t_ok => -1))->limit($limit)
-        ->skip($skip)->fields({tasks => 0})->all($d->begin);
-    },
-    sub {
-      my ($d, $count, $err, $users) = @_;
-      return $c->reply->exception("Error while find users: $err") if $err;
+    return $c->reply->not_found unless %res;
+    return $c->reply->exception($res{err}) if $res{err};
 
-      $c->stash(users => $users, skip => $skip, next_btn => ($count - $skip > $limit) ? 1 : 0);
-      $c->render;
-    }
-  );
+    $c->render(%res);
+  };
+
+  return $c->model('user')->contest_all($con, $page, $cb) if $con;
+
+  $c->model('user')->all($page, $cb);
 }
 
 sub change_name {
@@ -380,14 +369,19 @@ sub change_name {
       $db->c('comment')
         ->update(
         ({'user.login' => $rlogin}, {'$set' => {'user.login' => $nlogin}}, {multi => 1}) => $d->begin);
+      $db->c('contest')
+        ->update(
+        ({'owner.login' => $rlogin}, {'$set' => {'owner.login' => $nlogin}}, {multi => 1}) => $d->begin);
     },
     sub {
-      my ($d, $serr, $snum, $soerr, $sonum, $toerr, $tonum, $twerr, $twnum, $cerr, $cnum) = @_;
+      my ($d, $serr, $snum, $soerr, $sonum, $toerr, $tonum, $twerr, $twnum, $cerr, $cnum, $coerr, $conum) =
+        @_;
       return $c->reply->exception("Error while update user login: $serr")                    if $serr;
       return $c->reply->exception("Error while update solution when update user: $soerr")    if $soerr;
       return $c->reply->exception("Error while update task owner when update user: $toerr")  if $toerr;
       return $c->reply->exception("Error while update task winner when update user: $twerr") if $twerr;
       return $c->reply->exception("Error while update comment when update user: $cerr")      if $cerr;
+      return $c->reply->exception("Error while update contest when update user: $coerr")     if $coerr;
 
       return $c->redirect_to('user_settings', login => $nlogin);
     }

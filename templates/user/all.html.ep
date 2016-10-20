@@ -16,7 +16,7 @@
     % my $count = $skip + 1;
     % for my $user (@$users) {
       <tr>
-        <td><%= $count %></td>
+        <td><%= $user->{rank} %></td>
         <td><%= $user->{score} %></td>
         <td><%= $user->{t_all} %></td>
         <td><%= $user->{t_ok} %></td>
@@ -32,14 +32,13 @@
           </div>
         </td>
       </tr>
-      % ++$count;
     % }
 </table>
 
 <br>
-
-% my $url_prev = url_for('user_all', page => $page - 1);
-% my $url_next = url_for('user_all', page => $page + 1);
+% my $pag_url = stash('con') ? 'contest_user_all' : 'user_all';
+% my $url_prev = url_for($pag_url, page => $page - 1);
+% my $url_next = url_for($pag_url, page => $page + 1);
 
 <ul class="pager">
     <li class="previous <%= 'disabled' if $page == 1 %>"><a href="<%= $url_prev if $page > 1 %>">&larr; Prev</a></li>

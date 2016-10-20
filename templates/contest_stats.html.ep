@@ -1,0 +1,28 @@
+<table class="table table-hover table-striped">
+<caption>Top users <small><a href="<%= $url %>">(All users)</a></small></caption>
+<thead>
+  <tr>
+    <th>Rank</th>
+    <th>Rating</th>
+    <th>User name</th>
+  </tr>
+</thead>
+% my $count = 1;
+% for my $stat (@$stats) {
+  <tr>
+    <th><%= $count %></th>
+    <td><%= $stat->{score} %></td>
+    <td>
+      % foreach my $user ( @{$stat->{users}} ) {
+        <div style="padding-bottom:2px">
+          <a href="<%= url_for('contest_user_info', login => $user->{login}, con => $contest->{_id}) %>">
+            <img class="img-rounded user" src="<%= $user->{pic} %>">
+            <%= $user->{login} %>
+          </a>
+        </div>
+      % }
+    </td>
+  </tr>
+  % ++$count
+% }
+</table>

@@ -1,3 +1,4 @@
+% use Mojo::Util 'decode';
 <div class="solution anchor" id="<%= $solution->{_id} %>">
   <div class="panel panel-default">
     <div class="panel-heading">
@@ -71,7 +72,7 @@
       </div>
     </div>
     <div class="panel-body">
-      <pre><%= $solution->{code} %></pre>
+      <pre><%= $solution->{code} || '...' %></pre>
     </div>
   </div>
 </div>

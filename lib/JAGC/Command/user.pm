@@ -33,7 +33,7 @@ sub run {
       $db->c('solution')->remove({'user.uid' => $uid});
       $db->c('task')->update({'winner.uid' => $uid}, {'$unset' => {winner => ''}}, {multi => 1});
       $db->c('task')->remove({'owner.uid' => $uid});
-      $db->c('stat')->remove({_id         => $uid});
+      $db->c('stat')->remove({uid         => $uid});
       $db->c('comment')->remove({'user.uid' => $uid});
 
       print "User [$uid] removed\n";

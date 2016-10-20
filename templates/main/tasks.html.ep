@@ -1,5 +1,11 @@
 % layout 'default';
 % title 'Tasks';
+% content_for social_meta => begin
+% my $soc_desc = 'List of all tasks';
+    <meta name="description" content="<%= $soc_desc %>" />
+    <meta name="twitter:description" content="<%= $soc_desc %>">
+    <meta property="og:description" content="<%= $soc_desc %>" />
+%end
 
 <div class="col-sm-9">
   %= include 'tasks', tasks => $tasks;

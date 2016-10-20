@@ -1,5 +1,11 @@
 % layout 'default';
 % title 'JAGC';
+% content_for social_meta => begin
+% my $soc_desc = 'List of tasks';
+    <meta name="description" content="<%= $soc_desc %>" />
+    <meta name="twitter:description" content="<%= $soc_desc %>">
+    <meta property="og:description" content="<%= $soc_desc %>" />
+%end
 
 <div class="row">
   <div class="col-sm-9">
@@ -7,7 +13,6 @@
       <li class="active"><a href="#recent" data-toggle="tab">Recent</a></li>
       <li><a href="#popular"  data-toggle="tab">Popular</a></li>
     </ul>
-
     <div class="tab-content">
       <div class="tab-pane" id="popular">
         %= include 'tasks', tasks => $ptasks;
@@ -18,32 +23,7 @@
     </div>
   </div>
   <div class="col-sm-3">
-    <table class="table table-hover table-striped">
-    <caption>Top users <small><a href="<%= url_for('user_all') %>">(All users)</a></small></caption>
-    <thead>
-      <tr>
-        <th>Rank</th>
-        <th>Rating</th>
-        <th>User name</th>
-      </tr>
-    </thead>
-    % my $count = 1;
-    % for my $stat (@$stats) {
-      <tr>
-        <th><%= $count %></th>
-        <td><%= $stat->{score} %></td>
-        <td>
-          <div>
-            <a href="<%= url_for('user_info', login => $stat->{login}) %>">
-              <img class="img-rounded user" src="<%= $stat->{pic} %>">
-              <%= $stat->{login} %>
-            </a>
-          </div>
-        </td>
-      </tr>
-      % ++$count
-    % }
-    </table>
+    %= include 'stats', url => url_for('user_all')
     %= include 'language';
     <a class="btn btn-primary" href="<%= url_for('tasks') %>">All tasks</a>
   </div>

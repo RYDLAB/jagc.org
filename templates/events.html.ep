@@ -1,4 +1,10 @@
 % use Mojo::Util 'decode';
+% content_for social_meta => begin
+% my $soc_desc = 'List of events';
+    <meta name="description" content="<%= $soc_desc %>" />
+    <meta name="twitter:description" content="<%= $soc_desc %>">
+    <meta property="og:description" content="<%= $soc_desc %>" />
+%end
 
 <div class="panel-group">
   % my $id = 0;
@@ -12,7 +18,8 @@
           </div>
           <div class="col-sm-2">
 
-            <a href="<%= url_for('user_info', login => $event->{user}{login}) %>">
+            % my $profile_url = stash('con') ? 'contest_user_info' : 'user_info';
+            <a href="<%= url_for( $profile_url, login => $event->{user}{login}, con => stash('con')) %>">
               <img class="img-rounded user" src="<%= $event->{user}{pic} %>" >
                 <%= $event->{user}{login} %>
             </a>
@@ -86,7 +93,7 @@
       </div>
       <div id="collapse<%= $id %>" class="panel-collapse collapse">
         <div class="panel-body">
-          <pre><%= $event->{code} %></pre>
+          <pre><%= stash('hide_code') ? '...'  : $event->{code} %></pre>
         </div>
       </div>
     </div>

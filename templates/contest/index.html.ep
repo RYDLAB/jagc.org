@@ -1,0 +1,30 @@
+%layout 'default';
+%title 'Contests';
+% content_for social_meta => begin
+% my $soc_desc = 'List of contests';
+    <meta name="description" content="<%= $soc_desc %>" />
+    <meta name="twitter:description" content="<%= $soc_desc %>">
+    <meta property="og:description" content="<%= $soc_desc %>" />
+%end
+
+<div class="row"><div class="col-sm-9">
+  <ul class="nav nav-tabs">
+      <li class="active"><a href="#current" data-toggle="tab">Current</a></li>
+      <li><a href="#archive"  data-toggle="tab">Archive</a></li>
+  </ul>
+  <div class="tab-content">
+    <div class="tab-pane" id="archive">
+      %= include 'contests_archive', contests => $contests_archive;
+    </div>
+    <div class="tab-pane active" id="current">
+      %= include 'contests', contests => $contests_current;
+    </div>
+  </div>
+  </div>
+  %# <div class="col-sm-3"><a class = "btn btn-primary" href="<%= url_for('contests') %>"> All contests </a></div>
+  <div class="col-sm-3">
+  % if (session('uid')) {
+    <a class="btn btn-primary" href="<%= url_for 'contest_add_view' %>">Add new contest</a>
+  % }
+  </div>
+</div>

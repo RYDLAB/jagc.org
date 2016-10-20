@@ -6,59 +6,20 @@ use Mojo::Util 'xml_escape';
 use XML::RSS;
 
 sub info {
-  my $c = shift;
+  my $c = shift->render_later;
 
-  my $page = int $c->stash('page');
-  return $c->reply->not_found if $page < 1;
+  $c->model('event')->info(
+    page => $c->param('page'),
+    login => $c->param('login'),
+    cb => sub {
+      my %res = @_;
+      return $c->reply->not_found unless %res;
+      return $c->reply->exception($res{err}) if $res{err};
 
-  my $login = $c->stash('login');
-  my $event_opt = $login ? {'user.login' => $login} : {};
+      $c->stash(@_);
 
-  my $limit = 20;
-  my $skip  = ($page - 1) * $limit;
-
-  my $db = $c->db;
-  $c->delay(
-    sub { $db->c('solution')->find($event_opt)->count(shift->begin) },
-    sub {
-      my ($d, $err, $count) = @_;
-      return $c->reply->exception("Error while get count of elements in solution: $err") if $err;
-      return $c->reply->not_found if $count > 0 && $count <= $skip;
-
-      $c->stash(need_next_btn => ($count - $skip > $limit ? 1 : 0));
-      $db->c('solution')->find($event_opt)->sort({ts => -1})->skip($skip)->limit($limit)->all($d->begin);
-    },
-    sub {
-      my ($d, $qerr, $events) = @_;
-      return $c->reply->exception("Error while get solutions: $qerr") if $qerr;
-
-      my %sid;
-      map { $sid{$_->{task}{tid}} = undef } @{$events // []};
-      $c->stash(events => $events // []);
-
-      $db->c('task')->find({_id => {'$in' => [map { bson_oid $_ } keys %sid]}})->all($d->begin);
-    },
-    sub {
-      my ($d, $terr, $tasks) = @_;
-      return $c->reply->exception("Error while get tasks for solutions: $terr") if $terr;
-
-      my %tasks;
-      map { $tasks{$_->{_id}} = $_ } @$tasks;
-      $c->stash(tasks => \%tasks);
-
-      return $c->render unless $login;
-
-      if (@{$c->stash('events')}) {
-        return $c->render(action => 'user', user => $c->stash('events')->[0]->{user});
-      }
-      $db->c('user')->find_one({login => $login}, {login => 1, pic => 1} => $d->begin);
-    },
-    sub {
-      my ($d, $uerr, $user) = @_;
-      return $c->reply->exception("Error get user: $uerr") if $uerr;
-      return $c->reply->not_found unless $user;
-
-      $c->render(action => 'user', user => $user);
+      return $c->render unless  $res{login};
+      $c->render('action' => 'user');
     }
   );
 }

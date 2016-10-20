@@ -5,69 +5,30 @@ use HTML::StripScripts::Parser;
 use Mojo::Util qw/encode decode trim/;
 use Mango::BSON ':bson';
 use Text::Markdown 'markdown';
+use JAGC::Model::Task 'SHOW_ALL';
 
 sub add {
   my $c = shift;
-  $c->render_later;
-  my $db = $c->db;
 
-  return $c->reply->not_found unless my $uid = $c->session('uid');
-  $uid = bson_oid($uid);
+  return $c->reply->not_found unless $c->session('uid');
 
-  my $params      = $c->req->body_params;
-  my $hparams     = $params->to_hash;
-  my @test_fields = grep { /^test_/ } @{$params->names};
+  my %q = (validation => $c->validation, params => $c->req->params, session => $c->session);
+  $q{con} = $c->param('con') if $c->param('con');
 
-  for (@test_fields) {
-    $hparams->{$_} =~ s/\r\n/\n/g;
-    $hparams->{$_} =~ s/^\n*|\n*$//g;
+  my %res = $c->model('task')->add(%q);
+
+  my $v = $res{validation};
+
+  if ($v->has_error) {
+    $c->stash(alert_error => 'You need create at least 5 tests') if $v->has_error('enough_tests');
+    return $c->render(action => 'add');
   }
 
-  my $to_validate = {name => trim($hparams->{name}), description => trim($hparams->{description})};
-  $to_validate->{$_} = $hparams->{$_} for @test_fields;
+  return $c->reply->exception("Error while insert task: $res{err}") if $res{err};
+  return $c->redirect_to('contest_edit_view', id => $c->param('con')) if $c->param('con');
 
-  my $v = $c->validation;
-  $v->input($to_validate);
-  $v->required('name')->size(1, 50, 'Length of task name must be no more than 50 characters');
-  $v->required('description')->size(1, 500, 'Length of description must be no more than 500 characters');
-  $v->required($_)->size(1, 100000, 'Length of test must be no more than 100000 characters') for @test_fields;
-
-  my $tnum = grep { /^test_\d+_in$/ } @{$params->names};
-  if ($v->has_error || $tnum < 5) {
-    $c->stash(alert_error => 'You need create at least 5 tests') if $tnum < 5;
-    return $c->add_view;
-  }
-
-  my @tests;
-  for my $tin (grep { /^test_\d+_in$/ } @{$params->names}) {
-    (my $tout = $tin) =~ s/in/out/;
-    my $test_in  = $v->param($tin);
-    my $test_out = $v->param($tout);
-    my $test     = bson_doc(
-      _id => bson_oid,
-      in  => bson_bin(encode 'UTF-8', $test_in),
-      out => bson_bin(encode 'UTF-8', $test_out),
-      ts  => bson_time
-    );
-    push @tests, $test;
-  }
-
-  $db->c('task')->insert(
-    bson_doc(
-      name  => $v->param('name'),
-      desc  => $v->param('description'),
-      owner => bson_doc(uid => $uid, login => $c->session('login'), pic => $c->session('pic')),
-      stat  => bson_doc(all => 0, ok => 0),
-      ts    => bson_time,
-      tests => \@tests
-      ) => sub {
-      my ($collection, $err, $oid) = @_;
-      return $c->reply->exception("Error while insert task: $err") if $err;
-
-      $c->app->minion->enqueue(notice_new_task => [$oid]);
-      return $c->redirect_to('task_view', id => $oid);
-    }
-  );
+  $c->app->minion->enqueue(notice_new_task => [$res{tid}]);
+  $c->redirect_to('task_view', id => $res{tid});
 }
 
 sub add_view {
@@ -78,113 +39,39 @@ sub add_view {
 sub comments {
   my $c = shift;
 
-  my $id = bson_oid $c->stash('id');
-  my $db = $c->db;
-  $c->delay(
-    sub {
-      my $d = shift;
-
-      $db->c('task')->find_one($id => $d->begin);
-      $db->c('comment')->find(bson_doc(type => 'task', tid => $id, del => bson_false))
-        ->sort(bson_doc(ts => 1))->all($d->begin);
-    },
-    sub {
-      my ($d, $terr, $task, $cerr, $comments) = @_;
-      return $c->reply->exception("Error while find_one task with $id: $terr") if $terr;
-      return $c->reply->not_found unless $task;
-      return $c->reply->exception("Error while find comments: $cerr") if $cerr;
-
-      $c->stash(task => $task, comments => $comments);
-      $c->render(action => 'comments');
-    }
+  my %res = $c->model('comment')->task_comments(
+    tid => $c->stash('id'),
+    uid => $c->session('uid')
   );
+  
+  return $c->reply->not_found unless %res;
+
+  $c->stash( %res );
+  $c->render(action => 'comments');
 }
 
 sub solution_comments {
   my $c = shift;
 
-  my $id = bson_oid $c->stash('id');
-  my $db = $c->db;
-  $c->delay(
-    sub {
-      my $d = shift;
-
-      $db->c('solution')->find_one($id => $d->begin);
-      $db->c('comment')->find(bson_doc(type => 'solution', sid => $id, del => bson_false))
-        ->sort(bson_doc(ts => 1))->all($d->begin);
-    },
-    sub {
-      my ($d, $serr, $solution, $cerr, $comments) = @_;
-      return $c->reply->exception("Error while find_one solution with $id: $serr") if $serr;
-      return $c->reply->not_found unless $solution;
-      return $c->reply->exception("Error while find comments: $cerr") if $cerr;
-
-      $c->stash(solution => $solution, comments => $comments);
-      $c->render(action => 'solution_comments');
-    }
+  my %res = $c->model('comment')->solution_comments(
+    sid => $c->stash('id'),
+    uid => $c->session('uid')
   );
+  
+  return $c->reply->not_found unless %res;
+
+  $c->stash( %res );
+  $c->render(action => 'solution_comments');
 }
 
 sub view {
   my $c = shift;
 
-  my $id = bson_oid $c->stash('id');
-  my $db = $c->db;
-  $c->delay(
-    sub {
-      my $d = shift;
+  my %res = $c->model('task')->view(tid => $c->param('id'), s => $c->stash('s'), session => $c->session,);
+  return $c->reply->not_found unless %res;
 
-      $db->c('task')->find_one($id => $d->begin);
-      $db->c('language')->find({})->fields({name => 1, _id => 0})->all($d->begin);
-    },
-    sub {
-      my ($d, $terr, $task, $lerr, $languages) = @_;
-      return $c->reply->exception("Error while find_one task with $id: $terr") if $terr;
-      return $c->reply->not_found unless $task;
-      return $c->reply->exception("Error while find languages: $lerr") if $lerr;
-
-      $c->stash(task => $task, languages => [map { $_->{name} } @$languages]);
-
-      my $collection = $db->c('solution');
-      my $cursor;
-      if ($c->stash('s') == 1) {
-        $cursor = $collection->find(bson_doc('task.tid' => $id, s => 'finished'))->fields({task => 0})
-          ->sort(bson_doc(size => 1, ts => 1))->limit(20);
-      } elsif ($c->stash('s') == 0) {
-        $cursor =
-          $collection->find(bson_doc('task.tid' => $id, s => {'$in' => [qw/incorrect timeout error/]}))
-          ->fields({task => 0})->sort(bson_doc(ts => 1))->limit(20);
-      }
-      $cursor->all($d->begin);
-      $db->c('comment')->find(bson_doc(type => 'task', tid => $id, del => bson_false))->count($d->begin);
-      $db->c('comment')->aggregate([
-          {'$match' => bson_doc(tid => $id, type => 'solution', del => bson_false)},
-          {'$group' => bson_doc(_id => '$sid', count => {'$sum' => 1})}
-        ]
-      )->all($d->begin);
-      if (my $uid = $c->session('uid')) {
-        $db->c('notification')->find_one(bson_doc(uid => bson_oid($uid), tid => $id), {for => 1}, $d->begin);
-      }
-    },
-    sub {
-      my ($d, $err, $solutions, $cerr, $comments_count, $ccerr, $solution_comments, $nerr, $notice) = @_;
-      return $c->reply->exception("Error while find solution: $err")                if $err;
-      return $c->reply->exception("Error while count comments for $id: $cerr")      if $cerr;
-      return $c->reply->exception("Error while find comments for solution: $ccerr") if $ccerr;
-      return $c->reply->exception("Error while find notification for task: $nerr")  if $nerr;
-
-      my %solution_comments;
-      map { $solution_comments{$_->{_id}} = $_->{count} } @$solution_comments;
-
-      $c->stash(
-        solutions         => $solutions,
-        comments_count    => $comments_count,
-        solution_comments => \%solution_comments,
-        notice            => $notice
-      );
-      $c->render(action => 'view');
-    }
-  );
+  $c->stash(%res);
+  $c->render('task/view');
 }
 
 sub edit_view {
@@ -337,9 +224,11 @@ sub view_solutions {
       my $cursor;
       if ($c->stash('s') == 1) {
         $cursor = $collection->find(bson_doc('task.tid' => $id, s => 'finished'));
+        $d->data( sort => {size => 1});
       } elsif ($c->stash('s') == 0) {
         $cursor =
           $collection->find(bson_doc('task.tid' => $id, s => {'$in' => [qw/incorrect timeout error/]}));
+        $d->data( sort => {ts => 1});
       }
       $d->data(cursor => $cursor);
       $cursor->count($d->begin);
@@ -350,14 +239,27 @@ sub view_solutions {
       return $c->reply->not_found if $count <= $skip;
 
       $c->stash(need_next_btn => ($count - $skip > $limit ? 1 : 0));
-      $d->data('cursor')->all($d->begin);
-      $db->c('task')->find_one($id, {tests => 1} => $d->begin);
+      $d->data('cursor')->sort($d->data('sort'))->all($d->begin);
+      $db->c('task')->find_one($id, {con => 1, tests => 1} => $d->begin);
     },
     sub {
       my ($d, $serr, $solutions, $terr, $task) = @_;
       return $c->reply->exception("Error while find solution: $serr")     if $serr;
       return $c->reply->exception("Error while find_one task $id: $terr") if $terr;
       return $c->reply->not_found unless $task;
+
+      if($task->{con}) {
+        my $uid = $c->session->{uid} || '';
+        my $con = bson_oid $task->{con};
+
+        my $perm = $c->app->model('task')->view_permissions($con, $uid);
+
+        unless( $perm == SHOW_ALL ) {
+          foreach my $s (@$solutions) {
+            $s->{code} = '...' if $uid ne $s->{user}{uid}; 
+          }
+        }
+      }
 
       $c->stash(solutions => $solutions, task => $task);
       $c->render(action => 'solution');
@@ -504,81 +406,30 @@ sub solution_comment_add {
 sub solution_add {
   my $c = shift;
 
-  return $c->reply->not_found unless my $uid = $c->session('uid');
-  $uid = bson_oid $uid;
+  return $c->reply->not_found unless $c->session('uid');
 
-  my $login = $c->session('login');
-  my $pic   = $c->session('pic');
-  my $tid   = bson_oid $c->stash('id');
-
-  my $max_code_len = 10_000;
-
-  my $db = $c->db;
-  $c->delay(
-    sub {
-      my $d = shift;
-      $db->c('task')->find_one($tid => $d->begin);
-      $db->c('language')->find({})->all($d->begin);
-    },
-    sub {
-      my ($d, $terr, $task, $lerr, $languages) = @_;
-      return $c->reply->exception("Error while find_one task with $tid: $terr") if $terr;
-      return $c->reply->exception("Error while find languages: $lerr")          if $lerr;
-      return $c->reply->not_found unless $task;
-
-      my $langs = [map { $_->{name} } @$languages];
-      $d->data(languages => $langs);
-      $d->data(tname     => $task->{name});
-
-      my $code = $c->param('code');
-      $code =~ s/\r\n?/\n/g;
-
-      my $v = $c->validation;
-      $v->input({language => trim($c->param('language')), code => $code});
-      $v->required('language')->in(\@$langs, 'Language not exist');
-      $v->required('code')
-        ->code_size(1, $max_code_len,
-        'The length of the source code must be less than ' . ($max_code_len + 1));
-      if ($v->has_error) {
-        $c->stash(s => 1);
-        return $c->view();
-      }
-
-      my ($used_lang) = grep { $_->{name} eq $v->param('language') } @$languages;
-
-      $code = $v->param('code');
-      my $code_length = length $code;
-
-      if ($code =~ m/^#!/) {
-        $code =~ s/^#![^\s]+[\t ]*//;
-        $code_length = length($code) - 1;
-        $code_length++ unless $code =~ m/\n/;
-        $v->output->{code} =~ s/^#![^\s]+/#!$used_lang->{path}/;
-      }
-
-      $d->data(code => $v->param('code'));
-      $c->session(lang => $v->param('language'));
-
-      $db->c('solution')->insert(
-        bson_doc(
-          task => {tid => $tid, name  => $task->{name}},
-          user => {uid => $uid, login => $login, pic => $pic},
-          code => $v->param('code'),
-          lng  => $v->param('language'),
-          size => $code_length,
-          s    => 'inactive',
-          ts   => bson_time
-        ) => $d->begin
-      );
-    },
-    sub {
-      my ($d, $serr, $sid) = @_;
-      return $c->reply->exception("Error while insert solution: $serr") if $serr;
-
-      $c->minion->enqueue(check => [$sid] => {priority => 1});
-      return $c->redirect_to('event_user_info', login => $login);
-    }
+  my %res = $c->model('solution')->add(
+    validation => $c->validation,
+    params     => $c->req->params,
+    session    => $c->session,
+    tid        => $c->param('id')
   );
+  return $c->reply->not_found unless %res;
+  return $c->reply->exception($res{err}) if $res{err};
+
+  if ($res{validation}->has_error) {
+    $c->stash(s => 1);
+    return $c->view;
+  }
+
+  # remember last language
+  $c->session(lang => $c->param('language'));
+
+  my $login = $c->session->{login};
+
+  return $c->redirect_to('contest_user_evt', login => $login, con => $res{con}) if $res{con};
+
+  $c->redirect_to('event_user_info', login => $login);
 }
 
 1;

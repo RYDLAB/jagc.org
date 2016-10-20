@@ -11,6 +11,7 @@ use JAGC::Task::email;
 use JAGC::Task::notice_new_task;
 use JAGC::Task::notice_new_comment;
 use JAGC::Task::notice_new_solution;
+use JAGC::Task::notice_new_contest;
 
 sub startup {
   my $app = shift;
@@ -19,6 +20,7 @@ sub startup {
   $app->plugin('JAGC::Plugin::SendNotify');
   $app->plugin('JAGC::Plugin::Helpers');
   $app->plugin('Config', file => "app.$mode.conf");
+  $app->plugin('Model');
 
   $app->secrets([$app->config->{secret}]);
   $app->sessions->cookie_name('jagc_session');
@@ -32,6 +34,7 @@ sub startup {
     $app->minion->add_task(notice_new_task     => sub { JAGC::Task::notice_new_task->new->call(@_) });
     $app->minion->add_task(notice_new_comment  => sub { JAGC::Task::notice_new_comment->new->call(@_) });
     $app->minion->add_task(notice_new_solution => sub { JAGC::Task::notice_new_solution->new->call(@_) });
+    $app->minion->add_task(notice_new_contest  => sub { JAGC::Task::notice_new_contest->new->call(@_) });
   }
 
   push @{$app->commands->namespaces}, 'JAGC::Command';
@@ -46,7 +49,6 @@ sub startup {
 
   $r->get('/')->to('main#index')->name('index');
   $br->get('/logout')->to('main#logout')->name('logout');
-
   $r->get('/tasks/:page' => [page => $num])->to('main#tasks', page => 1)->name('tasks');
 
   # Login
@@ -71,6 +73,20 @@ sub startup {
   $br->get('/oauth/linkedin')->to('oauth#linkedin')->name('oauth_linkedin');
   $br->get('/oauth/fb')->to('oauth#fb')->name('oauth_fb');
   $br->get('/oauth/test')->to('oauth#test')->name('oauth_test') if $mode eq 'test';
+
+  # Contest
+  $br->get('/contest/add')->to('contest#add_view')->name('contest_add_view');
+  $br->post('/contest/add')->to('contest#upsert')->name('contest_add');
+  $br->get('/contest/:con/edit' => [con => $oid])->to('contest#edit_view')->name('contest_edit_view');
+  $br->post('/contest/:con/edit' => [con => $oid])->to('contest#upsert')->name('contest_edit');
+  $br->get('/contest/:con/task/add' => [con => $oid])->to('task#add_view')->name('con_task_add_view');
+  $br->post('/contest/:con/task/add' => [con => $oid])->to('task#add')->name('con_task_add');
+  $br->get('/contest/task/:id' => [id => $oid])->to('task#edit_view')->name('contest_task_edit_view');
+  $br->get('/contest/:con/users/:page' => [con => $oid, page => $num])->to('user#all', page => 1)->name('contest_user_all');
+  $br->get('/contests')->to('contest#contests')->name('contests');
+  $br->get('/contest/:con' => [con => $oid] )->to('contest#view')->name('contest_view');
+  $br->get('/contest/:con/:login' => [con => $oid])->to('contest#user_info')->name('contest_user_info');
+  $br->get('/contest/:con/:login/events/:page' => [con => $oid, page => $num])->to('contest#events', page => 1)->name('contest_user_evt');
 
   $br->post('/task/add')->to('task#add')->name('task_add');
   $br->get('/task/add')->to('task#add_view')->name('task_add_view');
@@ -103,6 +119,7 @@ sub startup {
   $br->post('/user/register')->to('user#register')->name('user_register');
   $br->get('/users/:page' => [page => $num])->to('user#all', page => 1)->name('user_all');
   $br->post('/user/:login/change_name')->to('user#change_name')->name('user_change_name');
+  $br->get('/user/settings/notification/contests')->to('user#notification_contests')->name('user_notification_contests');
 
   $br->get('/user/:uid/confirmation/:email/code/:code' =>
       [uid => $oid, email => qr/.+@.+\.[^.]+/, code => qr/[0-9a-f]{32}/])->to('user#confirmation')
@@ -173,6 +190,47 @@ sub startup {
     email => sub {
       my ($validation, $name, $value) = @_;
       return $value =~ m/.+\@.+\..+/ ? undef : 1;
+    }
+  );
+
+  $app->validator->add_check(
+    check_dates => sub {
+      my $v = shift;
+
+      my $start = $app->date_to_bson($v->param('start_date'));
+      my $end   = $app->date_to_bson($v->param('end_date'));
+
+      unless ($start) {
+        $v->error(start_date => ['cechk_dates', q(Bad start date!)]);
+        return undef;
+      }
+
+      unless ($end) {
+        $v->error(end_date => ['check_dates', q(Bad end date!)]);
+        return undef;
+      }
+
+      if ($end < $start) {
+        $v->error(end_date => ['check_dates', q(Can't be smaller than start date!)]);
+        return undef;
+      }
+      return undef;
+    }
+  );
+
+  $app->validator->add_check(
+    enough_tests => sub {
+      my $v = shift;
+
+      my $p = $v->input;
+      my $ctr = 0;
+      foreach ( keys %{$p} ) {
+        $ctr++ if /^test_\d+/ && $p->{$_};
+      }
+
+      $v->error(enough_tests => 'You need add at least 5 tests') if $ctr < 10;
+
+      return undef;
     }
   );
 }
