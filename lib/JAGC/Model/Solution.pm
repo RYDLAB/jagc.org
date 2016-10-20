@@ -77,7 +77,7 @@ sub add {
   return (validation => $v, err => "Error while insert solution: $@") if $@;
   $self->app->minion->enqueue(check => [$sid] => {priority => 1});
 
-  return ( $task->{con} ? ( con => $task->{con}, validation => $v ) : validation => $v);
+  return ( $task->{con} ? ( con => $task->{con}, validation => $v ) : ( validation => $v ));
 }
 
 1;
