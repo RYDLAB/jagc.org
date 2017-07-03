@@ -15,10 +15,9 @@ my $t = Test::Mojo->new('JAGC')->tap(
   }
 );
 
-my @langs =
-  qw/python3 python2 php ruby2.0 perl bash haskell nodejs erlang golfscript pyth cjam julia lua/;
+my @langs = qw/python3 python2 php ruby2.0 perl bash haskell nodejs erlang golfscript pyth cjam julia lua/;
 
-$t->app->db->c('language')->insert({name => 'test',       path => '/usr/bin/test'});
+$t->app->db->c('language')->insert({name => 'test', path => '/usr/bin/test'});
 
 my $user_email = 'u3@jagc.org';
 my $user_login = 'u3';
@@ -49,7 +48,7 @@ $t->post_ok($surl => form => {code => '1', language => 'test'})->status_is(302)
 $t->get_ok('/user/u3/events')->status_is(200)
   ->text_is('div.panel-group div.row:nth-child(1) div.col-sm-3 a'        => 't')
   ->text_is('div.panel-group div.row:nth-child(1) div:nth-child(4) span' => 'Not tested yet')
-  ->text_is('div.panel-group div.row:nth-child(1) div:nth-child(5)'      => 'test');
+  ->text_like('div.panel-group div.row:nth-child(1) div:nth-child(5)' => qr/test/);
 
 my $c = $t->app->build_controller;
 
@@ -61,7 +60,7 @@ foreach my $lng (@langs) {
 $t->app->minion->perform_jobs;
 
 $t->get_ok('/user/u3/events')
-  ->text_is('div.panel-group div.row:nth-child(1) div:nth-child(4) a' => 'Success');
+  ->text_like('div.panel-group div.row:nth-child(1) div:nth-child(4) a' => qr/Success/);
 
 # Recheck solution
 push @tests, (test_6_in => "25\n6", test_6_out => 31);
@@ -70,12 +69,13 @@ $t->post_ok("$turl/edit" => form => {name => 't2', description => 't2', @tests})
 $t->get_ok('/user/u3/events')->status_is(200)
   ->text_is('div.panel-group div.row:nth-child(1) div.col-sm-3 a'        => 't2')
   ->text_is('div.panel-group div.row:nth-child(1) div:nth-child(4) span' => 'Not tested yet')
-  ->text_is('div.panel-group div.row:nth-child(1) div:nth-child(5)'      => $langs[-1]);
+  ->text_like('div.panel-group div.row:nth-child(1) div:nth-child(5)' => qr/$langs[-1]/);
 
 $t->app->minion->perform_jobs;
 
 for my $i (1 .. @langs) {
-  $t->get_ok('/user/u3/events')->text_is("div.panel:nth-child($i) div.col-sm-2:nth-child(4) a" => 'Success');
+  $t->get_ok('/user/u3/events')
+    ->text_like("div.panel:nth-child($i) div.col-sm-2:nth-child(4) a" => qr/Success/);
 }
 
 done_testing();

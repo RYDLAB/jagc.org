@@ -1,11 +1,10 @@
 package JAGC::Task::check;
 use Mojo::Base -base;
 
-use File::Copy 'cp';
-use File::Path 'remove_tree';
 use File::Temp 'tempdir';
 use Mango::BSON ':bson';
-use Mojo::Util qw ( spurt encode);
+use Mojo::Util 'encode';
+use Mojo::File 'path';
 
 sub prepare_container {
   my ($self, $app, $data, $sid, $lng) = @_;
@@ -23,11 +22,11 @@ sub prepare_container {
   my $tmp_dir = $self->{tmp_dir} = eval { tempdir DIR => $config->{shared_volume_dir} };
   $log->error("Can't create temp dir: $@") and return undef if $@;
 
-  eval { spurt encode ('UTF-8', $data), "$tmp_dir/code" };
+  eval { path("$tmp_dir/code")->spurt(encode ('UTF-8', $data)) };
   $log->error("$@") and return undef if $@;
 
-  $log->error("Can't copy starter: $!") and return undef
-    unless cp $app->home->rel_file('script/starter'), $tmp_dir;
+  eval { $app->home->rel_file('script/starter')->copy_to($tmp_dir) };
+  $log->error("Can't copy starter: $@") and return undef if $@;
 
   $log->error("Can't set permissions for starter! $!") and return undef
     if 2 > chmod 0755, $tmp_dir, "$tmp_dir/starter";
@@ -48,8 +47,7 @@ sub prepare_container {
 sub destroy_container {
   my ($self, $app) = @_;
 
-  remove_tree $self->{tmp_dir}, {error => \my $err};
-  $app->log->warn("Can't remove directory $self->{tmp_dir}: " . $app->dumper($err)) if @$err;
+  path($self->{tmp_dir})->remove_tree;
 
   my $api_server = $app->config->{worker}{api_server};
 
@@ -67,7 +65,7 @@ sub run_test {
   my $log        = $app->log;
   my $cid        = $self->{container_id};
 
-  eval { spurt $test->{in}, "$self->{tmp_dir}/input" };
+  eval { path("$self->{tmp_dir}/input")->spurt($test->{in}) };
   $log->warn($@) and return undef if $@;
 
   $log->debug(sprintf 'Run test %s', $test->{_id});
@@ -77,7 +75,6 @@ sub run_test {
   $app->ua->websocket(
     "$api_server/containers/$cid/attach/ws?stream=1&stdout=1" => sub {
       my ($ua, $tx) = @_;
-
 
       my $start_tx = $ua->post("$api_server/containers/$cid/start");
 
@@ -90,7 +87,7 @@ sub run_test {
           $result = {status => 'error', stderr => $err, stdout => ''};
         }
 
-        $ua->post("$api_server/containers/$cid/stop?t=1"); Mojo::IOLoop->stop; 
+        $ua->post("$api_server/containers/$cid/stop?t=1"); Mojo::IOLoop->stop;
       });
       $tx->on(json => sub { my ($tx, $json) = @_; $result = $json; });
     }

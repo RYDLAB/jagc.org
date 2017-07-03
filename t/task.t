@@ -43,7 +43,7 @@ $t->post_ok(
     test_5_out  => '5'
   }
 )->status_is(302);
-$t->get_ok($t->tx->res->headers->location)->status_is(200)->text_is('blockquote > h3' => $task_name)
+$t->get_ok($t->tx->res->headers->location)->status_is(200)->text_like('blockquote > h3' => qr/$task_name/)
   ->text_is('blockquote pre.text_description' => $task_description);
 
 done_testing();
