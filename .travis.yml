@@ -7,7 +7,7 @@ perl:
   - "5.22"
   - "5.24"
 before_install:
-  - "sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 7F0CEB10"
+  - "sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 0C49F3730359A14518585931BC711F9BA15703C6"
   - "echo 'deb http://repo.mongodb.org/apt/debian wheezy/mongodb-org/3.4 main' | sudo tee /etc/apt/sources.list.d/mongodb.list"
   - "sudo apt-get update"
   - "sudo apt-get install -y mongodb-org-server"
