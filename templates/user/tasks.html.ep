@@ -3,7 +3,8 @@
 
 <div class="row">
   <div class="col-sm-2">
-    <img class="social_img_normal" src="<%= $owner->{pic} %>"><h3 class="snuggle"><b><%= $owner->{login} %></b></h3>
+    <img class="social_img_normal" src="<%= url_for('user_pic', login => $owner->{login}) %>">
+    <h3 class="snuggle"><b><%= $owner->{login} %></b></h3>
   </div>
   <div class="col-sm-10">
     <ul class="nav nav-pills nav-justified">

@@ -20,7 +20,7 @@
 
             % my $profile_url = stash('con') ? 'contest_user_info' : 'user_info';
             <a href="<%= url_for( $profile_url, login => $event->{user}{login}, con => stash('con')) %>">
-              <img class="img-rounded user" src="<%= $event->{user}{pic} %>" >
+              <img class="img-rounded user" src="<%= url_for('user_pic', login => $event->{user}{login}) %>" >
                 <%= $event->{user}{login} %>
             </a>
           </div>

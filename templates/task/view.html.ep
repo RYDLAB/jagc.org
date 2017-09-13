@@ -47,7 +47,7 @@
       <footer>
         <a href="<%= url_for('user_tasks_owner', login => $task->{owner}{login}) %>">
           <%= $task->{owner}{login} %>
-          <img src="<%= $task->{owner}{pic} %>" class="img-rounded user">
+          <img src="<%= url_for('user_pic', login => $task->{owner}{login}) %>" class="img-rounded user">
         </a>
       </footer>
     </blockquote>

@@ -5,7 +5,7 @@
       <footer>
         <a href="<%= url_for('user_info', login => $comment->{user}{login}) %>">
           <%= $comment->{user}{login} %>
-          <img src="<%= $comment->{user}{pic} %>" class="img-rounded user">
+          <img src="<%= url_for('user_pic', login => $comment->{user}{login}) %>" class="img-rounded user">
         </a>
       </footer>
     </blockquote>

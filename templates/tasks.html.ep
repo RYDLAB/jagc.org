@@ -20,7 +20,7 @@
     <td>
       <div>
         <a href="<%= url_for('user_info', login => $task->{owner}{login}) %>">
-          <img class="img-rounded user" src="<%= $task->{owner}{pic} %>">
+          <img class="img-rounded user" src="<%= url_for('user_pic', login => $task->{owner}{login}) %>">
           <%= $task->{owner}{login} %>
         </a>
       </div>
@@ -34,7 +34,7 @@
           <div>
             % my @prof_url = stash('con') ? ('contest_user_info', con => stash('con')) : 'user_info';
             <a href="<%= url_for( @prof_url, login => $winner->{login}) %>">
-              <img class="img-rounded user" src="<%= $winner->{pic} %>">
+              <img class="img-rounded user" src="<%= url_for('user_pic', login => $winner->{login}) %>">
               <%= $winner->{login} %>
             </a>
           </div>

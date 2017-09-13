@@ -61,7 +61,7 @@
         </div>
         <div class="col-sm-5">
           <div class="pull-right">
-            <img src="<%= $user->{pic} %>" class="img-rounded user-big pull-right">
+            <img src="<%= url_for('user_pic', login => $user->{login}) %>" class="img-rounded user-big pull-right">
           </div>
           <div class="pull-right" style="margin-right:10px">
             % my ($datetime, $cdate) = tz $solution->{ts};

@@ -26,7 +26,7 @@
         <td>
           <div>
             <a href="<%= url_for('user_info', login => $user->{login}) %>">
-              <img class="img-rounded user" src="<%= $user->{pic} %>">
+              <img class="img-rounded user" src="<%= url_for('user_pic', login => $user->{login}) %>">
               <%= $user->{login} %>
             </a>
           </div>

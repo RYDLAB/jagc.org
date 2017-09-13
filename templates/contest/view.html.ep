@@ -18,7 +18,7 @@
       <footer>
         <a href="<%= url_for('contest_user_info', con => $contest->{_id}, login => $contest->{owner}{login}) %>">
           <%= $contest->{owner}{login} %>
-          <img src="<%= $contest->{owner}{pic} %>" class="img-rounded user">
+          <img src="<%= url_for('user_pic', login => $contest->{owner}{login}) %>" class="img-rounded user">
         </a>
       </footer>
     </blockquote>

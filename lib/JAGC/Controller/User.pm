@@ -39,6 +39,32 @@ sub info {
   );
 }
 
+sub pic {
+  my $c = shift;
+
+  my $login = $c->stash('login');
+  my $db    = $c->db;
+
+  $c->delay(
+    sub {
+      $db->c('user')->find_one({login => $login} => shift->begin);
+    },
+    sub {
+      my ($d, $err, $user) = @_;
+      return $c->reply->exception("Error while find user $login: $err") if $err;
+
+      $c->app->ua->get($user->{pic} => $d->begin);
+    },
+    sub {
+      my ($d, $pic) = @_;
+      return $c->reply->static('/images/avatar.png') if $pic->error;
+
+      $c->res->headers->content_type($pic->res->headers->content_type);
+      $c->render(data => $pic->res->body);
+    }
+  );
+}
+
 sub tasks_owner {
   my $c = shift;
 

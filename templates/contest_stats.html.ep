@@ -16,7 +16,7 @@
       % foreach my $user ( @{$stat->{users}} ) {
         <div style="padding-bottom:2px">
           <a href="<%= url_for('contest_user_info', login => $user->{login}, con => $contest->{_id}) %>">
-            <img class="img-rounded user" src="<%= $user->{pic} %>">
+            <img class="img-rounded user" src="<%= url_for('user_pic', login => $user->{login}) %>">
             <%= $user->{login} %>
           </a>
         </div>

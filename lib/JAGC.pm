@@ -112,6 +112,7 @@ sub startup {
   $br->get('/user/:login')->to('user#info')->name('user_info');
   $br->get('/user/:login/tasks/owner')->to('user#tasks_owner')->name('user_tasks_owner');
   $br->get('/user/:login/settings')->to('user#settings')->name('user_settings');
+  $br->get('/user/:login/pic')->to('user#pic')->name('user_pic');
   $br->get('/user/settings/notification/new')->to('user#notification_new')->name('user_notification_new');
   $br->get('/user/settings/notification/:tid/:type' => [tid => $oid, type => qr/comment|solution/])
     ->to('user#notification')->name('user_notification');
